@@ -1,7 +1,4 @@
-import {
-	PUBLIC_SUPABASE_ANON_KEY,
-	PUBLIC_SUPABASE_URL,
-} from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import {
 	createBrowserClient,
 	createServerClient,
@@ -95,13 +92,15 @@ function createInterceptedFetch(originalFetch: typeof globalThis.fetch): typeof 
  */
 function createSupabaseClient(
 	fetch: typeof globalThis.fetch,
-	data: { session: any }
+	data: { session: any },
+	url: string,
+	anonKey: string
 ): ReturnType<typeof createBrowserClient> | ReturnType<typeof createServerClient> {
 	if (isBrowser()) {
 		// Use intercepted fetch to handle invalid refresh token errors
 		const interceptedFetch = createInterceptedFetch(fetch);
 
-		return createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		return createBrowserClient(url, anonKey, {
 			global: {
 				fetch: interceptedFetch,
 			},
@@ -118,7 +117,7 @@ function createSupabaseClient(
 		});
 	}
 
-	return createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+	return createServerClient(url, anonKey, {
 		global: {
 			fetch: fetch,
 		},
@@ -191,12 +190,14 @@ async function getAuthData(supabase: ReturnType<typeof createBrowserClient> | Re
 // ============================================================================
 
 export const load: LayoutLoad = async ({ fetch, data, depends }) => {
+	const url = env.PUBLIC_SUPABASE_URL ?? '';
+	const anonKey = env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 	try {
 		// Mark dependency for SvelteKit's reactivity system
 		depends('supabase:auth');
 
 		// Create appropriate Supabase client
-		const supabase = createSupabaseClient(fetch, data);
+		const supabase = createSupabaseClient(fetch, data, url, anonKey);
 
 		// Retrieve authentication data safely
 		const { session, user } = await getAuthData(supabase);
@@ -210,7 +211,7 @@ export const load: LayoutLoad = async ({ fetch, data, depends }) => {
 
 		// Return fallback data to prevent app crash
 		return {
-			supabase: createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+			supabase: createServerClient(url, anonKey, {
 				global: { fetch },
 				cookies: { get: () => '{}' }
 			}),

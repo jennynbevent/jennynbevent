@@ -1,7 +1,4 @@
-import {
-	PUBLIC_SUPABASE_ANON_KEY,
-	PUBLIC_SUPABASE_URL,
-} from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import {
 	createBrowserClient,
 	createServerClient,
@@ -11,9 +8,11 @@ import {
 
 export const load = async ({ fetch, data, depends }) => {
 	depends('supabase:auth');
+	const supabaseUrl = env.PUBLIC_SUPABASE_URL ?? '';
+	const anonKey = env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 	const supabase = isBrowser()
-		? createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		? createBrowserClient(supabaseUrl, anonKey, {
 				global: {
 					fetch,
 				},
@@ -27,7 +26,7 @@ export const load = async ({ fetch, data, depends }) => {
 					flowType: 'pkce',
 				},
 			})
-		: createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		: createServerClient(supabaseUrl, anonKey, {
 				global: {
 					fetch,
 				},
