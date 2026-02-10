@@ -211,3 +211,7 @@ COMMENT ON FUNCTION "public"."get_user_permissions_complete"("p_profile_id" "uui
 
 
 
+
+
+
+

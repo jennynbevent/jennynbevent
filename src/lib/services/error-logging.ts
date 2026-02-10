@@ -15,14 +15,27 @@ export class ErrorLogger {
      * Log une erreur critique (les erreurs sont uniquement loggées dans la console)
      */
     static async logCritical(
-        error: Error | unknown, 
-        context?: CriticalErrorContext, 
+        error: Error | unknown,
+        context?: CriticalErrorContext,
         metadata?: Record<string, any>
     ): Promise<void> {
-        const errorObj = error instanceof Error ? error : new Error(String(error));
-        
+        // Extraire un message lisible pour les erreurs Supabase / Postgrest (objets avec .message)
+        const message =
+            error instanceof Error
+                ? error.message
+                : typeof error === 'object' && error !== null && 'message' in error
+                    ? String((error as { message?: unknown }).message)
+                    : String(error);
+        const errorObj = error instanceof Error ? error : new Error(message);
+
         // 1. Toujours logger dans la console
         console.error('🚨 CRITICAL ERROR:', errorObj);
+        if (typeof error === 'object' && error !== null && 'code' in error) {
+            console.error('   Code:', (error as { code?: string }).code);
+        }
+        if (typeof error === 'object' && error !== null && 'details' in error) {
+            console.error('   Details:', (error as { details?: string }).details);
+        }
         if (context) {
             console.error('📋 Context:', context);
         }

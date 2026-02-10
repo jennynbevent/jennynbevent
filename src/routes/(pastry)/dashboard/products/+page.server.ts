@@ -6,11 +6,9 @@ import { forceRevalidateShop } from '$lib/utils/catalog';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { createCategoryFormSchema, updateCategoryFormSchema, deleteCategoryFormSchema } from './schema';
-import { checkProductLimit } from '$lib/utils/product-limits';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
     const { userId, permissions } = await parent();
-    const currentProductCount = permissions.productCount;
 
     // ✅ OPTIMISÉ : Un seul appel DB pour toutes les données produits
     const { data: productsData, error } = await locals.supabase.rpc('get_products_data', {
@@ -29,6 +27,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
     const updateCategoryForm = await superValidate(zod(updateCategoryFormSchema));
     const deleteCategoryForm = await superValidate(zod(deleteCategoryFormSchema));
 
+    const currentProductCount = products?.length ?? 0;
     return {
         products,
         categories,
@@ -169,22 +168,6 @@ export const actions: Actions = {
             return fail(403, { error: 'Accès non autorisé à cette boutique' });
         }
 
-        // ✅ OPTIMISÉ : checkProductLimit récupère déjà le plan via RPC, pas besoin de getUserPermissions
-        // Vérifier la limite de produits
-        console.log('🔍 [Product Duplication] Checking product limit before duplicating product...');
-        const productLimitStats = await checkProductLimit(shopId, userId, locals.supabase);
-        if (productLimitStats.isLimitReached) {
-            console.warn('🚫 [Product Duplication] Product duplication blocked - limit reached:', {
-                shopId,
-                productCount: productLimitStats.productCount,
-                productLimit: productLimitStats.productLimit,
-                plan: productLimitStats.plan
-            });
-            return fail(403, { 
-                error: `Limite de gâteaux atteinte. Vous avez atteint la limite de ${productLimitStats.productLimit} gâteau${productLimitStats.productLimit > 1 ? 'x' : ''} pour votre plan ${productLimitStats.plan === 'free' ? 'gratuit' : productLimitStats.plan === 'basic' ? 'Starter' : 'Premium'}. Passez à un plan supérieur pour ajouter plus de gâteaux.`
-            });
-        }
-
         if (!productId) {
             return fail(400, {
                 error: 'ID du produit manquant'
@@ -321,7 +304,7 @@ export const actions: Actions = {
 
         // ✅ Lire formData AVANT superValidate (car superValidate consomme le body)
         const formData = await request.formData();
-        
+
         // Validation avec Superforms (passer formData au lieu de request)
         const form = await superValidate(formData, zod(createCategoryFormSchema));
 
@@ -400,9 +383,9 @@ export const actions: Actions = {
             return { form };
         } catch (err) {
             console.error('❌ [Create Category] Unexpected error:', err);
-            return fail(500, { 
-                form, 
-                error: `Erreur inattendue lors de la création de la catégorie: ${err instanceof Error ? err.message : 'Erreur inconnue'}` 
+            return fail(500, {
+                form,
+                error: `Erreur inattendue lors de la création de la catégorie: ${err instanceof Error ? err.message : 'Erreur inconnue'}`
             });
         }
     },
@@ -413,7 +396,7 @@ export const actions: Actions = {
 
         // Récupérer categoryId, shopId et shopSlug AVANT superValidate (car le body ne peut être lu qu'une fois)
         const formData = await request.formData();
-        
+
         // Validation avec Superforms
         const form = await superValidate(formData, zod(updateCategoryFormSchema));
 
@@ -566,7 +549,7 @@ export const actions: Actions = {
             if (products && products.length > 0) {
                 return fail(400, {
                     form,
-                    error: `Impossible de supprimer la catégorie "${category.name}" car elle contient ${products.length} gâteau${products.length > 1 ? 'x' : ''}. Veuillez d'abord déplacer ou supprimer ces gâteaux.`
+                    error: `Impossible de supprimer la catégorie "${category.name}" car elle contient ${products.length} article${products.length > 1 ? 's' : ''}. Veuillez d'abord déplacer ou supprimer ces articles.`
                 });
             }
 
@@ -656,7 +639,7 @@ export const actions: Actions = {
             }
 
             return {
-                message: `Gâteau ${isActive ? 'activé' : 'désactivé'} avec succès`,
+                message: `Article ${isActive ? 'activé' : 'désactivé'} avec succès`,
                 isActive
             };
         } catch (err) {

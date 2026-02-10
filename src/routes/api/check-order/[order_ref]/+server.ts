@@ -9,10 +9,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
             return json({ exists: false }, { status: 400 });
         }
 
-        // Vérifier si une commande existe avec cet order_ref
         const { data: order, error: orderError } = await (locals.supabaseServiceRole as any)
             .from('orders')
-            .select('id, shops!inner(slug)')
+            .select('id')
             .eq('order_ref', order_ref)
             .maybeSingle();
 
@@ -22,10 +21,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
         }
 
         if (order) {
-            return json({ 
-                exists: true, 
-                orderId: order.id, 
-                slug: order.shops.slug 
+            return json({
+                exists: true,
+                orderId: order.id
             });
         }
 

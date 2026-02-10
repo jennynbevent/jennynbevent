@@ -155,26 +155,6 @@
 		<Form.FieldErrors />
 	</Form.Field>
 
-	<Form.Field {form} name="slug">
-		<Form.Control let:attrs>
-			<Form.Label>URL de votre boutique</Form.Label>
-			<div class="flex items-center space-x-2">
-				<span class="text-sm text-muted-foreground">pattyly.com/</span>
-				<Input
-					{...attrs}
-					type="text"
-					placeholder="ma-boutique"
-					required
-					bind:value={$formData.slug}
-				/>
-			</div>
-		</Form.Control>
-		<Form.FieldErrors />
-		<Form.Description
-			>Cette URL sera utilisée pour accéder à votre boutique en ligne</Form.Description
-		>
-	</Form.Field>
-
 	<Form.Field {form} name="bio">
 		<Form.Control let:attrs>
 			<Form.Label>Description de votre boutique</Form.Label>

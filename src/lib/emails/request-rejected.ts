@@ -44,13 +44,13 @@ export function RequestRejectedEmail({
 
     const ctaSection = `
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
-            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Découvrez nos gâteaux disponibles ou proposez une autre date</p>
+            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Découvrez nos articles disponibles ou proposez une autre date</p>
             ${EmailButton({
-                href: catalogUrl,
-                text: 'Voir le catalogue',
-                variant: 'primary',
-                shopColor,
-            })}
+        href: catalogUrl,
+        text: 'Voir le catalogue',
+        variant: 'primary',
+        shopColor,
+    })}
         </div>
     `;
 

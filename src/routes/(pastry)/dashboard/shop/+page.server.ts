@@ -6,23 +6,12 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { formSchema } from './schema';
 import { customizationSchema } from './customization-schema';
-import { directorySchema, toggleDirectorySchema } from '$lib/validations/schemas/shop';
 import { policiesSchema } from './policies-schema';
 import { paymentConfigSchema } from '../../../onboarding/schema';
 import { uploadShopLogo, uploadBackgroundImage, deleteImage, extractPublicIdFromUrl } from '$lib/cloudinary';
 import { forceRevalidateShop } from '$lib/utils/catalog';
 import { verifyShopOwnership } from '$lib/auth';
 import { setError } from 'sveltekit-superforms';
-import Stripe from 'stripe';
-import { PRIVATE_STRIPE_SECRET_KEY } from '$env/static/private';
-import { PUBLIC_SITE_URL } from '$env/static/public';
-import {
-	createStripeConnectAccount,
-	createStripeAccountLink,
-	createStripeAccountUpdateLink,
-	getStripeConnectAccount,
-	isStripeConnectAccountReady
-} from '$lib/stripe/connect-client';
 
 export const load: PageServerLoad = async ({ locals, parent, url }) => {
     // ✅ OPTIMISÉ : Réutiliser les permissions et shop du layout
@@ -41,76 +30,8 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
         throw error(404, 'Boutique non trouvée');
     }
 
-    // Gérer le retour de Stripe Connect OAuth
-    if (url.searchParams.get('stripe_connect') === 'return') {
-        try {
-            // Récupérer le compte Stripe Connect
-            const { data: account } = await locals.supabase
-                .from('stripe_connect_accounts')
-                .select('stripe_account_id')
-                .eq('profile_id', user.id)
-                .single();
-
-            if (account?.stripe_account_id) {
-                // Vérifier le statut du compte
-                const stripeAccount = await getStripeConnectAccount(locals.stripe, account.stripe_account_id);
-
-                // Mettre à jour dans la DB
-                const isReady = isStripeConnectAccountReady(stripeAccount);
-                await locals.supabase
-                    .from('stripe_connect_accounts')
-                    .update({
-                        is_active: isReady,
-                        charges_enabled: stripeAccount.charges_enabled || false,
-                        payouts_enabled: stripeAccount.payouts_enabled || false,
-                        details_submitted: stripeAccount.details_submitted || false,
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq('profile_id', user.id);
-
-                // Créer/mettre à jour payment_links si le compte est actif ET use_for_orders est true
-                const { data: updatedAccount } = await locals.supabase
-                    .from('stripe_connect_accounts')
-                    .select('use_for_orders')
-                    .eq('profile_id', user.id)
-                    .single();
-
-                if (isReady && updatedAccount?.use_for_orders) {
-                    await locals.supabase
-                        .from('payment_links')
-                        .upsert({
-                            profile_id: user.id,
-                            provider_type: 'stripe',
-                            payment_identifier: account.stripe_account_id,
-                            is_active: true,
-                        }, {
-                            onConflict: 'profile_id,provider_type'
-                        });
-                } else if (!updatedAccount?.use_for_orders) {
-                    // Si use_for_orders est false, retirer Stripe de payment_links
-                    await locals.supabase
-                        .from('payment_links')
-                        .delete()
-                        .eq('profile_id', user.id)
-                        .eq('provider_type', 'stripe');
-                }
-            }
-        } catch (err) {
-            console.error('Error handling Stripe Connect callback:', err);
-            // Continue même si l'erreur - l'utilisateur pourra réessayer
-        }
-
-        // Rediriger vers la même page sans le paramètre pour éviter les problèmes
-        throw redirect(303, '/dashboard/shop');
-    }
-
-    // ✅ OPTIMISÉ : 5 requêtes parallèles pour récupérer directory fields + customizations + policies + payment_links + stripe_connect
-    const [shopDataResult, customizationsResult, policiesResult, paymentLinksResult, stripeConnectResult] = await Promise.all([
-        locals.supabase
-            .from('shops')
-            .select('directory_city, directory_actual_city, directory_postal_code, directory_cake_types, directory_enabled')
-            .eq('id', permissions.shopId)
-            .single(),
+    // 3 requêtes parallèles (sans stripe_connect, sans annuaire)
+    const [customizationsResult, policiesResult, paymentLinksResult] = await Promise.all([
         locals.supabase
             .from('shop_customizations')
             .select('button_color, button_text_color, text_color, icon_color, secondary_text_color, background_color, background_image_url')
@@ -125,38 +46,12 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
             .from('payment_links')
             .select('provider_type, payment_identifier')
             .eq('profile_id', user.id)
-            .eq('is_active', true),
-        locals.supabase
-            .from('stripe_connect_accounts')
-            .select('id, is_active, charges_enabled, payouts_enabled, stripe_account_id, use_for_orders')
-            .eq('profile_id', user.id)
-            .single()
+            .eq('is_active', true)
     ]);
 
-    if (shopDataResult.error) {
-        console.error('🎨 [Dashboard Shop] Error fetching shop data:', shopDataResult.error);
-        error(500, 'Erreur lors du chargement de la boutique');
-    }
-
-    const shopData = shopDataResult.data;
     const customizations = customizationsResult.data;
     const policies = policiesResult.data;
-    const stripeConnectAccount = stripeConnectResult.data || null;
-
-    // Debug: Vérifier ce qui est récupéré
-    console.log('🎨 [Dashboard Shop] Customizations récupérées:', customizations);
-    console.log('🎨 [Dashboard Shop] background_image_url:', customizations?.background_image_url);
-    console.log('💳 [Dashboard Shop] Stripe Connect Account:', stripeConnectAccount);
-
-    // Fusionner le shop du parent avec les données supplémentaires
-    const shop = {
-        ...layoutShop,
-        directory_city: shopData?.directory_city || null,
-        directory_actual_city: shopData?.directory_actual_city || null,
-        directory_postal_code: shopData?.directory_postal_code || null,
-        directory_cake_types: shopData?.directory_cake_types || null,
-        directory_enabled: shopData?.directory_enabled || false
-    };
+    const shop = layoutShop;
 
     return {
         shop,
@@ -182,20 +77,6 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
                 background_image_url: customizations?.background_image_url || null, // ✅ Utiliser null au lieu de '' pour éviter les chaînes vides
             }
         }),
-        directoryForm: await superValidate(zod(directorySchema), {
-            defaults: {
-                directory_city: shop.directory_city || '',
-                directory_actual_city: shop.directory_actual_city || '',
-                directory_postal_code: shop.directory_postal_code || '',
-                directory_cake_types: shop.directory_cake_types || [],
-                directory_enabled: shop.directory_enabled || false
-            }
-        }),
-        toggleDirectoryForm: await superValidate(zod(toggleDirectorySchema), {
-            defaults: {
-                directory_enabled: shop.directory_enabled || false
-            }
-        }),
         policiesForm: await superValidate(zod(policiesSchema), {
             defaults: {
                 terms_and_conditions: policies?.terms_and_conditions || '',
@@ -219,8 +100,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
                 return defaults;
             })()
         }),
-        stripeConnectAccount, // ✅ Ajouter stripeConnectAccount pour passer au composant
-        permissions // ✅ Ajouter permissions pour passer le plan au composant
+        permissions
     };
 };
 
@@ -632,7 +512,7 @@ export const actions: Actions = {
             .eq('id', shopId)
             .single();
 
-        const cityChanged = 
+        const cityChanged =
             currentShop?.directory_actual_city !== form.data.directory_actual_city ||
             currentShop?.directory_city !== form.data.directory_city ||
             currentShop?.directory_postal_code !== form.data.directory_postal_code;
@@ -923,7 +803,7 @@ export const actions: Actions = {
             });
 
             const validation = paypalSchema.safeParse({ paypal_me });
-            
+
             if (!validation.success) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 const error = validation.error.errors[0];
@@ -1039,7 +919,7 @@ export const actions: Actions = {
             });
 
             const validation = revolutSchema.safeParse({ revolut_me });
-            
+
             if (!validation.success) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 const error = validation.error.errors[0];
@@ -1158,7 +1038,7 @@ export const actions: Actions = {
             });
 
             const validation = weroSchema.safeParse({ wero_me });
-            
+
             if (!validation.success) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 const error = validation.error.errors[0];
@@ -1240,153 +1120,4 @@ export const actions: Actions = {
         }
     },
 
-    connectStripe: async ({ locals, url }) => {
-        const { session, user } = await locals.safeGetSession();
-
-        if (!session || !user) {
-            return { success: false, error: 'Non autorisé' };
-        }
-
-        const userId = user.id;
-
-        try {
-            // Vérifier si un compte existe déjà
-            const { data: existingAccount } = await locals.supabase
-                .from('stripe_connect_accounts')
-                .select('stripe_account_id')
-                .eq('profile_id', userId)
-                .single();
-
-            let accountId: string;
-
-            if (existingAccount?.stripe_account_id) {
-                accountId = existingAccount.stripe_account_id;
-            } else {
-                // Créer un nouveau compte Connect Express
-                const account = await createStripeConnectAccount(locals.stripe, user.email || '', 'FR');
-                accountId = account.id;
-
-                // Sauvegarder dans la DB
-                const { error: insertError } = await locals.supabase
-                    .from('stripe_connect_accounts')
-                    .insert({
-                        profile_id: userId,
-                        stripe_account_id: accountId,
-                        is_active: false,
-                        charges_enabled: false,
-                        payouts_enabled: false,
-                        details_submitted: false,
-                        use_for_orders: true, // ✅ Par défaut activé pour les commandes
-                    });
-
-                if (insertError) {
-                    console.error('Error saving Stripe Connect account:', insertError);
-                    return { success: false, error: 'Erreur lors de la création du compte' };
-                }
-            }
-
-            // Créer un account link pour l'onboarding
-            const returnUrl = `${PUBLIC_SITE_URL}/dashboard/shop?stripe_connect=return`;
-            const accountLink = await createStripeAccountLink(locals.stripe, accountId, returnUrl);
-
-            return { success: true, url: accountLink.url };
-        } catch (err) {
-            console.error('Stripe Connect error:', err);
-            return { success: false, error: 'Erreur lors de la connexion Stripe' };
-        }
-    },
-
-    updateStripeAccount: async ({ locals, url }) => {
-        const { session, user } = await locals.safeGetSession();
-
-        if (!session || !user) {
-            return { success: false, error: 'Non autorisé' };
-        }
-
-        const userId = user.id;
-
-        try {
-            // Récupérer le compte Stripe Connect existant
-            const { data: existingAccount } = await locals.supabase
-                .from('stripe_connect_accounts')
-                .select('stripe_account_id')
-                .eq('profile_id', userId)
-                .single();
-
-            if (!existingAccount?.stripe_account_id) {
-                return { success: false, error: 'Aucun compte Stripe Connect trouvé' };
-            }
-
-            // Créer un account link pour mettre à jour le compte
-            // Note: On utilise account_onboarding car account_update n'est disponible que pour certains types de comptes
-            // account_onboarding fonctionne aussi pour les comptes déjà configurés
-            const returnUrl = `${PUBLIC_SITE_URL}/dashboard/shop?stripe_connect=return`;
-            const accountLink = await createStripeAccountLink(locals.stripe, existingAccount.stripe_account_id, returnUrl);
-
-            return { success: true, url: accountLink.url };
-        } catch (err) {
-            console.error('Stripe Connect update error:', err);
-            return { success: false, error: 'Erreur lors de la mise à jour du compte Stripe' };
-        }
-    },
-
-    updateStripeUseForOrders: async ({ request, locals }) => {
-        const { session, user } = await locals.safeGetSession();
-
-        if (!session || !user) {
-            return { success: false, error: 'Non autorisé' };
-        }
-
-        const userId = user.id;
-
-        try {
-            const formData = await request.formData();
-            const useForOrders = formData.get('use_for_orders') === 'true';
-
-            // Mettre à jour use_for_orders
-            const { error: updateError } = await locals.supabase
-                .from('stripe_connect_accounts')
-                .update({ use_for_orders: useForOrders })
-                .eq('profile_id', userId);
-
-            if (updateError) {
-                console.error('Error updating use_for_orders:', updateError);
-                return { success: false, error: 'Erreur lors de la mise à jour' };
-            }
-
-            // Si use_for_orders est désactivé, retirer Stripe de payment_links
-            if (!useForOrders) {
-                await locals.supabase
-                    .from('payment_links')
-                    .delete()
-                    .eq('profile_id', userId)
-                    .eq('provider_type', 'stripe');
-            } else {
-                // Si use_for_orders est activé, ajouter/mettre à jour Stripe dans payment_links
-                const { data: account } = await locals.supabase
-                    .from('stripe_connect_accounts')
-                    .select('stripe_account_id, is_active, charges_enabled, payouts_enabled')
-                    .eq('profile_id', userId)
-                    .single();
-
-                if (account?.is_active && account?.charges_enabled && account?.payouts_enabled) {
-                    await locals.supabase
-                        .from('payment_links')
-                        .upsert({
-                            profile_id: userId,
-                            provider_type: 'stripe',
-                            payment_identifier: account.stripe_account_id,
-                            is_active: true,
-                        }, {
-                            onConflict: 'profile_id,provider_type'
-                        });
-                }
-            }
-
-            return { success: true };
-        } catch (err) {
-            console.error('Error updating use_for_orders:', err);
-            return { success: false, error: 'Erreur lors de la mise à jour' };
-        }
-    }
 };

@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
+	import InputOtp from '$lib/components/ui/input-otp.svelte';
 	import {
 		superForm,
 		type Infer,
@@ -9,96 +10,125 @@
 	} from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import LoaderCircle from '~icons/lucide/loader-circle';
-	import Eye from '~icons/lucide/eye';
-	import EyeOff from '~icons/lucide/eye-off';
-	import { formSchema, type FormSchema } from './schema';
+	import { formSchema, loginOtpSchema, type FormSchema, type LoginOtpSchema } from './schema';
 
-	export let data: SuperValidated<Infer<FormSchema>>;
+	export let form: SuperValidated<Infer<FormSchema>>;
+	export let otpForm: SuperValidated<Infer<LoginOtpSchema>>;
+	export let step: 'code' | null;
+	export let email: string | null;
 
-	const form = superForm(data, {
+	const emailForm = superForm(form, {
 		validators: zodClient(formSchema),
 	});
 
-	const { form: formData, enhance, submitting } = form;
+	const otpFormInstance = superForm(otpForm, {
+		validators: zodClient(loginOtpSchema),
+	});
 
-	// État pour la visibilité du mot de passe
-	let showPassword = false;
+	const { form: formData, enhance, submitting, message } = emailForm;
+	const {
+		form: otpFormData,
+		enhance: enhanceOtp,
+		submitting: submittingOtp,
+	} = otpFormInstance;
 
-	function togglePasswordVisibility() {
-		showPassword = !showPassword;
+	function onOtpChange(event: CustomEvent<{ value: string }>) {
+		// Mettre à jour le store du formulaire pour que le bouton « Se connecter » s’active
+		otpFormInstance.form.update((f) => ({ ...f, code: event.detail.value }));
 	}
 </script>
 
-<form
-	method="POST"
-	action="?redirectTo={encodeURIComponent(
-		`${$page.url.origin}/auth/callback${$page.url.search}`,
-	)}"
-	use:enhance
-	class="grid gap-6"
->
-	<Form.Errors {form} />
-	<Form.Field {form} name="email">
-		<Form.Control let:attrs>
-			<Form.Label class="mb-2 text-sm font-medium text-neutral-700">Email</Form.Label>
-			<Input
-				{...attrs}
-				type="email"
-				placeholder="ton@email.com"
-				required
-				bind:value={$formData.email}
-				class="h-12 rounded-xl border-neutral-300 bg-white text-base transition-all duration-200 focus:border-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]/20"
-			/>
-		</Form.Control>
-		<Form.FieldErrors />
-	</Form.Field>
-	<Form.Field {form} name="password">
-		<Form.Control let:attrs>
-			<div class="mb-2 flex items-center">
-				<Form.Label class="text-sm font-medium text-neutral-700">Mot de passe</Form.Label>
-				<a
-					href="/forgot-password"
-					class="ml-auto inline-block text-sm text-[#FF6F61] underline transition-colors hover:text-[#e85a4f]"
+{#if step === 'code' && email}
+	<!-- Étape 2 : saisie du code OTP à 6 chiffres -->
+	<div class="space-y-6">
+		<p class="rounded-lg bg-green-50 p-3 text-sm text-green-800">
+			Un code à 6 chiffres a été envoyé à <strong>{email}</strong>. Saisis-le ci-dessous.
+		</p>
+		<p class="text-sm text-neutral-500">
+			💡 Ouvre ta boîte mail dans un <strong>nouvel onglet</strong> (clic droit → « Ouvrir dans un nouvel onglet ») pour rester sur cette page.
+		</p>
+
+		<form
+			method="POST"
+			action="?/verifyOtp"
+			use:enhanceOtp
+			class="grid gap-6"
+		>
+			<Form.Errors form={otpFormInstance} />
+			<input type="hidden" name="email" value={email} />
+			<Form.Field form={otpFormInstance} name="code">
+				<Form.Control let:attrs>
+					<input {...attrs} type="hidden" name="code" bind:value={$otpFormData.code} />
+					<div class="flex justify-center">
+						<InputOtp
+							value={$otpFormData.code}
+							length={6}
+							disabled={$submittingOtp}
+							on:change={onOtpChange}
+						/>
+					</div>
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
+			<Form.Button
+				class="h-12 w-full rounded-xl bg-[#FF6F61] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#e85a4f] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+				disabled={$submittingOtp || $otpFormData.code.length !== 6}
+			>
+				{#if $submittingOtp}
+					<LoaderCircle class="mr-2 h-5 w-5 animate-spin" />
+					Connexion…
+				{:else}
+					Se connecter
+				{/if}
+			</Form.Button>
+		</form>
+
+		<div class="text-center text-sm text-neutral-500">
+			Tu n’as pas reçu le code ?
+			<form method="POST" action="?/sendOtp{$page.url.search}" class="inline" use:enhance>
+				<input type="hidden" name="email" value={email} />
+				<button
+					type="submit"
+					class="text-[#FF6F61] underline hover:text-[#e85a4f]"
 				>
-					Mot de passe oublié ?
-				</a>
-			</div>
-			<div class="relative">
+					Renvoyer le code
+				</button>
+			</form>
+		</div>
+	</div>
+{:else}
+	<!-- Étape 1 : email puis envoi du code -->
+	<form method="POST" action="?/sendOtp" use:enhance class="grid gap-6">
+		<Form.Errors form={emailForm} />
+		{#if $message}
+			<p class="rounded-lg bg-green-50 p-3 text-sm text-green-800">
+				{$message}
+			</p>
+		{/if}
+		<Form.Field form={emailForm} name="email">
+			<Form.Control let:attrs>
+				<Form.Label class="mb-2 text-sm font-medium text-neutral-700">Email</Form.Label>
 				<Input
 					{...attrs}
-					type={showPassword ? 'text' : 'password'}
-					placeholder="••••••••"
+					type="email"
+					placeholder="ton@email.com"
 					required
-					bind:value={$formData.password}
-					class="h-12 rounded-xl border-neutral-300 bg-white pr-10 text-base transition-all duration-200 focus:border-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]/20"
+					bind:value={$formData.email}
+					class="h-12 rounded-xl border-neutral-300 bg-white text-base transition-all duration-200 focus:border-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]/20"
 				/>
-				<button
-					type="button"
-					on:click={togglePasswordVisibility}
-					class="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400 transition-colors hover:text-neutral-600 focus:outline-none"
-					aria-label={showPassword
-						? 'Masquer le mot de passe'
-						: 'Afficher le mot de passe'}
-				>
-					{#if showPassword}
-						<EyeOff class="h-5 w-5" />
-					{:else}
-						<Eye class="h-5 w-5" />
-					{/if}
-				</button>
-			</div>
-		</Form.Control>
-		<Form.FieldErrors />
-	</Form.Field>
-	<Form.Button 
-		class="h-12 w-full rounded-xl bg-[#FF6F61] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#e85a4f] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed" 
-		disabled={$submitting}
-	>
-		{#if $submitting}
-			<LoaderCircle class="mr-2 h-5 w-5 animate-spin" />
-			Connexion en cours…
-		{:else}
-			Se connecter
-		{/if}
-	</Form.Button>
-</form>
+			</Form.Control>
+			<Form.FieldErrors />
+		</Form.Field>
+		<Form.Button
+			class="h-12 w-full rounded-xl bg-[#FF6F61] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#e85a4f] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+			disabled={$submitting}
+		>
+			{#if $submitting}
+				<LoaderCircle class="mr-2 h-5 w-5 animate-spin" />
+				Envoi en cours…
+			{:else}
+				Recevoir le code
+			{/if}
+		</Form.Button>
+	</form>
+{/if}

@@ -8,6 +8,7 @@ interface QuoteConfirmationProps {
     shopLogo?: string;
     pickupDate: string;
     pickupTime?: string | null;
+    pickupDateEnd?: string | null;
     totalPrice: number;
     depositAmount: number;
     remainingAmount: number;
@@ -23,6 +24,7 @@ export function QuoteConfirmationEmail({
     shopLogo,
     pickupDate,
     pickupTime,
+    pickupDateEnd,
     totalPrice,
     depositAmount,
     remainingAmount,
@@ -41,11 +43,11 @@ export function QuoteConfirmationEmail({
     const title = EmailTitle('Commande confirmée');
 
     const intro = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Votre commande personnalisée a été confirmée et votre acompte a été prélevé avec succès. Le pâtissier prépare votre gâteau pour le <strong>${formatDateTimeForEmail(pickupDate, pickupTime)}</strong>.`
+        `Bonjour ${customerName},<br /><br />Votre commande personnalisée a été confirmée et votre acompte a été prélevé avec succès. Le pâtissier prépare votre commande pour le <strong>${formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd)}</strong>.`
     );
 
     const details = EmailTable([
-        { label: 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime) },
+        { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
         { label: 'Prix total', value: `<strong>${totalPrice.toFixed(2)}€</strong>` },
         { label: 'Acompte payé', value: `<strong>${depositAmount.toFixed(2)}€</strong>` },
         { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
@@ -65,11 +67,11 @@ export function QuoteConfirmationEmail({
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
             <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Retrouvez tous les détails de votre commande</p>
             ${EmailButton({
-                href: orderUrl,
-                text: 'Voir le récapitulatif',
-                variant: 'primary',
-                shopColor,
-            })}
+        href: orderUrl,
+        text: 'Voir le récapitulatif',
+        variant: 'primary',
+        shopColor,
+    })}
         </div>
     `;
 

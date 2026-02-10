@@ -1,12 +1,10 @@
 <script lang="ts">
 	import ShopForm from './shop-form.svelte';
 	import CustomizationForm from './customization-form.svelte';
-	import DirectoryForm from '$lib/components/directory/directory-form.svelte';
 	import PoliciesForm from './policies-form.svelte';
 	import type { SuperValidated, Infer } from 'sveltekit-superforms';
 import { formSchema } from './schema';
 import { customizationSchema } from './customization-schema';
-import { directorySchema, toggleDirectorySchema } from '$lib/validations/schemas/shop';
 import { policiesSchema } from './policies-schema';
 	import {
 		Card,
@@ -16,7 +14,7 @@ import { policiesSchema } from './policies-schema';
 		CardTitle,
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Store, Palette, MapPin, FileText, CreditCard } from 'lucide-svelte';
+	import { Store, Palette, FileText, CreditCard } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import PaymentForm from './payment-form.svelte';
 
@@ -33,17 +31,8 @@ import { policiesSchema } from './policies-schema';
 		};
 		form: SuperValidated<Infer<typeof formSchema>>;
 		customizationForm: SuperValidated<Infer<typeof customizationSchema>>;
-		directoryForm: SuperValidated<Infer<typeof directorySchema>>;
-		toggleDirectoryForm: SuperValidated<Infer<typeof toggleDirectorySchema>>;
 		policiesForm: SuperValidated<Infer<typeof policiesSchema>>;
 		paymentForm: SuperValidated<any>;
-		stripeConnectAccount?: {
-			id: string;
-			is_active: boolean;
-			charges_enabled: boolean;
-			payouts_enabled: boolean;
-			stripe_account_id: string;
-		} | null;
 		permissions?: {
 			plan: 'free' | 'basic' | 'premium' | 'exempt';
 		};
@@ -51,12 +40,11 @@ import { policiesSchema } from './policies-schema';
 
 	let error = '';
 	let success = '';
-	let activeTab: 'info' | 'customization' | 'directory' | 'policies' | 'payment' = 'info';
+	let activeTab: 'info' | 'customization' | 'policies' | 'payment' = 'info';
 
 	const tabs = [
 		{ id: 'info' as const, label: 'Informations', icon: Store },
 		{ id: 'customization' as const, label: 'Personnalisation', icon: Palette },
-		{ id: 'directory' as const, label: 'Annuaire', icon: MapPin },
 		{ id: 'policies' as const, label: 'Politiques de ventes', icon: FileText },
 		{ id: 'payment' as const, label: 'Méthodes de paiement', icon: CreditCard }
 	];
@@ -132,23 +120,6 @@ import { policiesSchema } from './policies-schema';
 		</Card>
 	{:else if activeTab === 'customization'}
 		<CustomizationForm form={data.customizationForm} />
-	{:else if activeTab === 'directory'}
-		<Card class="shadow-sm">
-			<CardHeader class="pb-6">
-				<div class="flex items-center space-x-4">
-					<MapPin class="h-7 w-7 text-primary" />
-					<div>
-						<CardTitle class="text-xl">Configuration de l'annuaire</CardTitle>
-						<CardDescription class="text-base">
-							Gérez vos informations pour apparaître dans l'annuaire des pâtissiers
-						</CardDescription>
-					</div>
-				</div>
-			</CardHeader>
-			<CardContent class="pt-0">
-				<DirectoryForm data={data.directoryForm} toggleForm={data.toggleDirectoryForm} userPlan={data.permissions?.plan} />
-			</CardContent>
-		</Card>
 	{:else if activeTab === 'policies'}
 		<PoliciesForm data={data.policiesForm} />
 	{:else if activeTab === 'payment'}
@@ -165,7 +136,7 @@ import { policiesSchema } from './policies-schema';
 				</div>
 			</CardHeader>
 			<CardContent class="pt-0">
-				<PaymentForm data={data.paymentForm} stripeConnectAccount={data.stripeConnectAccount} />
+				<PaymentForm data={data.paymentForm} />
 			</CardContent>
 		</Card>
 	{/if}

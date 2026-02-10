@@ -9,6 +9,7 @@ interface OrderPendingVerificationPastryProps {
     productName: string;
     pickupDate: string;
     pickupTime?: string | null;
+    pickupDateEnd?: string | null;
     totalAmount: number;
     paidAmount: number;
     remainingAmount: number;
@@ -66,8 +67,8 @@ export function OrderPendingVerificationPastryEmail({
     const customerInfo = EmailTable(customerInfoRows);
 
     const orderDetails = EmailTable([
-        { label: 'Gâteau', value: productName },
-        { label: 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime) },
+        { label: 'Article', value: productName },
+        { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
         { label: 'Prix total', value: `<strong>${totalAmount.toFixed(2)}€</strong>` },
         { label: 'Acompte à vérifier', value: `<strong>${paidAmount.toFixed(2)}€</strong>` },
         { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
@@ -77,10 +78,10 @@ export function OrderPendingVerificationPastryEmail({
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
             <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Une fois le paiement vérifié sur PayPal, validez-le sur votre dashboard</p>
             ${EmailButton({
-                href: dashboardUrl,
-                text: 'Valider le paiement',
-                variant: 'primary',
-            })}
+        href: dashboardUrl,
+        text: 'Valider le paiement',
+        variant: 'primary',
+    })}
         </div>
     `;
 

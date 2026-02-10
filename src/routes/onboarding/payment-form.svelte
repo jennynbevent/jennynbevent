@@ -13,21 +13,12 @@
 	import { invalidateAll } from '$app/navigation';
 
 	export let data: any;
-	export let stripeConnectAccount: {
-		id: string;
-		is_active: boolean;
-		charges_enabled: boolean;
-		payouts_enabled: boolean;
-		stripe_account_id: string;
-	} | null | undefined = null;
 
 	const dispatch = createEventDispatcher();
 
-	let stripeLoading = false;
 	let showPaypalForm = false;
 	let showRevolutForm = false;
 	let showWeroForm = false;
-	let showStripeInfo = false;
 	let paypalSubmitting = false;
 	let paypalSubmitted = false;
 	let revolutSubmitting = false;
@@ -47,76 +38,6 @@
 	}
 
 	let isPaypalGuideOpen = false;
-
-	// Helper function to parse SvelteKit action response
-	// SvelteKit uses a special serialization format: [{"key":index}, value1, value2, ...]
-	function parseSvelteKitActionResponse(data: unknown): { success?: boolean; url?: string; error?: string } | null {
-		if (!data) return null;
-		
-		// If it's already a plain object, return it
-		if (typeof data === 'object' && !Array.isArray(data) && 'success' in data) {
-			return data as { success?: boolean; url?: string; error?: string };
-		}
-		
-		// If it's an array with the SvelteKit format: [{"success":1,"url":2}, true, "https://..."]
-		if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
-			const refObj = data[0] as Record<string, number>;
-			const result: { success?: boolean; url?: string; error?: string } = {};
-			
-			// Extract values using the indices
-			if ('success' in refObj && typeof refObj.success === 'number') {
-				result.success = data[refObj.success] as boolean;
-			}
-			if ('url' in refObj && typeof refObj.url === 'number') {
-				result.url = data[refObj.url] as string;
-			}
-			if ('error' in refObj && typeof refObj.error === 'number') {
-				result.error = data[refObj.error] as string;
-			}
-			
-			return result;
-		}
-		
-		return null;
-	}
-
-	async function handleConnectStripe() {
-		stripeLoading = true;
-		try {
-			const formData = new FormData();
-			const response = await fetch('?/connectStripe', {
-				method: 'POST',
-				body: formData
-			});
-			const result = await response.json();
-			
-			// result.data might be a JSON string, parse it first
-			let parsedData = result.data;
-			if (typeof parsedData === 'string') {
-				try {
-					parsedData = JSON.parse(parsedData);
-				} catch {
-					// If parsing fails, use the string as-is
-				}
-			}
-			
-			// Parse SvelteKit action response (handles both plain objects and serialized format)
-			const actionData = parseSvelteKitActionResponse(parsedData);
-			
-			if (actionData?.success && actionData?.url && typeof actionData.url === 'string' && actionData.url.startsWith('http')) {
-				window.location.href = actionData.url;
-			} else {
-				const errorMessage = actionData?.error || 'Erreur lors de la connexion Stripe';
-				console.error('Error connecting Stripe:', errorMessage, result);
-				alert(errorMessage);
-				stripeLoading = false;
-			}
-		} catch (err) {
-			console.error('Error connecting Stripe:', err);
-			alert('Erreur lors de la connexion Stripe. Veuillez réessayer.');
-			stripeLoading = false;
-		}
-	}
 </script>
 
 <div class="space-y-6">
@@ -147,7 +68,6 @@
 				on:click={() => {
 					showRevolutForm = false; // Fermer Revolut
 					showWeroForm = false; // Fermer Wero
-					showStripeInfo = false; // Fermer Stripe
 					showPaypalForm = !showPaypalForm; // Toggle PayPal
 				}}
 				class="mb-2 w-full bg-gray-600 hover:bg-gray-700 text-white"
@@ -334,7 +254,6 @@
 					on:click={() => {
 						showPaypalForm = false; // Fermer PayPal
 						showWeroForm = false; // Fermer Wero
-						showStripeInfo = false; // Fermer Stripe
 						showRevolutForm = !showRevolutForm; // Toggle Revolut
 					}}
 					class="mb-2 w-full"
@@ -348,7 +267,6 @@
 					on:click={() => {
 						showPaypalForm = false; // Fermer PayPal
 						showWeroForm = false; // Fermer Wero
-						showStripeInfo = false; // Fermer Stripe
 						showRevolutForm = true; // Ouvrir Revolut
 					}}
 					class="mb-2 w-full bg-gray-600 hover:bg-gray-700 text-white"
@@ -479,7 +397,6 @@
 					on:click={() => {
 						showPaypalForm = false; // Fermer PayPal
 						showRevolutForm = false; // Fermer Revolut
-						showStripeInfo = false; // Fermer Stripe
 						showWeroForm = !showWeroForm; // Toggle Wero
 					}}
 					class="mb-2 w-full"
@@ -493,7 +410,6 @@
 					on:click={() => {
 						showPaypalForm = false; // Fermer PayPal
 						showRevolutForm = false; // Fermer Revolut
-						showStripeInfo = false; // Fermer Stripe
 						showWeroForm = true; // Ouvrir Wero
 					}}
 					class="mb-2 w-full bg-gray-600 hover:bg-gray-700 text-white"
@@ -577,116 +493,6 @@
 			</Collapsible.Root>
 		</div>
 
-		<!-- Carte Stripe -->
-		<div class="flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:col-span-1" style="order: 5;">
-			<!-- Logo Stripe -->
-			<div class="mb-4">
-				<div class="flex items-center justify-between">
-					<img src="/payments_logo/stripe_logo.svg" alt="Stripe" class="h-5 w-auto" />
-					<span class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-						Automatique
-					</span>
-				</div>
-			</div>
-
-			<!-- Description -->
-			<p class="mb-6 flex-grow text-sm text-gray-600">
-				Paiements automatiques avec Stripe Connect. Les commandes sont confirmées automatiquement dès le paiement.
-			</p>
-
-			<!-- Bouton Connecter ou état connecté -->
-			{#if stripeConnectAccount?.is_active}
-				<Button
-					type="button"
-					variant="outline"
-					class="mb-2 w-full"
-				>
-					<Check class="mr-2 h-4 w-4 text-indigo-600" />
-					Configuré
-				</Button>
-			{:else}
-				<Button
-					type="button"
-					on:click={() => {
-						showPaypalForm = false; // Fermer PayPal
-						showRevolutForm = false; // Fermer Revolut
-						showWeroForm = false; // Fermer Wero
-						showStripeInfo = !showStripeInfo; // Toggle Stripe
-					}}
-					class="mb-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-				>
-					Configurer
-				</Button>
-			{/if}
-		</div>
-
-		<!-- Formulaire Stripe Mobile (dans le même conteneur, juste après la carte Stripe) -->
-		<div class="md:hidden" style="order: {showStripeInfo ? 7 : 999};">
-			<Collapsible.Root bind:open={showStripeInfo}>
-				<Collapsible.Content class="mt-0">
-					<div class="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-						<div class="flex items-center justify-between">
-							<h3 class="font-semibold text-gray-900">Stripe</h3>
-							<span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
-								Automatique
-							</span>
-						</div>
-
-						{#if stripeConnectAccount?.is_active}
-							<div class="rounded-lg border border-green-200 bg-green-50 p-3">
-								<div class="flex items-start gap-2">
-									<Check class="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-									<div class="flex-1">
-										<p class="text-sm font-medium text-green-800">
-											Votre compte Stripe est connecté et actif
-										</p>
-										<p class="mt-1 text-xs text-green-700">
-											Les paiements sont traités automatiquement
-										</p>
-									</div>
-								</div>
-							</div>
-						{:else}
-							<!-- Informations importantes sur Stripe -->
-							<Alert class="border-indigo-200 bg-white">
-								<AlertCircle class="h-4 w-4 text-indigo-600" />
-								<AlertDescription class="text-sm text-indigo-900">
-									<div class="space-y-2">
-										<p class="font-medium">⚡ Paiement automatique</p>
-										<p>
-											Avec Stripe, les commandes sont confirmées automatiquement dès le paiement.
-											Plus besoin de vérifier manuellement les paiements PayPal/Revolut.
-										</p>
-										<div class="rounded-lg bg-indigo-50 p-2 text-xs">
-											<p class="font-medium text-indigo-900 mb-1">📋 À savoir :</p>
-											<ul class="list-disc list-inside space-y-1 text-indigo-800">
-												<li>Les fonds arrivent sur votre compte bancaire sous 3-7 jours ouvrables (jusqu'à 10 jours pour le premier paiement)</li>
-												<li>Frais de transaction : 1,4% + 0,25€ par paiement</li>
-												<li>Vous pouvez utiliser Stripe en complément de PayPal/Revolut</li>
-											</ul>
-										</div>
-									</div>
-								</AlertDescription>
-							</Alert>
-
-							<Button 
-								type="button"
-								on:click={handleConnectStripe}
-								disabled={stripeLoading}
-								class="w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-							>
-								{#if stripeLoading}
-									<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-									Connexion en cours...
-								{:else}
-									Connecter mon compte Stripe
-								{/if}
-							</Button>
-						{/if}
-					</div>
-				</Collapsible.Content>
-			</Collapsible.Root>
-		</div>
 	</div>
 
 	<!-- Section formulaires Desktop (visible uniquement sur desktop) -->
@@ -1008,71 +814,6 @@
 			</Collapsible.Content>
 		</Collapsible.Root>
 
-		<!-- Informations Stripe Desktop (Collapsible) -->
-		<Collapsible.Root bind:open={showStripeInfo}>
-			<Collapsible.Content>
-				<div class="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-					<div class="flex items-center justify-between">
-						<h3 class="font-semibold text-gray-900">Stripe</h3>
-						<span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
-							Automatique
-						</span>
-					</div>
-
-					{#if stripeConnectAccount?.is_active}
-						<div class="rounded-lg border border-green-200 bg-green-50 p-3">
-							<div class="flex items-start gap-2">
-								<Check class="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-								<div class="flex-1">
-									<p class="text-sm font-medium text-green-800">
-										Votre compte Stripe est connecté et actif
-									</p>
-									<p class="mt-1 text-xs text-green-700">
-										Les paiements sont traités automatiquement
-									</p>
-								</div>
-							</div>
-						</div>
-					{:else}
-						<!-- Informations importantes sur Stripe -->
-						<Alert class="border-indigo-200 bg-white">
-							<AlertCircle class="h-4 w-4 text-indigo-600" />
-							<AlertDescription class="text-sm text-indigo-900">
-								<div class="space-y-2">
-									<p class="font-medium">⚡ Paiement automatique</p>
-									<p>
-										Avec Stripe, les commandes sont confirmées automatiquement dès le paiement.
-										Plus besoin de vérifier manuellement les paiements PayPal/Revolut.
-									</p>
-									<div class="rounded-lg bg-indigo-50 p-2 text-xs">
-										<p class="font-medium text-indigo-900 mb-1">📋 À savoir :</p>
-										<ul class="list-disc list-inside space-y-1 text-indigo-800">
-											<li>Les fonds arrivent sur votre compte bancaire sous 3-7 jours ouvrables (jusqu'à 10 jours pour le premier paiement)</li>
-											<li>Frais de transaction : 1,4% + 0,25€ par paiement</li>
-											<li>Vous pouvez utiliser Stripe en complément de PayPal/Revolut</li>
-										</ul>
-									</div>
-								</div>
-							</AlertDescription>
-						</Alert>
-
-						<Button 
-							type="button"
-							on:click={handleConnectStripe}
-							disabled={stripeLoading}
-							class="w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-						>
-							{#if stripeLoading}
-								<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-								Connexion en cours...
-							{:else}
-								Connecter mon compte Stripe
-							{/if}
-						</Button>
-					{/if}
-				</div>
-			</Collapsible.Content>
-		</Collapsible.Root>
 	</div>
 
 </div>

@@ -9,6 +9,7 @@ interface OrderPendingVerificationClientProps {
     productName: string;
     pickupDate: string;
     pickupTime?: string | null;
+    pickupDateEnd?: string | null;
     totalAmount: number;
     paidAmount: number;
     remainingAmount: number;
@@ -56,8 +57,8 @@ export function OrderPendingVerificationClientEmail({
     `;
 
     const details = EmailTable([
-        { label: 'Gâteau', value: productName },
-        { label: 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime) },
+        { label: 'Article', value: productName },
+        { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
         { label: 'Prix total', value: `<strong>${totalAmount.toFixed(2)}€</strong>` },
         { label: 'Acompte déclaré', value: `<strong>${paidAmount.toFixed(2)}€</strong>` },
         { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
@@ -67,11 +68,11 @@ export function OrderPendingVerificationClientEmail({
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
             <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Retrouvez tous les détails de votre commande</p>
             ${EmailButton({
-                href: orderUrl,
-                text: 'Voir le récapitulatif',
-                variant: 'primary',
-                shopColor,
-            })}
+        href: orderUrl,
+        text: 'Voir le récapitulatif',
+        variant: 'primary',
+        shopColor,
+    })}
         </div>
     `;
 

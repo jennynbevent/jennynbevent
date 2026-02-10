@@ -23,6 +23,10 @@ export default defineConfig({
 			'$src': path.resolve(__dirname, './src'),
 		},
 	},
+	// Évite que Rollup échoue sur Vercel en traçant des modules Node (ex: ioredis)
+	ssr: {
+		external: ['ioredis'],
+	},
 	server: {
 		// Allow ngrok and other external hosts
 		allowedHosts: [

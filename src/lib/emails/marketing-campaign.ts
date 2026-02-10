@@ -12,17 +12,17 @@ interface MarketingCampaignEmailProps {
     recipientEmail?: string;
 }
 
-export function MarketingCampaignEmail({ 
-    recipientName, 
-    subject, 
-    content, 
-    ctaText, 
+export function MarketingCampaignEmail({
+    recipientName,
+    subject,
+    content,
+    ctaText,
     ctaUrl,
     date,
     recipientEmail
 }: MarketingCampaignEmailProps) {
     const header = EmailHeader({
-        logoUrl: undefined,
+        logoUrl: 'https://pattyly.com/images/logo_jennynbevent.jpg',
         logoAlt: 'Pattyly',
         type: 'customer',
     });
@@ -39,18 +39,18 @@ export function MarketingCampaignEmail({
     const ctaSection = ctaText && ctaUrl ? `
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
             ${EmailButton({
-                href: ctaUrl,
-                text: ctaText,
-                variant: 'primary'
-            })}
+        href: ctaUrl,
+        text: ctaText,
+        variant: 'primary'
+    })}
         </div>
     ` : '';
 
     // URL de désabonnement avec l'email en paramètre
-    const unsubscribeUrl = recipientEmail 
+    const unsubscribeUrl = recipientEmail
         ? `${PUBLIC_SITE_URL}/unsubscribe?email=${encodeURIComponent(recipientEmail)}`
         : `${PUBLIC_SITE_URL}/unsubscribe`;
-    
+
     const footer = `
         <div style="text-align: center; margin-top: ${EMAIL_SPACING['2xl']}; padding-top: ${EMAIL_SPACING.lg}; border-top: 1px solid ${EMAIL_COLORS.neutral[200]};">
             <p style="color: ${EMAIL_COLORS.neutral[500]}; font-size: ${EMAIL_TYPOGRAPHY.fontSize.xs}; margin: ${EMAIL_SPACING.md} 0;">

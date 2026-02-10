@@ -39,7 +39,7 @@
 
 	// Props
 	export let fields: CustomizationField[];
-	export let title = 'Personnalisation du gâteau';
+	export let title = 'Personnalisation de votre commande';
 	export let description =
 		'Ajoutez des questions que vos clients devront remplir pour personnaliser leur commande';
 	export let containerClass = 'custom-fields-container';

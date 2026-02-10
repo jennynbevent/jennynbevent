@@ -6,20 +6,12 @@ import { shopCreationSchema, paypalConfigSchema, paymentConfigSchema } from './s
 import { directorySchema } from '$lib/validations/schemas/shop';
 import { z } from 'zod';
 import { uploadShopLogo } from '$lib/cloudinary';
-import { STRIPE_PRICES } from '$lib/config/server';
-import { PUBLIC_SITE_URL } from '$env/static/public';
-import {
-	createStripeConnectAccount,
-	createStripeAccountLink,
-	getStripeConnectAccount,
-	isStripeConnectAccountReady
-} from '$lib/stripe/connect-client';
 // import { paypalClient } from '$lib/paypal/client.js';
 
 
 
 
-export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase, stripe }, url }) => {
+export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase } }) => {
     const { session, user } = await safeGetSession();
 
     // 🟢 Redirection 1 — pas connecté
@@ -29,56 +21,7 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase,
 
     const userId = user.id;
 
-    // Gérer le retour de Stripe Connect OAuth
-    if (url.searchParams.get('stripe_connect') === 'return') {
-        try {
-            // Récupérer le compte Stripe Connect
-            const { data: account } = await supabase
-                .from('stripe_connect_accounts')
-                .select('stripe_account_id')
-                .eq('profile_id', userId)
-                .single();
-
-            if (account?.stripe_account_id) {
-                // Vérifier le statut du compte
-                const stripeAccount = await getStripeConnectAccount(stripe, account.stripe_account_id);
-
-                // Mettre à jour dans la DB
-                const { error: updateError } = await supabase
-                    .from('stripe_connect_accounts')
-                    .update({
-                        is_active: isStripeConnectAccountReady(stripeAccount),
-                        charges_enabled: stripeAccount.charges_enabled || false,
-                        payouts_enabled: stripeAccount.payouts_enabled || false,
-                        details_submitted: stripeAccount.details_submitted || false,
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq('profile_id', userId);
-
-                if (!updateError && isStripeConnectAccountReady(stripeAccount)) {
-                    // Créer/mettre à jour payment_links si le compte est actif
-                    await supabase
-                        .from('payment_links')
-                        .upsert({
-                            profile_id: userId,
-                            provider_type: 'stripe',
-                            payment_identifier: account.stripe_account_id,
-                            is_active: true,
-                        }, {
-                            onConflict: 'profile_id,provider_type'
-                        });
-                }
-            }
-        } catch (err) {
-            console.error('Error handling Stripe Connect callback:', err);
-            // Continue même si l'erreur - l'utilisateur pourra réessayer
-        }
-
-        // Rediriger vers la même page sans le paramètre pour éviter les problèmes
-        throw redirect(303, '/onboarding');
-    }
-
-    // 🧠 On récupère les données, mais sans inclure les redirections ici
+    // 🧠 On récupère les données
     const { data: onboardingData, error: dbError } = await supabase.rpc('get_onboarding_data', {
         p_profile_id: userId
     });
@@ -90,77 +33,27 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase,
 
     const { shop, has_paypal } = onboardingData as any;
 
-    // Vérifier qu'au moins un payment provider est configuré
+    // Vérifier qu'au moins un payment provider est configuré (payment_links uniquement)
     const { data: paymentLinks } = await supabase
         .from('payment_links')
         .select('provider_type, payment_identifier')
-        .eq('profile_id', userId);
-
-    // Vérifier aussi Stripe Connect
-    const { data: stripeConnectAccount } = await supabase
-        .from('stripe_connect_accounts')
-        .select('id')
         .eq('profile_id', userId)
-        .eq('is_active', true)
-        .eq('charges_enabled', true)
-        .single();
+        .eq('is_active', true);
 
-    const hasPaymentMethod = (paymentLinks && paymentLinks.length > 0) || !!stripeConnectAccount;
+    const hasPaymentMethod = !!(paymentLinks && paymentLinks.length > 0);
 
-    // 🟢 Redirection 2 — compte déjà actif (avec payment method et annuaire configuré)
+    // 🟢 Redirection 2 — boutique + méthode de paiement → aller au dashboard (plus d’étape annuaire)
     if (shop && hasPaymentMethod) {
-        // Vérifier si l'annuaire est déjà configuré
-        const { data: shopData } = await supabase
-            .from('shops')
-            .select('directory_city, directory_actual_city, directory_postal_code, directory_cake_types')
-            .eq('id', shop.id)
-            .single();
-
-        // Si l'annuaire est configuré, rediriger vers le dashboard
-        // La redirection vers subscription se fera côté client si un plan est dans localStorage
-        if (shopData?.directory_city && shopData?.directory_actual_city && shopData?.directory_postal_code) {
-            throw redirect(303, '/dashboard');
-        }
+        throw redirect(303, '/dashboard');
     }
 
-    // 🧩 Cas 1 : boutique + payment method mais pas annuaire → étape 3
-    if (shop && hasPaymentMethod) {
-        // Récupérer les données complètes de la boutique avec les champs directory
-        const { data: shopData } = await supabase
-            .from('shops')
-            .select('id, name, slug, logo_url, directory_city, directory_actual_city, directory_postal_code, directory_cake_types, directory_enabled')
-            .eq('id', shop.id)
-            .single();
-
-        return {
-            step: 3,
-            shop: shopData || shop,
-            form: await superValidate(zod(directorySchema), {
-                defaults: {
-                    directory_city: shopData?.directory_city || '',
-                    directory_actual_city: shopData?.directory_actual_city || '',
-                    directory_postal_code: shopData?.directory_postal_code || '',
-                    directory_cake_types: shopData?.directory_cake_types || [],
-                    directory_enabled: shopData?.directory_enabled || false
-                }
-            })
-        };
-    }
-
-    // 🧩 Cas 2 : boutique créée mais pas de payment method → étape 2
+    // 🧩 Cas : boutique créée mais pas de payment method → étape 2
     if (shop) {
         // Charger les payment_links existants pour pré-remplir le formulaire
         const { data: existingLinks } = await supabase
             .from('payment_links')
             .select('provider_type, payment_identifier')
             .eq('profile_id', userId);
-
-        // Charger le compte Stripe Connect si existant
-        const { data: stripeConnectAccount } = await supabase
-            .from('stripe_connect_accounts')
-            .select('id, is_active, charges_enabled, payouts_enabled, stripe_account_id')
-            .eq('profile_id', userId)
-            .single();
 
         const defaults: any = {};
         existingLinks?.forEach(link => {
@@ -176,8 +69,7 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase,
         return {
             step: 2,
             shop,
-            form: await superValidate(zod(paymentConfigSchema), { defaults }),
-            stripeConnectAccount: stripeConnectAccount || null
+            form: await superValidate(zod(paymentConfigSchema), { defaults })
         };
     }
 
@@ -185,10 +77,22 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase,
     return {
         step: 1,
         shop: null,
-        form: await superValidate(zod(shopCreationSchema)),
-        stripeConnectAccount: null
+        form: await superValidate(zod(shopCreationSchema))
     };
 };
+
+// Génère un slug à partir du nom de la boutique (pour onboarding sans champ URL)
+function slugFromName(name: string): string {
+    const base = name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50);
+    if (base.length >= 3) return base;
+    return base ? `${base}-${Date.now().toString(36).slice(-6)}` : `boutique-${Date.now().toString(36).slice(-6)}`;
+}
 
 // ✅ Fonction supprimée : L'essai gratuit est maintenant géré uniquement via Stripe
 // lors du choix d'un plan payant dans /subscription avec demande de CB
@@ -236,8 +140,8 @@ export const actions: Actions = {
                 const cleanForm = await superValidate(zod(shopCreationSchema));
 
                 // Gérer les erreurs spécifiques
-                if (createError.code === '23505') { // Unique constraint violation
-                    setError(cleanForm, 'slug', "Ce nom d'URL est déjà pris. Veuillez en choisir un autre.");
+                if (createError.code === '23505') { // Unique constraint violation (slug déjà pris)
+                    setError(cleanForm, 'name', "Une boutique avec un nom similaire existe déjà. Choisissez un autre nom.");
                 } else {
                     setError(cleanForm, 'name', 'Erreur lors de la création de la boutique');
                 }
@@ -301,95 +205,6 @@ export const actions: Actions = {
             syncPastryToResend(userId, user.email || '', supabase).catch(err => {
                 console.error('Erreur synchronisation Resend:', err);
             });
-
-            // ✅ Créer l'affiliation si un ref existe dans le cookie
-            const affiliateCode = cookies.get('affiliate_ref');
-            if (affiliateCode) {
-                console.log('🔍 [AFFILIATION] Ref trouvé dans cookie:', affiliateCode);
-                console.log('🔍 [AFFILIATION] User ID:', userId);
-
-                try {
-                    // Vérifier que le code existe et récupérer le profile_id et is_stripe_free
-                    const { data: referrerProfile, error: profileError } = await supabaseServiceRole
-                        .from('profiles')
-                        .select('id, is_stripe_free')
-                        .eq('affiliate_code', affiliateCode)
-                        .single();
-
-                    if (profileError) {
-                        console.error('❌ [AFFILIATION] Erreur recherche profile:', profileError);
-                    } else if (!referrerProfile) {
-                        console.log('⚠️ [AFFILIATION] Profile non trouvé pour code:', affiliateCode);
-                    } else if (referrerProfile.id === userId) {
-                        console.log('⚠️ [AFFILIATION] Auto-parrainage détecté, ignoré');
-                    } else {
-                        console.log('✅ [AFFILIATION] Profile trouvé, profile_id referrer:', referrerProfile.id);
-
-                        // Vérifier que le parrain a un compte Stripe Connect configuré
-                        const { data: stripeConnect, error: stripeError } = await supabaseServiceRole
-                            .from('stripe_connect_accounts')
-                            .select('stripe_account_id, is_active, charges_enabled, payouts_enabled')
-                            .eq('profile_id', referrerProfile.id)
-                            .eq('is_active', true)
-                            .eq('charges_enabled', true)
-                            .eq('payouts_enabled', true)
-                            .single();
-
-                        if (stripeError) {
-                            console.error('❌ [AFFILIATION] Erreur recherche Stripe Connect:', stripeError);
-                        } else if (!stripeConnect) {
-                            console.log('⚠️ [AFFILIATION] Stripe Connect non configuré pour referrer:', referrerProfile.id);
-                        } else {
-                            console.log('✅ [AFFILIATION] Stripe Connect trouvé, création affiliation...');
-
-                            // Vérifier si l'affiliation existe déjà
-                            const { data: existingAffiliation } = await supabaseServiceRole
-                                .from('affiliations')
-                                .select('id')
-                                .eq('referred_profile_id', userId)
-                                .single();
-
-                            if (existingAffiliation) {
-                                console.log('⚠️ [AFFILIATION] Affiliation déjà existante:', existingAffiliation.id);
-                            } else {
-                                // ✅ Déterminer les valeurs de commission selon si c'est un ambassadeur
-                                const isAmbassador = referrerProfile.is_stripe_free === true;
-                                const commissionRate = isAmbassador ? 50.00 : 30.00; // Valeur par défaut de la table
-                                const commissionDurationMonths = isAmbassador ? 99999 : 6; // Valeur par défaut de la table
-
-                                // Créer l'affiliation avec status 'pending'
-                                const { data: affiliation, error: affiliationError } = await supabaseServiceRole
-                                    .from('affiliations')
-                                    .insert({
-                                        referrer_profile_id: referrerProfile.id,
-                                        referred_profile_id: userId,
-                                        affiliate_slug: affiliateCode, // ✅ Stocker le code dans affiliate_slug (pas besoin de changer la colonne DB)
-                                        status: 'pending',
-                                        commission_rate: commissionRate, // ✅ Ajouter commission_rate
-                                        commission_duration_months: commissionDurationMonths // ✅ Ajouter commission_duration_months
-                                    })
-                                    .select()
-                                    .single();
-
-                                if (affiliationError) {
-                                    console.error('❌ [AFFILIATION] Erreur création affiliation:', affiliationError);
-                                } else if (affiliation) {
-                                    console.log('✅ [AFFILIATION] Affiliation créée avec succès:', affiliation.id);
-                                } else {
-                                    console.error('❌ [AFFILIATION] Aucune donnée retournée après insertion');
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Supprimer le cookie après utilisation
-                    cookies.delete('affiliate_ref', { path: '/' });
-                    console.log('✅ [AFFILIATION] Cookie supprimé après utilisation');
-                } catch (error) {
-                    console.error('❌ [AFFILIATION] Erreur inattendue:', error);
-                    // Ne pas bloquer la création de la boutique en cas d'erreur d'affiliation
-                }
-        }
 
             // Retour succès
             const cleanForm = await superValidate(zod(shopCreationSchema));
@@ -539,84 +354,6 @@ export const actions: Actions = {
         }
     },
 
-    connectStripe: async ({ locals, url }) => {
-        const { session, user } = await locals.safeGetSession();
-
-        if (!session || !user) {
-            return { success: false, error: 'Non autorisé' };
-        }
-
-        const userId = user.id;
-
-        try {
-            // Vérifier si un compte existe déjà
-            const { data: existingAccount, error: selectError } = await locals.supabase
-                .from('stripe_connect_accounts')
-                .select('stripe_account_id')
-                .eq('profile_id', userId)
-                .single();
-
-            // Logger les erreurs de sélection (PGRST116 = not found, c'est OK)
-            if (selectError && selectError.code !== 'PGRST116') {
-                console.error('Error fetching existing Stripe Connect account:', selectError);
-            }
-
-            let accountId: string;
-
-            if (existingAccount?.stripe_account_id) {
-                accountId = existingAccount.stripe_account_id;
-                console.log('Using existing Stripe Connect account:', accountId);
-            } else {
-                // Créer un nouveau compte Connect Express
-                console.log('Creating new Stripe Connect account for user:', userId);
-                const account = await createStripeConnectAccount(locals.stripe, user.email || '', 'FR');
-                accountId = account.id;
-                console.log('Stripe Connect account created:', accountId);
-
-                // Sauvegarder dans la DB
-                const { error: insertError } = await locals.supabase
-                    .from('stripe_connect_accounts')
-                    .insert({
-                        profile_id: userId,
-                        stripe_account_id: accountId,
-                        is_active: false,
-                        charges_enabled: false,
-                        payouts_enabled: false,
-                        details_submitted: false,
-                    });
-
-                if (insertError) {
-                    console.error('Error saving Stripe Connect account:', insertError);
-                    return { success: false, error: `Erreur lors de la sauvegarde: ${insertError.message}` };
-                }
-                console.log('Stripe Connect account saved to database');
-            }
-
-            // Créer un account link pour l'onboarding
-            const returnUrl = `${PUBLIC_SITE_URL}/onboarding?stripe_connect=return`;
-            console.log('Creating account link with returnUrl:', returnUrl);
-            const accountLink = await createStripeAccountLink(locals.stripe, accountId, returnUrl);
-            console.log('Account link created:', accountLink.url);
-
-            return { success: true, url: accountLink.url };
-        } catch (err) {
-            // Logger l'erreur complète avec tous les détails
-            console.error('Stripe Connect error details:', {
-                error: err,
-                message: err instanceof Error ? err.message : String(err),
-                stack: err instanceof Error ? err.stack : undefined,
-                userId,
-                publicSiteUrl: PUBLIC_SITE_URL
-            });
-            
-            // Retourner un message plus informatif
-            const errorMessage = err instanceof Error 
-                ? `Erreur Stripe: ${err.message}` 
-                : 'Erreur lors de la connexion Stripe';
-            return { success: false, error: errorMessage };
-        }
-    },
-
     updatePaypal: async ({ request, locals }) => {
         try {
             const { session, user } = await locals.safeGetSession();
@@ -651,7 +388,7 @@ export const actions: Actions = {
             });
 
             const validation = paypalSchema.safeParse({ paypal_me });
-            
+
             if (!validation.success) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 const error = validation.error.errors[0];
@@ -767,7 +504,7 @@ export const actions: Actions = {
             });
 
             const validation = revolutSchema.safeParse({ revolut_me });
-            
+
             if (!validation.success) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 const error = validation.error.errors[0];
@@ -886,7 +623,7 @@ export const actions: Actions = {
             });
 
             const validation = weroSchema.safeParse({ wero_me });
-            
+
             if (!validation.success) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 const error = validation.error.errors[0];
@@ -1012,7 +749,7 @@ export const actions: Actions = {
             }
 
             // Vérifier si la ville a changé pour déclencher le géocodage
-            const cityChanged = 
+            const cityChanged =
                 shop.directory_actual_city !== form.data.directory_actual_city ||
                 shop.directory_city !== form.data.directory_city ||
                 shop.directory_postal_code !== form.data.directory_postal_code;

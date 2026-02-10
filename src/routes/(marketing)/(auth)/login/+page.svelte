@@ -15,7 +15,6 @@
 	let { supabase } = data;
 
 	let heroTitle: HTMLElement;
-	let heroContent: HTMLElement;
 	let cardContainer: HTMLElement;
 
 	onMount(async () => {
@@ -32,11 +31,10 @@
 		});
 
 		supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
-			// Redirect to account after sucessful login
-			if (event == 'SIGNED_IN') {
-				// Delay needed because order of callback not guaranteed.
-				// Give the layout callback priority to update state or
-				// we'll just bounch back to login when /dashboard tries to load
+			// Ne pas rediriger si l’utilisateur est sur l’étape « code OTP » : il peut avoir
+			// ouvert le lien magique dans un autre onglet ; on laisse le formulaire et le serveur gérer la redirection.
+			const step = $page.url.searchParams.get('step');
+			if (event === 'SIGNED_IN' && step !== 'code') {
 				setTimeout(() => {
 					goto('/dashboard');
 				}, 1);
@@ -44,7 +42,6 @@
 		});
 
 		if (heroTitle) await revealElement(heroTitle, { delay: 0, duration: 0.6 });
-		if (heroContent) await revealElement(heroContent, { delay: 0.1, duration: 0.6 });
 		if (cardContainer) await revealElement(cardContainer, { delay: 0.2, duration: 0.6 });
 	});
 </script>
@@ -94,13 +91,6 @@
 			>
 				Connecte-toi à <span class="text-[#FF6F61]">ton compte</span>
 			</h1>
-			<p
-				bind:this={heroContent}
-				class="mx-auto max-w-xl text-lg leading-[180%] text-neutral-600 sm:text-xl"
-				style="font-weight: 300; letter-spacing: -0.01em;"
-			>
-				Accède à ton dashboard pour gérer tes commandes, devis et factures en ligne.
-			</p>
 		</div>
 
 		<!-- Card avec formulaire -->
@@ -112,15 +102,12 @@
 					<SocialsAuth />
 
 					<div class="mt-6 space-y-6">
-						<LoginForm data={data.form} />
-						<div class="text-center text-sm text-neutral-600">
-							Tu n&apos;as pas encore de compte ?
-							<a
-								href="/register"
-								class="ml-1 text-[#FF6F61] font-medium underline transition-colors hover:text-[#e85a4f]"
-								>Créer un compte</a
-							>.
-						</div>
+						<LoginForm
+							form={data.form}
+							otpForm={data.otpForm}
+							step={data.step}
+							email={data.email}
+						/>
 					</div>
 				</Card.Content>
 			</Card.Root>

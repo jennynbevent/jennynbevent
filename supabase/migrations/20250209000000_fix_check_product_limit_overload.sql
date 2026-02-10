@@ -15,3 +15,7 @@ DROP FUNCTION IF EXISTS "public"."check_product_limit"(
 -- La version avec 5 paramètres (incluant p_premium_product_id, p_basic_product_id, p_lifetime_product_id) 
 -- reste active et est déjà définie dans la migration 20250207000000_fix_exempt_support_in_functions.sql
 
+
+
+
+

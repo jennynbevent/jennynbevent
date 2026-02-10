@@ -1,9 +1,5 @@
 // src/hooks.server.ts
 import {
-	PRIVATE_STRIPE_SECRET_KEY,
-	PRIVATE_SUPABASE_SERVICE_ROLE,
-} from '$env/static/private';
-import {
 	PUBLIC_SUPABASE_ANON_KEY,
 	PUBLIC_SUPABASE_URL,
 	PUBLIC_SITE_URL,
@@ -181,9 +177,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		);
 
 		// Initialize Stripe client
-		event.locals.stripe = new Stripe(PRIVATE_STRIPE_SECRET_KEY, {
-			apiVersion: '2024-04-10',
-		});
 
 		/**
 		 * Safe session getter that validates JWT before returning session
@@ -228,8 +221,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 		};
 
 		// Validate session early to clean up invalid tokens before response is generated
-		// Use getUser() instead of getSession() to avoid security warnings
-		await event.locals.supabase.auth.getUser();
+		// Use getUser() instead of getSession() to avoid security warnings.
+		// On network errors (ECONNRESET, ETIMEDOUT, etc.) we continue without failing the request.
+		try {
+			await event.locals.supabase.auth.getUser();
+		} catch (authError: unknown) {
+			const cause = authError && typeof authError === 'object' && 'cause' in authError
+				? (authError as { cause?: { code?: string } }).cause
+				: null;
+			const code = cause && typeof cause === 'object' && 'code' in cause ? cause.code : null;
+			if (code === 'ECONNRESET' || code === 'ETIMEDOUT' || code === 'ECONNREFUSED') {
+				console.warn('[Supabase Auth] Network error during session check, continuing without session:', code);
+			} else {
+				throw authError;
+			}
+		}
 
 		// Resolve the request
 		const response = await resolve(event, {

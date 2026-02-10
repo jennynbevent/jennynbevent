@@ -14,14 +14,6 @@
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	export let data: any;
-	export let stripeConnectAccount: {
-		id: string;
-		is_active: boolean;
-		charges_enabled: boolean;
-		payouts_enabled: boolean;
-		stripe_account_id: string;
-		use_for_orders: boolean;
-	} | null | undefined = null;
 
 	// Créer 3 formulaires indépendants avec des IDs uniques pour éviter les effets de bord
 	// Chaque formulaire est isolé et ne met à jour que son propre état
@@ -65,13 +57,9 @@
 	let revolutSubmitting = false;
 	let weroSubmitted = false;
 	let weroSubmitting = false;
-	let stripeLoading = false;
-	let stripeUpdateLoading = false;
-	let stripeToggleLoading = false;
 	let showPaypalForm = false;
 	let showRevolutForm = false;
 	let showWeroForm = false;
-	let showStripeInfo = false;
 	let confirmingDeleteProvider: string | null = null;
 
 	function startDeleteConfirmation(provider: string) {
@@ -114,81 +102,6 @@
 		return null;
 	}
 
-	async function handleConnectStripe() {
-		stripeLoading = true;
-		try {
-			const formData = new FormData();
-			const response = await fetch('?/connectStripe', {
-				method: 'POST',
-				body: formData
-			});
-			const result = await response.json();
-			
-			// result.data might be a JSON string, parse it first
-			let parsedData = result.data;
-			if (typeof parsedData === 'string') {
-				try {
-					parsedData = JSON.parse(parsedData);
-				} catch {
-					// If parsing fails, use the string as-is
-				}
-			}
-			
-			// Parse SvelteKit action response (handles both plain objects and serialized format)
-			const actionData = parseSvelteKitActionResponse(parsedData);
-			
-			if (actionData?.success && actionData?.url && typeof actionData.url === 'string' && actionData.url.startsWith('http')) {
-				window.location.href = actionData.url;
-			} else {
-				const errorMessage = actionData?.error || 'Erreur lors de la connexion Stripe';
-				console.error('Error connecting Stripe:', errorMessage, result);
-				alert(errorMessage);
-				stripeLoading = false;
-			}
-		} catch (err) {
-			console.error('Error connecting Stripe:', err);
-			alert('Erreur lors de la connexion Stripe. Veuillez réessayer.');
-			stripeLoading = false;
-		}
-	}
-
-	async function handleUpdateStripeAccount() {
-		stripeUpdateLoading = true;
-		try {
-			const formData = new FormData();
-			const response = await fetch('?/updateStripeAccount', {
-				method: 'POST',
-				body: formData
-			});
-			const result = await response.json();
-			
-			// result.data might be a JSON string, parse it first
-			let parsedData = result.data;
-			if (typeof parsedData === 'string') {
-				try {
-					parsedData = JSON.parse(parsedData);
-				} catch {
-					// If parsing fails, use the string as-is
-				}
-			}
-			
-			// Parse SvelteKit action response (handles both plain objects and serialized format)
-			const actionData = parseSvelteKitActionResponse(parsedData);
-			
-			if (actionData?.success && actionData?.url && typeof actionData.url === 'string' && actionData.url.startsWith('http')) {
-				window.location.href = actionData.url;
-			} else {
-				const errorMessage = actionData?.error || 'Erreur lors de la mise à jour du compte Stripe';
-				console.error('Error updating Stripe account:', errorMessage, result);
-					alert(errorMessage);
-					stripeUpdateLoading = false;
-			}
-		} catch (err) {
-			console.error('Error updating Stripe account:', err);
-			alert('Une erreur est survenue lors de la mise à jour du compte Stripe. Veuillez réessayer.');
-			stripeUpdateLoading = false;
-		}
-	}
 </script>
 
 
@@ -229,7 +142,6 @@
 					on:click={() => {
 						showRevolutForm = false; // Fermer Revolut
 						showWeroForm = false; // Fermer Wero
-						showStripeInfo = false; // Fermer Stripe
 						showPaypalForm = !showPaypalForm; // Toggle PayPal
 					}}
 					class="mb-2 w-full"
@@ -243,7 +155,6 @@
 				on:click={() => {
 					showRevolutForm = false; // Fermer Revolut
 					showWeroForm = false; // Fermer Wero
-					showStripeInfo = false; // Fermer Stripe
 					showPaypalForm = true; // Ouvrir PayPal
 				}}
 				class="mb-2 w-full bg-gray-600 hover:bg-gray-700 text-white"
@@ -506,7 +417,6 @@
 						} else {
 						showPaypalForm = false; // Fermer PayPal
 							showWeroForm = false; // Fermer Wero
-						showStripeInfo = false; // Fermer Stripe
 							showRevolutForm = true; // Ouvrir Revolut
 						}
 					}}
@@ -521,7 +431,6 @@
 				on:click={() => {
 					showPaypalForm = false; // Fermer PayPal
 					showWeroForm = false; // Fermer Wero
-					showStripeInfo = false; // Fermer Stripe
 					showRevolutForm = true; // Ouvrir Revolut
 				}}
 				class="mb-2 w-full bg-gray-600 hover:bg-gray-700 text-white"
@@ -726,7 +635,6 @@
 						} else {
 							showPaypalForm = false;
 							showRevolutForm = false;
-							showStripeInfo = false;
 							showWeroForm = true; // Ouvrir Wero
 						}
 					}}
@@ -741,7 +649,6 @@
 				on:click={() => {
 					showPaypalForm = false;
 					showRevolutForm = false;
-					showStripeInfo = false;
 					showWeroForm = true;
 				}}
 				class="mb-2 w-full bg-gray-600 hover:bg-gray-700 text-white"
@@ -894,190 +801,6 @@
 			</Collapsible.Root>
 		</div>
 
-		<!-- Carte Stripe -->
-		<div class="flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:col-span-1" style="order: 5;">
-			<!-- Logo Stripe -->
-			<div class="mb-4">
-				<div class="flex items-center justify-between">
-					<img src="/payments_logo/stripe_logo.svg" alt="Stripe" class="h-5 w-auto" />
-					<span class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-						Automatique
-					</span>
-				</div>
-			</div>
-
-			<!-- Description -->
-			<p class="mb-6 flex-grow text-sm text-gray-600">
-				Paiements automatiques avec Stripe Connect. Les commandes sont confirmées automatiquement dès le paiement.
-			</p>
-
-			<!-- Bouton Connecter ou état connecté -->
-			{#if stripeConnectAccount?.is_active}
-				<Button
-					type="button"
-					variant="outline"
-					on:click={() => {
-						showPaypalForm = false; // Fermer PayPal
-						showRevolutForm = false; // Fermer Revolut
-						showWeroForm = false; // Fermer Wero
-						showStripeInfo = !showStripeInfo; // Toggle Stripe
-					}}
-					class="mb-2 w-full"
-				>
-					<div class="flex items-center justify-between w-full">
-						<div class="flex items-center gap-2">
-							<Check class="h-4 w-4 text-indigo-600" />
-							<span>Configuré</span>
-						</div>
-						{#if stripeConnectAccount?.use_for_orders === false}
-							<span class="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-								Uniquement pour l'affiliation
-							</span>
-						{/if}
-					</div>
-				</Button>
-			{:else}
-				<Button
-					type="button"
-					on:click={() => {
-						showPaypalForm = false; // Fermer PayPal
-						showRevolutForm = false; // Fermer Revolut
-						showStripeInfo = true; // Ouvrir Stripe
-					}}
-					class="mb-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-				>
-					Connecter
-				</Button>
-			{/if}
-		</div>
-
-		<!-- Formulaire Stripe Mobile (dans le même conteneur, juste après la carte Stripe) -->
-		<div class="md:hidden" style="order: {showStripeInfo ? 6 : 999};">
-			<Collapsible.Root bind:open={showStripeInfo}>
-				<Collapsible.Content class="mt-0">
-					<div class="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-						<div class="flex items-center justify-between">
-							<h3 class="font-semibold text-gray-900">Stripe</h3>
-							<span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
-								Automatique
-							</span>
-						</div>
-
-						{#if stripeConnectAccount?.is_active}
-							<div class="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
-								<div class="flex items-start gap-2">
-									<Check class="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
-									<div class="flex-1">
-										<p class="text-sm font-medium text-indigo-800">
-											Compte Stripe connecté
-										</p>
-										<p class="mt-1 text-xs text-indigo-700">
-											Les paiements sont traités automatiquement
-										</p>
-									</div>
-								</div>
-							</div>
-
-							<Button
-								type="button"
-								on:click={handleUpdateStripeAccount}
-								disabled={stripeUpdateLoading}
-								class="mt-4 h-10 w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-							>
-								{#if stripeUpdateLoading}
-									<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-									Chargement...
-								{:else}
-									Gérer mon compte Stripe
-								{/if}
-							</Button>
-
-							<!-- Toggle pour utiliser Stripe Connect uniquement pour l'affiliation -->
-							<form
-								method="POST"
-								action="?/updateStripeUseForOrders"
-								use:enhance={() => {
-									stripeToggleLoading = true;
-									return async ({ result, update }) => {
-										stripeToggleLoading = false;
-										await update();
-										if (result.type === 'success') {
-											await invalidateAll();
-										} else if (result.type === 'failure' && result.data?.error) {
-											alert(result.data.error);
-										}
-									};
-								}}
-							>
-								<input
-									type="hidden"
-									name="use_for_orders"
-									value={(!stripeConnectAccount?.use_for_orders).toString()}
-								/>
-								<div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-									<div class="flex items-center justify-between">
-										<div class="flex-1">
-											<p class="text-sm font-medium text-gray-900">
-												Utiliser Stripe Connect uniquement pour les commissions d'affiliation
-											</p>
-											<p class="mt-1 text-xs text-gray-600">
-												Si activé, Stripe Connect ne sera pas utilisé pour les paiements de
-												commandes, uniquement pour recevoir tes commissions d'affiliation
-											</p>
-										</div>
-										<button
-											type="submit"
-											disabled={stripeToggleLoading}
-											class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#FF6F61] focus:ring-offset-2 disabled:opacity-50 {!stripeConnectAccount?.use_for_orders ? 'bg-[#FF6F61]' : 'bg-gray-200'}"
-											role="switch"
-											aria-checked={!stripeConnectAccount?.use_for_orders}
-										>
-											<span
-												class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {!stripeConnectAccount?.use_for_orders ? 'translate-x-5' : 'translate-x-0'}"
-											/>
-										</button>
-									</div>
-								</div>
-							</form>
-						{:else}
-							<Alert class="border-indigo-200 bg-white">
-								<AlertCircle class="h-4 w-4 text-indigo-600" />
-								<AlertDescription class="text-sm text-indigo-900">
-									<div class="space-y-2">
-										<p class="font-medium">⚡ Paiement automatique</p>
-										<p>
-											Les commandes sont confirmées automatiquement dès le paiement, sans vérification manuelle.
-										</p>
-										<div class="rounded-lg bg-indigo-50 p-2 text-xs">
-											<p class="font-medium text-indigo-900 mb-1">📋 À savoir :</p>
-											<ul class="list-disc list-inside space-y-1 text-indigo-800">
-												<li>Les fonds arrivent sur votre compte bancaire sous 3-7 jours ouvrables (jusqu'à 10 jours pour le premier paiement)</li>
-												<li>Frais de transaction : 1,4% + 0,25€ par paiement</li>
-												<li>Utilisable en complément de PayPal/Revolut</li>
-											</ul>
-										</div>
-									</div>
-								</AlertDescription>
-							</Alert>
-
-							<Button
-								type="button"
-								on:click={handleConnectStripe}
-								disabled={stripeLoading}
-								class="mt-4 h-10 w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-							>
-								{#if stripeLoading}
-									<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-									Connexion...
-								{:else}
-									Connecter mon compte Stripe
-								{/if}
-							</Button>
-						{/if}
-					</div>
-				</Collapsible.Content>
-			</Collapsible.Root>
-		</div>
 	</div>
 
 	<!-- Section formulaires Desktop (visible uniquement sur desktop) -->
@@ -1612,130 +1335,5 @@
 			</Collapsible.Content>
 		</Collapsible.Root>
 
-		<!-- Formulaire Stripe Desktop -->
-		<Collapsible.Root bind:open={showStripeInfo}>
-			<Collapsible.Content>
-				<div class="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-					<div class="flex items-center justify-between">
-						<h3 class="font-semibold text-gray-900">Stripe</h3>
-						<span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
-							Automatique
-						</span>
-					</div>
-
-					{#if stripeConnectAccount?.is_active}
-						<div class="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
-							<div class="flex items-start gap-2">
-								<Check class="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
-								<div class="flex-1">
-									<p class="text-sm font-medium text-indigo-800">
-										Compte Stripe connecté
-									</p>
-									<p class="mt-1 text-xs text-indigo-700">
-										Les paiements sont traités automatiquement
-									</p>
-								</div>
-							</div>
-						</div>
-
-						<Button
-							type="button"
-							on:click={handleUpdateStripeAccount}
-							disabled={stripeUpdateLoading}
-							class="mt-4 h-10 w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-						>
-							{#if stripeUpdateLoading}
-								<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-								Chargement...
-							{:else}
-								Gérer mon compte Stripe
-							{/if}
-							</Button>
-
-						<!-- Toggle pour utiliser Stripe Connect uniquement pour l'affiliation -->
-						<form
-							method="POST"
-							action="?/updateStripeUseForOrders"
-							use:enhance={() => {
-								stripeToggleLoading = true;
-								return async ({ result, update }) => {
-									stripeToggleLoading = false;
-									await update();
-									if (result.type === 'success') {
-										await invalidateAll();
-									} else if (result.type === 'failure' && result.data?.error) {
-										alert(result.data.error);
-									}
-								};
-							}}
-						>
-							<input
-								type="hidden"
-								name="use_for_orders"
-								value={(!stripeConnectAccount?.use_for_orders).toString()}
-							/>
-							<div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-								<div class="flex items-center justify-between">
-									<div class="flex-1">
-										<p class="text-sm font-medium text-gray-900">
-											Utiliser Stripe Connect uniquement pour les commissions d'affiliation
-										</p>
-										<p class="mt-1 text-xs text-gray-600">
-											Si activé, Stripe Connect ne sera pas utilisé pour les paiements de
-											commandes, uniquement pour recevoir tes commissions d'affiliation
-										</p>
-									</div>
-									<button
-										type="submit"
-										disabled={stripeToggleLoading}
-										class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#FF6F61] focus:ring-offset-2 disabled:opacity-50 {!stripeConnectAccount?.use_for_orders ? 'bg-[#FF6F61]' : 'bg-gray-200'}"
-										role="switch"
-										aria-checked={!stripeConnectAccount?.use_for_orders}
-									>
-										<span
-											class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {!stripeConnectAccount?.use_for_orders ? 'translate-x-5' : 'translate-x-0'}"
-										/>
-									</button>
-								</div>
-							</div>
-						</form>
-					{:else}
-						<Alert class="border-indigo-200 bg-white">
-							<AlertCircle class="h-4 w-4 text-indigo-600" />
-							<AlertDescription class="text-sm text-indigo-900">
-								<div class="space-y-2">
-									<p class="font-medium">⚡ Paiement automatique</p>
-									<p>
-										Les commandes sont confirmées automatiquement dès le paiement, sans vérification manuelle.
-									</p>
-									<div class="rounded-lg bg-indigo-50 p-2 text-xs">
-										<p class="font-medium text-indigo-900 mb-1">📋 À savoir :</p>
-										<ul class="list-disc list-inside space-y-1 text-indigo-800">
-											<li>Les fonds arrivent sur votre compte bancaire sous 3-7 jours ouvrables (jusqu'à 10 jours pour le premier paiement)</li>
-											<li>Frais de transaction : 1,4% + 0,25€ par paiement</li>
-											<li>Utilisable en complément de PayPal/Revolut</li>
-										</ul>
-									</div>
-								</div>
-							</AlertDescription>
-						</Alert>
-
-						<Button
-							type="button"
-							on:click={handleConnectStripe}
-							disabled={stripeLoading}
-							class="mt-4 h-10 w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-						>
-							{#if stripeLoading}
-								<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-								Connexion...
-							{:else}
-								Connecter mon compte Stripe
-							{/if}
-						</Button>
-					{/if}
-				</div>
-			</Collapsible.Content>
-		</Collapsible.Root>
 	</div>
 </div>

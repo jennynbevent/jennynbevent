@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { STRIPE_PRODUCTS } from '$lib/config/server';
 
 /**
- * Limites de produits (gâteaux) par plan
+ * Limites de produits (articles) par plan
  */
 export const PRODUCT_LIMITS = {
     free: 3,
@@ -43,7 +43,7 @@ export async function checkProductLimit(
     supabase: SupabaseClient
 ): Promise<ProductLimitStats> {
     console.log('📊 [Product Limits] Checking limit for shop:', shopId, 'profile:', profileId);
-    
+
     // ✅ Passer les IDs de produits depuis la config pour supporter différents environnements
     const { data, error } = await (supabase as any).rpc('check_product_limit', {
         p_shop_id: shopId,

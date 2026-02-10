@@ -98,7 +98,7 @@
 	function viewProduct(productId: string) {
 		// Rediriger vers la page publique du produit avec le mode preview
 		if (shopSlug) {
-			goto(`/${shopSlug}/product/${productId}?preview=true`);
+			goto(`/product/${productId}?preview=true`);
 		}
 	}
 
@@ -153,7 +153,7 @@
 </script>
 
 <svelte:head>
-	<title>Mes Gâteaux - Pattyly</title>
+	<title>Mes Articles - Pattyly</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">
@@ -162,13 +162,13 @@
 		class="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0"
 	>
 		<div>
-			<h1 class="text-3xl font-bold">Mes Gâteaux</h1>
-			<p class="text-muted-foreground">Gérez votre catalogue de gâteaux</p>
+			<h1 class="text-3xl font-bold">Mes Articles</h1>
+			<p class="text-muted-foreground">Gérez votre catalogue d'articles</p>
 			{#if showLimitInfo && productLimit > 0}
 				{#if permissions.plan === 'free'}
 					<!-- Plan gratuit : afficher le message de souscription -->
 					<p class="mt-1 text-xs text-[#FF6F61]">
-						{currentProductCount}/{productLimit} gâteaux,
+						{currentProductCount}/{productLimit} articles,
 						<a
 							href="/subscription"
 							class="underline transition-colors hover:text-[#e85a4f]"
@@ -180,7 +180,7 @@
 				{:else}
 					<!-- Plan avec limite (Starter) : afficher juste X/Y -->
 					<p class="mt-1 text-xs text-[#FF6F61]">
-						{currentProductCount}/{productLimit} gâteaux
+						{currentProductCount}/{productLimit} articles
 					</p>
 				{/if}
 			{/if}
@@ -196,7 +196,7 @@
 				disabled={isLimitReached}
 			>
 				<Plus class="mr-2 h-4 w-4" />
-				Ajouter un Gâteau
+				Ajouter un article
 			</Button>
 		</div>
 	</div>
@@ -307,7 +307,7 @@
 		</div>
 	</div>
 
-	<!-- Liste des gâteaux -->
+	<!-- Liste des articles -->
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
 		{#if filteredProducts && filteredProducts.length > 0}
 			{#each filteredProducts as product}
@@ -404,7 +404,7 @@
 									variant="ghost"
 									size="sm"
 									on:click={() => viewProduct(product.id)}
-									title="Voir le gâteau"
+									title="Voir l'article"
 									disabled={!product.is_active}
 									class={!product.is_active
 										? 'cursor-not-allowed opacity-50'
@@ -418,7 +418,7 @@
 									variant="ghost"
 									size="sm"
 									on:click={() => editProduct(product.id)}
-									title="Modifier le gâteau"
+									title="Modifier l'article"
 								>
 									<Edit class="h-4 w-4" />
 								</Button>
@@ -448,8 +448,8 @@
 										variant="ghost"
 										size="sm"
 										title={isLimitReached
-											? 'Limite de gâteaux atteinte'
-											: 'Dupliquer le gâteau'}
+											? 'Limite d\'articles atteinte'
+											: 'Dupliquer l\'article'}
 										disabled={isLimitReached}
 									>
 										<Copy class="h-4 w-4" />
@@ -504,7 +504,7 @@
 										size="sm"
 										class="text-red-600 hover:bg-red-50 hover:text-red-700"
 										on:click={() => startDeleteConfirmation(product.id)}
-										title="Supprimer le gâteau"
+										title="Supprimer l'article"
 									>
 										<Trash2 class="h-4 w-4" />
 									</Button>
@@ -524,13 +524,13 @@
 							>
 								<Plus class="h-8 w-8 text-gray-400" />
 							</div>
-							<h3 class="mb-2 text-lg font-medium">Aucun gâteau</h3>
+							<h3 class="mb-2 text-lg font-medium">Aucun article</h3>
 							<p class="mb-4 text-muted-foreground">
-								Commencez par ajouter votre premier gâteau à votre catalogue.
+								Commencez par ajouter votre premier article à votre catalogue.
 							</p>
 							<Button on:click={goToNewProduct} disabled={isLimitReached}>
 								<Plus class="mr-2 h-4 w-4" />
-								Ajouter un Gâteau
+								Ajouter un article
 							</Button>
 						</div>
 					</CardContent>

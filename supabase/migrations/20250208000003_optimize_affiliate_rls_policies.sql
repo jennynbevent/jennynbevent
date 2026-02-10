@@ -28,3 +28,7 @@ CREATE POLICY "Users can view their own payouts"
     USING ((select auth.uid()) = referrer_profile_id);
 
 
+
+
+
+

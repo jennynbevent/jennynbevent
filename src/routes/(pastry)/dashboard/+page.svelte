@@ -12,7 +12,7 @@
 	} from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import {
-		Cake,
+		Package,
 		ShoppingCart,
 		Euro,
 		TrendingUp,
@@ -139,7 +139,7 @@
 
 	// Fonction pour copier l'URL du shop
 	async function copyShopUrl() {
-		const fullUrl = `${env.PUBLIC_SITE_URL}/${shop?.slug}`;
+		const fullUrl = `${env.PUBLIC_SITE_URL}/`;
 
 		await navigator.clipboard.writeText(fullUrl);
 		copySuccess = true;
@@ -168,13 +168,6 @@
 					<Crown class="mr-1 h-3 w-3" />
 					Plan à vie
 				</Badge>
-			{:else if permissions?.isExempt}
-				<Badge
-					variant="secondary"
-					class="border-0 bg-[#FF6F61] text-white shadow-sm"
-				>
-					Ambassadeur
-				</Badge>
 			{/if}
 		</div>
 		<p class="mt-2 text-muted-foreground">
@@ -200,7 +193,7 @@
 						<p
 							class="break-all font-mono text-sm text-foreground sm:text-base md:text-lg"
 						>
-							{env.PUBLIC_SITE_URL}/{shop.slug}
+							{env.PUBLIC_SITE_URL}/
 						</p>
 					</div>
 					<Button
@@ -228,18 +221,18 @@
 
 	<!-- Métriques principales -->
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-		<!-- Nombre de gâteaux -->
+		<!-- Nombre d'articles -->
 		<Card>
 			<CardHeader
 				class="flex flex-row items-center justify-between space-y-0 pb-2"
 			>
-				<CardTitle class="text-sm font-medium">Gâteaux en vente</CardTitle>
-				<Cake class="h-4 w-4 text-muted-foreground" />
+				<CardTitle class="text-sm font-medium">Articles en vente</CardTitle>
+				<Package class="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div class="text-2xl font-bold">{metrics.productsCount}</div>
 				<p class="text-xs text-muted-foreground">
-					{metrics.productsCount === 0 ? 'Aucun gâteau' : 'gâteaux actifs'}
+					{metrics.productsCount === 0 ? 'Aucun article' : 'articles actifs'}
 				</p>
 			</CardContent>
 		</Card>
@@ -295,12 +288,12 @@
 			</CardContent>
 		</Card>
 
-		<!-- Gâteaux populaires -->
+		<!-- Articles populaires -->
 		<Card>
 			<CardHeader
 				class="flex flex-row items-center justify-between space-y-0 pb-2"
 			>
-				<CardTitle class="text-sm font-medium">Gâteaux populaires</CardTitle>
+				<CardTitle class="text-sm font-medium">Articles populaires</CardTitle>
 				<TrendingUp class="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
@@ -308,7 +301,7 @@
 				<p class="text-xs text-muted-foreground">
 					{metrics.popularProducts.length === 0
 						? 'Aucune vente'
-						: 'gâteaux vendus'}
+						: 'articles vendus'}
 				</p>
 			</CardContent>
 		</Card>
@@ -424,11 +417,11 @@
 					on:click={goToAddProduct}
 					disabled={isProductLimitReached}
 					title={isProductLimitReached
-						? 'Limite de gâteaux atteinte'
-						: 'Ajouter un gâteau'}
+						? 'Limite d\'articles atteinte'
+						: 'Ajouter un article'}
 				>
 					<Plus class="h-6 w-6" />
-					<span>Ajouter un gâteau</span>
+					<span>Ajouter un article</span>
 				</Button>
 				<Button
 					variant="outline"
@@ -519,16 +512,16 @@
 			</CardContent>
 		</Card>
 
-		<!-- Gâteaux populaires -->
+		<!-- Articles populaires -->
 		<Card>
 			<CardHeader>
-				<CardTitle>Gâteaux populaires</CardTitle>
-				<CardDescription>Vos gâteaux les plus vendus</CardDescription>
+				<CardTitle>Articles populaires</CardTitle>
+				<CardDescription>Vos articles les plus vendus</CardDescription>
 			</CardHeader>
 			<CardContent>
 				{#if metrics.popularProducts.length === 0}
 					<div class="py-8 text-center text-muted-foreground">
-						<Cake class="mx-auto mb-4 h-12 w-12 opacity-50" />
+						<Package class="mx-auto mb-4 h-12 w-12 opacity-50" />
 						<p>Aucune vente enregistrée</p>
 					</div>
 				{:else}
@@ -560,7 +553,7 @@
 							class="w-full"
 							on:click={() => goto('/dashboard/products')}
 						>
-							Voir tous les gâteaux
+							Voir tous les articles
 							<ArrowUpRight class="ml-2 h-4 w-4" />
 						</Button>
 					</div>

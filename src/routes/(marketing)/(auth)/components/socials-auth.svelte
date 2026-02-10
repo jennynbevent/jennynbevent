@@ -37,7 +37,7 @@
 				<li>
 					{#await loadIcon(provider)}
 						<Button
-							formaction="/login?provider={provider}&{redirectTo}"
+							formaction="/login?/oauth&provider={provider}&{redirectTo}"
 							variant="outline"
 							type="submit"
 							class="flex items-center gap-2 border-neutral-200 px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-800"
@@ -50,7 +50,7 @@
 						</Button>
 					{:then Icon}
 						<Button
-							formaction="/login?provider={provider}&{redirectTo}"
+							formaction="/login?/oauth&provider={provider}&{redirectTo}"
 							variant="outline"
 							type="submit"
 							class="flex items-center gap-2 border-neutral-200 px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-800"
@@ -63,7 +63,7 @@
 						</Button>
 					{:catch _}
 						<Button
-							formaction="/login?provider={provider}&{redirectTo}"
+							formaction="/login?/oauth&provider={provider}&{redirectTo}"
 							variant="outline"
 							type="submit"
 							class="flex items-center gap-2 border-neutral-200 px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-800"

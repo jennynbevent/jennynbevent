@@ -8,10 +8,9 @@ import { emailSchema, passwordSchema } from './common';
 
 // ===== SCHÉMAS COMPOSÉS =====
 
-// Connexion
+// Connexion (OTP uniquement : lien magique par email)
 export const loginSchema = z.object({
-    email: emailSchema,
-    password: passwordSchema
+    email: emailSchema
 });
 
 // Inscription

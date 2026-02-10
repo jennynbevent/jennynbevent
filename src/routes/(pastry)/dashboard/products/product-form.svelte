@@ -100,8 +100,9 @@
 		$formData.base_price = initialData.base_price || 0;
 		$formData.category_id = initialData.category_id || '';
 		$formData.min_days_notice = initialData.min_days_notice || 0;
-		$formData.cake_type = initialData.cake_type || null;
 		$formData.deposit_percentage = initialData.deposit_percentage ?? 50;
+		$formData.booking_type = initialData.booking_type || 'pickup';
+		$formData.min_reservation_days = initialData.min_reservation_days ?? 1;
 		// Charger les images existantes
 		if (initialData.images && Array.isArray(initialData.images)) {
 			existingImages = initialData.images.map((img: any, index: number) => ({
@@ -326,11 +327,11 @@
 	<!-- Formulaire -->
 	<Card>
 		<CardHeader>
-			<CardTitle>Informations du Gâteau</CardTitle>
+			<CardTitle>Informations de l'article</CardTitle>
 			<CardDescription>
 				{isEditing ? 'Modifiez' : 'Remplissez'} les informations de votre {isEditing
-					? 'gâteau'
-					: 'nouveau gâteau'}
+					? 'article'
+					: 'nouvel article'}
 			</CardDescription>
 		</CardHeader>
 		<CardContent>
@@ -379,11 +380,11 @@
 					/>
 				{/if}
 
-				<!-- Images du gâteau (max 3) -->
+				<!-- Images de l'article (max 3) -->
 				<div class="space-y-4">
 					<div>
 						<label for="images" class="mb-2 block text-sm font-medium">
-							Photos du gâteau (max {MAX_IMAGES})
+							Photos de l'article (max {MAX_IMAGES})
 						</label>
 						<p class="text-xs text-muted-foreground">
 							Taille max par image : 4 MB | Taille totale max : 12 MB (JPG, PNG, etc.)
@@ -502,15 +503,15 @@
 					{/if}
 				</div>
 
-				<!-- Nom du gâteau -->
+				<!-- Nom de l'article -->
 				<Form.Field {form} name="name">
 					<Form.Control let:attrs>
-						<Form.Label>Nom du gâteau *</Form.Label>
+						<Form.Label>Nom de l'article *</Form.Label>
 						<Input
 							{...attrs}
 							bind:value={$formData.name}
 							type="text"
-							placeholder="Ex: Gâteau au Chocolat"
+							placeholder="Ex: Nom de l'article"
 							required
 							maxlength={50}
 						/>
@@ -526,7 +527,7 @@
 							{...attrs}
 							bind:value={$formData.description}
 							rows={4}
-							placeholder="Description détaillée du gâteau..."
+							placeholder="Description détaillée de l'article..."
 							maxlength={1000}
 						/>
 					</Form.Control>
@@ -627,31 +628,58 @@
 					</div>
 				</div>
 
-				<!-- Type de gâteau -->
-				<Form.Field {form} name="cake_type">
+				<!-- Type de réservation -->
+				<Form.Field {form} name="booking_type">
 					<Form.Control let:attrs>
-						<Form.Label>Type de gâteau</Form.Label>
-						<select
-							{...attrs}
-							bind:value={$formData.cake_type}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						>
-							<option value="">Aucun type</option>
-							<option value="Gâteau d'anniversaire">Gâteau d'anniversaire</option>
-							<option value="Gâteau de mariage">Gâteau de mariage</option>
-							<option value="Cupcakes">Cupcakes</option>
-							<option value="Macarons">Macarons</option>
-							<option value="Gâteau personnalisé">Gâteau personnalisé</option>
-							<option value="Gâteau pour événement">Gâteau pour événement</option>
-							<option value="Gâteau vegan">Gâteau vegan</option>
-							<option value="Gâteau sans gluten">Gâteau sans gluten</option>
-							<option value="Pâtisserie orientale">Pâtisserie orientale</option>
-							<option value="Traiteur événementiel">Traiteur événementiel</option>
-							<option value="Mignardise">Mignardise</option>
-						</select>
+						<Form.Label>Type de commande *</Form.Label>
+						<div class="flex flex-col gap-2 sm:flex-row sm:gap-4">
+							<label class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 px-3 py-2 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+								<input
+									{...attrs}
+									type="radio"
+									name="booking_type"
+									value="pickup"
+									bind:group={$formData.booking_type}
+									class="h-4 w-4"
+								/>
+								<span class="text-sm font-medium">Achetable</span>
+							</label>
+							<label class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 px-3 py-2 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+								<input
+									type="radio"
+									name="booking_type"
+									value="reservation"
+									bind:group={$formData.booking_type}
+									class="h-4 w-4"
+								/>
+								<span class="text-sm font-medium">Réservable</span>
+							</label>
+						</div>
+						<p class="mt-1 text-sm text-muted-foreground">
+							Achetable = le client choisit une date et un créneau. Réservable = le client choisit une plage de dates (du … au …).
+						</p>
 					</Form.Control>
 					<Form.FieldErrors />
 				</Form.Field>
+
+				{#if $formData.booking_type === 'reservation'}
+					<Form.Field {form} name="min_reservation_days">
+						<Form.Control let:attrs>
+							<Form.Label>Durée minimale de la réservation (jours)</Form.Label>
+							<Input
+								{...attrs}
+								bind:value={$formData.min_reservation_days}
+								type="number"
+								min="0"
+								max="365"
+								placeholder="1"
+								inputmode="numeric"
+							/>
+						</Form.Control>
+						<Form.FieldErrors />
+						<Form.Description>La plage choisie par le client (du … au …) devra couvrir au moins ce nombre de jours.</Form.Description>
+					</Form.Field>
+				{/if}
 
 				<!-- Délai de préparation -->
 				<Form.Field {form} name="min_days_notice">
@@ -672,7 +700,7 @@
 							jour{$formData.min_days_notice > 1 ? 's' : ''} minimum à compter de
 							la date actuelle
 						{:else}
-							0 = Le client pourra commander ce gâteau pour le jour même
+							0 = Le client pourra commander cet article pour le jour même
 						{/if}
 					</p>
 				</Form.Field>
@@ -692,7 +720,7 @@
 					</Form.Control>
 					<Form.FieldErrors />
 					<p class="mt-1 text-sm text-muted-foreground">
-						Pourcentage d'acompte demandé pour ce gâteau (par défaut: 50%)
+						Pourcentage d'acompte demandé pour cet article (par défaut: 50%)
 					</p>
 				</Form.Field>
 			</form>
@@ -702,7 +730,7 @@
 	<!-- Section Personnalisation -->
 	<CustomizationFormBuilder
 		fields={customizationFields}
-		title="Personnalisation du Gâteau (Optionnel)"
+		title="Personnalisation de l'article (Optionnel)"
 		description="Ajoutez des champs pour permettre aux clients de personnaliser leur commande. Cette section est entièrement optionnelle."
 		containerClass="customization-fields-container"
 		on:fieldsChange={handleFieldsChange}
@@ -739,7 +767,7 @@
 				Remplissez les champs requis
 			{:else}
 				<Save class="mr-2 h-5 w-5" />
-				{isEditing ? 'Sauvegarder' : 'Créer'} le Gâteau
+				{isEditing ? 'Sauvegarder' : 'Créer'} l'article
 			{/if}
 		</Button>
 		<Button

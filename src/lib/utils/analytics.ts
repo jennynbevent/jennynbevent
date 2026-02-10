@@ -47,46 +47,16 @@ export function getSessionId(): string {
 }
 
 /**
- * Log un événement dans la table events
- * ⚡ PERFORMANCE : Cette fonction est asynchrone mais ne bloque pas l'exécution
- * Utilisez logEvent() sans await pour un fire-and-forget (recommandé)
- * ou avec await si vous avez besoin de confirmer l'enregistrement
- * 
- * ⚠️ IMPORTANT : Pour les page_view, utilisez logPageView() côté client pour avoir un session_id correct
+ * Log un événement (no-op: table events supprimée, single-user site)
  */
 export async function logEvent(
-	supabase: SupabaseClient<Database>,
-	eventName: string,
-	metadata: Record<string, unknown> = {},
-	userId: string | null = null,
-	page?: string
+	_supabase: SupabaseClient<Database>,
+	_eventName: string,
+	_metadata: Record<string, unknown> = {},
+	_userId: string | null = null,
+	_page?: string
 ): Promise<void> {
-	try {
-		const sessionId = getSessionId();
-
-		const eventData = {
-			user_id: userId,
-			event_name: eventName,
-			metadata: {
-				...metadata,
-				session_id: sessionId,
-				page: page || (typeof window !== 'undefined' ? window.location.pathname : null),
-				timestamp: new Date().toISOString()
-			}
-		};
-
-		const { data, error } = await supabase.from('events').insert(eventData).select();
-
-		if (error) {
-			logger.error('❌ [Analytics] Error logging event:', eventName, error);
-			logger.error('❌ [Analytics] Event data:', JSON.stringify(eventData, null, 2));
-		} else {
-			logger.log('✅ [Analytics] Event logged:', eventName, { userId, ...metadata, inserted: data?.[0]?.id });
-		}
-	} catch (error) {
-		// Ne pas bloquer l'application en cas d'erreur de tracking
-		logger.error('❌ [Analytics] Unexpected error logging event:', eventName, error);
-	}
+	// No-op: events table dropped for single-user site
 }
 
 /**
@@ -128,63 +98,13 @@ function getUserTypeFromContext(): 'pastry' | 'client' | 'visitor' {
 }
 
 /**
- * 🎯 Tracking de page_view côté client (pour avoir un session_id persistant)
- * À utiliser dans les composants Svelte avec onMount ou $effect
- * 
- * Si supabase n'est pas fourni, un client sera créé automatiquement
+ * Tracking de page_view (no-op: table events supprimée, single-user site)
  */
 export async function logPageView(
-	supabase: SupabaseClient<Database> | null = null,
-	metadata: Record<string, unknown> = {}
+	_supabase: SupabaseClient<Database> | null = null,
+	_metadata: Record<string, unknown> = {}
 ): Promise<void> {
-	// Vérifier qu'on est côté client
-	if (typeof window === 'undefined') {
-		logger.warn('⚠️ [Analytics] logPageView should only be called client-side');
-		return;
-	}
-
-	try {
-		// Créer un client Supabase si non fourni
-		let client = supabase;
-		if (!client) {
-			const { createBrowserClient } = await import('@supabase/ssr');
-			const { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } = await import('$env/static/public');
-			client = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-				global: { fetch },
-				cookies: {
-					get(key: string) {
-						try {
-							const cookie = document.cookie.split('; ').find(row => row.startsWith(key + '='));
-							return cookie ? cookie.split('=')[1] : undefined;
-						} catch {
-							return undefined;
-						}
-					}
-				}
-			});
-		}
-
-		const sessionId = getSessionId(); // Récupère depuis localStorage côté client
-		const userType = getUserTypeFromContext(); // Détermine le type d'utilisateur
-
-		const { error } = await client.from('events').insert({
-			user_id: null, // Page views sont anonymes
-			event_name: Events.PAGE_VIEW,
-			metadata: {
-				...metadata,
-				session_id: sessionId,
-				page: window.location.pathname,
-				user_type: userType, // ✅ NOUVEAU : Type d'utilisateur (pastry, client, visitor)
-				timestamp: new Date().toISOString()
-			}
-		});
-
-		if (error) {
-			logger.error('❌ [Analytics] Error logging page_view:', error);
-		}
-	} catch (error) {
-		logger.error('❌ [Analytics] Unexpected error logging page_view:', error);
-	}
+	// No-op: events table dropped for single-user site
 }
 
 /**

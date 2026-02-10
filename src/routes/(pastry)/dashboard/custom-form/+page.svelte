@@ -42,7 +42,7 @@
 	function viewCustomFormPreview() {
 		// Rediriger vers la page publique du formulaire personnalisé avec le mode preview
 		if (shop?.slug) {
-			goto(`/${shop.slug}/custom?preview=true`);
+			goto('/custom?preview=true');
 		}
 	}
 

@@ -23,9 +23,17 @@ export function formatTimeForEmail(timeString: string | null): string {
 }
 
 /**
- * Formate une date et heure complète pour les emails
+ * Formate une date et heure complète pour les emails.
+ * Si dateEndString est fourni (réservation), retourne "Du [date] au [date fin]".
  */
-export function formatDateTimeForEmail(dateString: string, timeString?: string | null): string {
+export function formatDateTimeForEmail(
+    dateString: string,
+    timeString?: string | null,
+    dateEndString?: string | null
+): string {
+    if (dateEndString) {
+        return `Du ${formatDateForEmail(dateString)} au ${formatDateForEmail(dateEndString)}`;
+    }
     const date = formatDateForEmail(dateString);
     const time = timeString ? formatTimeForEmail(timeString) : '';
     return time ? `${date} ${time}` : date;

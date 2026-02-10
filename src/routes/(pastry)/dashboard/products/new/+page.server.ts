@@ -6,7 +6,6 @@ import { forceRevalidateShop } from '$lib/utils/catalog';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { createProductFormSchema, createCategoryFormSchema } from './schema';
-import { checkProductLimit } from '$lib/utils/product-limits';
 import { ErrorLogger } from '$lib/services/error-logging';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
@@ -64,21 +63,6 @@ export const actions: Actions = {
             return fail(403, { error: 'Accès non autorisé à cette boutique' });
         }
 
-        // Vérifier la limite de produits
-        console.log('🔍 [Product Creation] Checking product limit before creating product...');
-        const productLimitStats = await checkProductLimit(shopId, userId, locals.supabase);
-        if (productLimitStats.isLimitReached) {
-            console.warn('🚫 [Product Creation] Product creation blocked - limit reached:', {
-                shopId,
-                productCount: productLimitStats.productCount,
-                productLimit: productLimitStats.productLimit,
-                plan: productLimitStats.plan
-            });
-            return fail(403, {
-                error: `Limite de gâteaux atteinte. Vous avez atteint la limite de ${productLimitStats.productLimit} gâteau${productLimitStats.productLimit > 1 ? 'x' : ''} pour votre plan ${productLimitStats.plan === 'free' ? 'gratuit' : productLimitStats.plan === 'basic' ? 'Starter' : 'Premium'}. Passez à un plan supérieur pour ajouter plus de gâteaux.`
-            });
-        }
-
         // ✅ formData a déjà été déclaré au début de l'action, pas besoin de le redéclarer
         // Valider avec Superforms
         const form = await superValidate(formData, zod(createProductFormSchema));
@@ -88,7 +72,7 @@ export const actions: Actions = {
         }
 
         // Extraire les données validées
-        const { name, description, base_price, category_id, min_days_notice, cake_type, deposit_percentage, customizationFields } = form.data;
+        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, customizationFields } = form.data;
 
         // Récupérer toutes les images depuis formData
         const imageFiles: File[] = [];
@@ -155,13 +139,15 @@ export const actions: Actions = {
                 .from('products')
                 .insert({
                     name,
-                    description,
+                    description: description ?? null,
                     base_price,
-                    category_id: finalCategoryId || null,
+                    category_id: (finalCategoryId && finalCategoryId.trim()) ? finalCategoryId : null,
                     shop_id: shopId,
-                    min_days_notice,
-                    cake_type: cake_type || null,
-                    deposit_percentage: deposit_percentage ?? 50
+                    min_days_notice: min_days_notice ?? 0,
+                    cake_type: null,
+                    deposit_percentage: deposit_percentage ?? 50,
+                    booking_type: booking_type || 'pickup',
+                    min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0
                 })
                 .select()
                 .single();
@@ -175,7 +161,11 @@ export const actions: Actions = {
                     action: 'createProduct',
                     step: 'insert_product',
                 });
-                return fail(500, { form, error: 'Erreur lors de l\'ajout du produit' });
+                const userMessage =
+                    insertError.code === '23503'
+                        ? 'Catégorie invalide ou supprimée. Choisissez une autre catégorie ou créez-en une.'
+                        : insertError.message || 'Erreur lors de l\'ajout du produit';
+                return fail(500, { form, error: userMessage });
             }
 
             product = productData;

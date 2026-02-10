@@ -29,6 +29,7 @@
 		customer_email: string;
 		pickup_date: string;
 		pickup_time: string | null;
+		pickup_date_end?: string | null;
 		status: string;
 		total_amount: number | null;
 		product_name: string | null;
@@ -490,21 +491,23 @@
 
 									<CardContent>
 										<div class="space-y-2">
-											<!-- Date de récupération -->
+											<!-- Date de récupération ou plage -->
 											<div
 												class="flex items-center gap-2 text-sm text-muted-foreground"
 											>
 												<Calendar class="h-3 w-3" />
-												<span
-													>Récupération : <span
-														class="font-medium text-foreground"
-														>{formatDate(order.pickup_date)}</span
-													>
-													{#if order.pickup_time}
-														<span class="ml-1 text-gray-900"
-															>{order.pickup_time.substring(0, 5)}</span
-														>
-													{/if}
+												<span>
+													{order.pickup_date_end ? 'Réservation : ' : 'Récupération : '}
+													<span class="font-medium text-foreground">
+														{#if order.pickup_date_end}
+															Du {formatDate(order.pickup_date)} au {formatDate(order.pickup_date_end)}
+														{:else}
+															{formatDate(order.pickup_date)}
+															{#if order.pickup_time}
+																<span class="ml-1 text-gray-900">{order.pickup_time.substring(0, 5)}</span>
+															{/if}
+														{/if}
+													</span>
 												</span>
 											</div>
 

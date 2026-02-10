@@ -28,7 +28,7 @@ export const productBaseSchema = z.object({
     base_price: priceSchema,          // Prix de base (0 à 10 000€)
     category_id: uuidSchema,          // Lien vers la catégorie
     form_id: uuidSchema,              // Lien vers le formulaire de personnalisation
-    cake_type: z.string().max(50, 'Le type de gâteau ne doit pas dépasser 50 caractères').optional().nullable(), // Type de gâteau (anniversaire, mariage, etc.)
+    cake_type: z.string().max(50, 'Le type d\'article ne doit pas dépasser 50 caractères').optional().nullable(), // Type d'article (anniversaire, mariage, etc.)
     min_days_notice: z.preprocess(
         (val) => {
             // Convertir string → number avant validation
@@ -56,7 +56,19 @@ export const productBaseSchema = z.object({
             required_error: 'Le pourcentage d\'acompte est requis',
             invalid_type_error: 'Le pourcentage d\'acompte doit être un nombre'
         }).int().min(0, 'Le pourcentage doit être entre 0 et 100').max(100, 'Le pourcentage doit être entre 0 et 100')
-    ).default(50)
+    ).default(50),
+    booking_type: z.enum(['pickup', 'reservation']).default('pickup'),
+    min_reservation_days: z.preprocess(
+        (val) => {
+            if (val === '' || val === undefined) return undefined;
+            if (typeof val === 'string') {
+                const num = parseInt(val, 10);
+                return isNaN(num) ? val : num;
+            }
+            return val;
+        },
+        z.number().int().min(0, 'Minimum 0').max(365, 'Maximum 365 jours').default(1).optional()
+    )
 });
 
 // Création d'un nouveau produit
@@ -76,7 +88,9 @@ export const updateProductSchema = productBaseSchema.pick({
     form_id: true,
     cake_type: true,
     min_days_notice: true,
-    deposit_percentage: true
+    deposit_percentage: true,
+    booking_type: true,
+    min_reservation_days: true
 });
 // Note: images ne sont pas dans le schéma car elles sont gérées manuellement via FormData
 

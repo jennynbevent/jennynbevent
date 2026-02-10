@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createShopSchema } from '$lib/validations';
-import { 
+import { slugSchema } from '$lib/validations/schemas/common';
+import {
     paypalMeSchema,
     paypalMeOptionalSchema,
     revolutMeOptionalSchema,
@@ -15,9 +16,13 @@ export const onboardingSchema = createShopSchema.extend({
 });
 
 // Schéma pour l'étape 1 (création de boutique sans paypal_me)
-export const shopCreationSchema = createShopSchema.extend({
-    logo: z.instanceof(File).optional()
-});
+// slug optionnel : généré côté serveur à partir du nom si absent
+export const shopCreationSchema = createShopSchema
+    .omit({ slug: true })
+    .extend({
+        slug: slugSchema.optional(),
+        logo: z.instanceof(File).optional()
+    });
 
 // Schéma pour l'étape 2 (configuration PayPal.me) - gardé pour rétrocompatibilité
 export const paypalConfigSchema = z.object({

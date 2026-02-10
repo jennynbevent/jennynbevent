@@ -36,6 +36,7 @@ export class EmailService {
         productName,
         pickupDate,
         pickupTime,
+        pickupDateEnd,
         totalAmount,
         paidAmount,
         remainingAmount,
@@ -51,6 +52,7 @@ export class EmailService {
         productName: string;
         pickupDate: string;
         pickupTime?: string | null;
+        pickupDateEnd?: string | null;
         totalAmount: number;
         paidAmount: number;
         remainingAmount: number;
@@ -71,6 +73,7 @@ export class EmailService {
                     productName,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     totalAmount,
                     paidAmount,
                     remainingAmount,
@@ -104,6 +107,7 @@ export class EmailService {
         productName,
         pickupDate,
         pickupTime,
+        pickupDateEnd,
         totalAmount,
         paidAmount,
         remainingAmount,
@@ -119,6 +123,7 @@ export class EmailService {
         productName: string;
         pickupDate: string;
         pickupTime?: string | null;
+        pickupDateEnd?: string | null;
         totalAmount: number;
         paidAmount: number;
         remainingAmount: number;
@@ -139,6 +144,7 @@ export class EmailService {
                     productName,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     totalAmount,
                     paidAmount,
                     remainingAmount,
@@ -172,6 +178,7 @@ export class EmailService {
         productName,
         pickupDate,
         pickupTime,
+        pickupDateEnd,
         totalAmount,
         paidAmount,
         remainingAmount,
@@ -188,6 +195,7 @@ export class EmailService {
         productName: string;
         pickupDate: string;
         pickupTime?: string | null;
+        pickupDateEnd?: string | null;
         totalAmount: number;
         paidAmount: number;
         remainingAmount: number;
@@ -209,6 +217,7 @@ export class EmailService {
                     productName,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     totalAmount,
                     paidAmount,
                     remainingAmount,
@@ -243,6 +252,7 @@ export class EmailService {
         productName,
         pickupDate,
         pickupTime,
+        pickupDateEnd,
         totalAmount,
         paidAmount,
         remainingAmount,
@@ -258,6 +268,7 @@ export class EmailService {
         productName: string;
         pickupDate: string;
         pickupTime?: string | null;
+        pickupDateEnd?: string | null;
         totalAmount: number;
         paidAmount: number;
         remainingAmount: number;
@@ -278,6 +289,7 @@ export class EmailService {
                     productName,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     totalAmount,
                     paidAmount,
                     remainingAmount,
@@ -311,6 +323,7 @@ export class EmailService {
         productName,
         pickupDate,
         pickupTime,
+        pickupDateEnd,
         totalAmount,
         paidAmount,
         remainingAmount,
@@ -325,6 +338,7 @@ export class EmailService {
         productName: string;
         pickupDate: string;
         pickupTime?: string | null;
+        pickupDateEnd?: string | null;
         totalAmount: number;
         paidAmount: number;
         remainingAmount: number;
@@ -344,6 +358,7 @@ export class EmailService {
                     productName,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     totalAmount,
                     paidAmount,
                     remainingAmount,
@@ -408,6 +423,7 @@ export class EmailService {
                     shopLogo,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     totalPrice,
                     depositAmount,
                     remainingAmount,
@@ -468,6 +484,7 @@ export class EmailService {
                     customerEmail,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     totalPrice,
                     depositAmount,
                     remainingAmount,
@@ -668,6 +685,7 @@ export class EmailService {
                     customerInstagram,
                     pickupDate,
                     pickupTime,
+                    pickupDateEnd,
                     requestId,
                     dashboardUrl,
                     date,
@@ -1037,7 +1055,7 @@ export class EmailService {
     }) {
         try {
             const { PUBLIC_SITE_URL } = await import('$env/static/public');
-            
+
             // Formater le prix
             const formatPrice = (price: number): string => {
                 return new Intl.NumberFormat('fr-FR', {
@@ -1120,16 +1138,9 @@ export class EmailService {
     }
 
     /**
-     * Envoie une notification quand un pâtissier active son code d'affiliation
+     * No-op: affiliation désactivée (single-user site)
      */
-    static async sendAffiliateActivationNotification({
-        shopName,
-        shopSlug,
-        shopInstagram,
-        shopTiktok,
-        shopUrl,
-        affiliateCode
-    }: {
+    static async sendAffiliateActivationNotification(_params: {
         shopName: string;
         shopSlug: string;
         shopInstagram: string | null;
@@ -1137,63 +1148,7 @@ export class EmailService {
         shopUrl: string;
         affiliateCode: string;
     }) {
-        try {
-            const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
-                to: ['affiliations@pattyly.com'],
-                subject: `Nouveau code d'affiliation activé - ${shopName}`,
-                html: `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="utf-8">
-                        <style>
-                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                            .header { background: #FF6F61; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-                            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-                            .info { background: white; padding: 15px; border-radius: 4px; margin: 15px 0; }
-                            .info p { margin: 10px 0; }
-                            .button { display: inline-block; padding: 12px 24px; background: #FF6F61; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
-                            code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="header">
-                                <h1>🎉 Nouveau code d'affiliation activé</h1>
-                            </div>
-                            <div class="content">
-                                <p>Bonjour,</p>
-                                <p>Un nouveau pâtissier a activé son code d'affiliation.</p>
-                                
-                                <div class="info">
-                                    <p><strong>Boutique :</strong> ${shopName}</p>
-                                    <p><strong>Code d'affiliation :</strong> <code>${affiliateCode}</code></p>
-                                    ${shopInstagram ? `<p><strong>Instagram :</strong> <a href="https://instagram.com/${shopInstagram.replace('@', '')}">@${shopInstagram.replace('@', '')}</a></p>` : ''}
-                                    ${shopTiktok ? `<p><strong>TikTok :</strong> <a href="https://tiktok.com/@${shopTiktok.replace('@', '')}">@${shopTiktok.replace('@', '')}</a></p>` : ''}
-                                </div>
-                                
-                                <div style="text-align: center;">
-                                    <a href="${shopUrl}" class="button">Voir la boutique</a>
-                                </div>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                `
-            });
-
-            if (error) {
-                console.error('Erreur envoi email activation affiliation:', error);
-                throw error;
-            }
-
-            return { success: true, messageId: data?.id };
-        } catch (error) {
-            console.error('Erreur EmailService.sendAffiliateActivationNotification:', error);
-            throw error;
-        }
+        return { success: true, messageId: undefined };
     }
 
     /**
@@ -1218,7 +1173,7 @@ export class EmailService {
             // Vérifier si l'utilisateur est désabonné
             try {
                 const { data: contact, error: contactError } = await resend.contacts.get({ email: recipientEmail });
-                
+
                 if (!contactError && contact?.unsubscribed === true) {
                     console.log(`⏭️  ${recipientEmail} est désabonné, email non envoyé`);
                     return { success: true, skipped: true, messageId: null };

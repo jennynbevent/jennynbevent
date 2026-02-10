@@ -16,7 +16,7 @@ import { uuidSchema, priceSchema } from './common';
 // ===== 1. TYPES DE CHAMPS DISPONIBLES =====
 
 export const fieldTypeSchema = z.enum([
-    'short-text',    // Ex: "Nom du gâteau"
+    'short-text',    // Ex: "Nom de l'article"
     'long-text',     // Ex: "Description des goûts"
     'number',        // Ex: "Nombre de personnes"
     'single-select', // Ex: "Couleur" avec options Rouge/Blanc/Noir

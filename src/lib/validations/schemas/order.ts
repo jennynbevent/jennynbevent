@@ -86,7 +86,8 @@ function createBaseOrderSchema(fields: Array<{
         customer_phone: z.string().optional(),
         customer_instagram: z.string().optional(),
         pickup_date: futureDateSchema,
-        pickup_time: timeSlotSchema,
+        pickup_time: timeSlotSchema.optional(),
+        pickup_date_end: futureDateSchema.optional(),
         customization_data: createDynamicCustomizationSchema(fields),
         additional_information: messageSchema.optional(),
         // inspiration_photos géré manuellement côté serveur, pas dans la validation

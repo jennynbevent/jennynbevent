@@ -148,7 +148,7 @@
 	}
 
 
-	// Gestion des types de gâteaux (limite à 3 maximum)
+	// Gestion des types d'articles (limite à 3 maximum)
 	function toggleCakeType(cakeType: string) {
 		const currentTypes = $formData.directory_cake_types || [];
 
@@ -451,12 +451,12 @@
 			<Form.FieldErrors />
 		</Form.Field>
 
-		<!-- Types de gâteaux -->
+		<!-- Types d'articles -->
 		<Form.Field {form} name="directory_cake_types">
 			<Form.Control>
-				<Form.Label>Types de gâteaux proposés</Form.Label>
+				<Form.Label>Types d'articles proposés</Form.Label>
 				<Form.Description>
-					Sélectionnez jusqu'à 3 types de gâteaux que vous proposez
+					Sélectionnez jusqu'à 3 types d'articles que vous proposez
 					{#if ($formData.directory_cake_types || []).length > 0}
 						<span class="ml-2 text-muted-foreground">
 							({($formData.directory_cake_types || []).length}/3)

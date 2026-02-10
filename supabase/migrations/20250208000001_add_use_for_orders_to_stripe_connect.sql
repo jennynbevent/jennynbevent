@@ -23,3 +23,7 @@ COMMENT ON COLUMN stripe_connect_accounts.use_for_orders IS
 'Si true, les paiements de commandes sont transférés vers ce compte Stripe Connect. Si false, Stripe Connect est uniquement utilisé pour les commissions d''affiliation.';
 
 
+
+
+
+

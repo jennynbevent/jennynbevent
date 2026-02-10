@@ -12,10 +12,9 @@
 	} from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 
-	import { Upload, X, Copy, Check, LoaderCircle } from 'lucide-svelte';
+	import { Upload, X, LoaderCircle } from 'lucide-svelte';
 	import { formSchema, type FormSchema } from './schema';
 	import { createEventDispatcher } from 'svelte';
-	import { env } from '$env/dynamic/public';
 	import { page } from '$app/stores';
 
 	export let data: SuperValidated<Infer<FormSchema>>;
@@ -29,7 +28,6 @@
 
 	let _logoFile: File | null = null;
 	let logoPreview: string | null = $formData.logo_url || null;
-	let copySuccess = false;
 	let logoInputElement: HTMLInputElement;
 	let submitted = false;
 	// Handle file selection (Cloudinary gère la compression automatiquement)
@@ -67,16 +65,6 @@
 		$formData.logo = undefined;
 	}
 
-	async function copyShopUrl() {
-		const fullUrl = `${env.PUBLIC_SITE_URL}/${$formData.slug}`;
-
-		await navigator.clipboard.writeText(fullUrl);
-		copySuccess = true;
-		// Reset after 2 seconds
-		setTimeout(() => {
-			copySuccess = false;
-		}, 2000);
-	}
 </script>
 
 <form
@@ -182,50 +170,7 @@
 				<Form.FieldErrors />
 			</Form.Field>
 
-			<Form.Field {form} name="slug">
-				<Form.Control let:attrs>
-					<Form.Label>URL de la boutique</Form.Label>
-					<div class="space-y-3">
-						<div
-							class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0"
-						>
-							<span class="text-sm font-medium text-muted-foreground"
-								>{env.PUBLIC_SITE_URL}/</span
-							>
-							<Input
-								{...attrs}
-								type="text"
-								placeholder="ma-patisserie"
-								required
-								bind:value={$formData.slug}
-								class="h-10 flex-1"
-							/>
-							<Button
-								type="button"
-								size="sm"
-								on:click={copyShopUrl}
-								title="Copier l'URL complète"
-								disabled={!$formData.slug}
-								class={`h-10 w-full px-4 sm:w-auto ${
-									copySuccess
-										? 'border-green-300 bg-green-100 text-green-700 hover:border-green-400 hover:bg-green-200'
-										: 'border border-input bg-background text-black hover:bg-accent hover:text-accent-foreground'
-								}`}
-							>
-								{#if copySuccess}
-									<Check class="mr-2 h-4 w-4" />
-									Copiée
-								{:else}
-									<Copy class="mr-2 h-4 w-4" />
-									Copier
-								{/if}
-							</Button>
-						</div>
-					</div>
-				</Form.Control>
-				<Form.FieldErrors />
-				<Form.Description>L'URL de votre boutique publique</Form.Description>
-			</Form.Field>
+	<input type="hidden" name="slug" value={$formData.slug} />
 
 			<Form.Field {form} name="bio">
 				<Form.Control let:attrs>
@@ -303,13 +248,13 @@
 	<div class="pt-4">
 		<Button
 			type="submit"
-			disabled={$submitting || submitted || !($formData.name && $formData.slug)}
+			disabled={$submitting || submitted || !$formData.name}
 			class={`h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed ${
 				submitted
 					? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
 					: $submitting
 						? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
-						: $formData.name && $formData.slug
+						: $formData.name
 							? 'bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md disabled:opacity-50'
 							: 'bg-gray-500 disabled:opacity-50'
 			}`}
@@ -354,8 +299,8 @@
 					</svg>
 					<span>Mise à jour...</span>
 				</div>
-			{:else if !($formData.name && $formData.slug)}
-				Remplissez tous les champs requis
+			{:else if !$formData.name}
+				Remplissez le nom de la boutique
 			{:else}
 				Mettre à jour la boutique
 			{/if}

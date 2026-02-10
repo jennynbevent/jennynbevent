@@ -1,7 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { error as svelteError } from '@sveltejs/kit';
-import { checkOrderLimit } from '$lib/utils/order-limits';
 
 // Types
 interface Order {
@@ -10,6 +9,7 @@ interface Order {
     customer_email: string;
     pickup_date: string;
     pickup_time: string | null;
+    pickup_date_end?: string | null;
     status: string | null; // ✅ Permettre null pour correspondre à Supabase
     total_amount: number | null;
     product_name: string | null;
@@ -60,7 +60,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
             // Récupérer tous les product_ids uniques pour optimiser les requêtes
             const productIds = new Set<string>();
             const pendingOrdersByShop: typeof pendingOrdersData = [];
-            
+
             for (const pending of pendingOrdersData) {
                 const orderData = pending.order_data as any;
                 // Vérifier que cette pending_order appartient à cette boutique
@@ -79,7 +79,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
                     .from('products')
                     .select('id, image_url')
                     .in('id', Array.from(productIds));
-                
+
                 if (products) {
                     products.forEach(product => {
                         productImagesMap.set(product.id, product.image_url);
@@ -98,6 +98,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
                     customer_email: orderData.customer_email || '',
                     pickup_date: orderData.pickup_date || new Date().toISOString(),
                     pickup_time: orderData.pickup_time || null,
+                    pickup_date_end: orderData.pickup_date_end || null,
                     status: 'non_finalisee', // Nouveau statut
                     total_amount: orderData.total_amount || null,
                     product_name: orderData.product_name || null,
@@ -125,23 +126,17 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
         // Compter les commandes normales par statut (sans les pending_orders)
         const statusCounts = getStatusCounts(normalOrders);
-        
+
         // Ajouter le compte des pending_orders au statut "non_finalisee"
         statusCounts.non_finalisee = pendingOrders.length;
 
-        // Récupérer les statistiques de limite de commandes
-        let orderLimitStats = null;
-        if (shop?.id) {
-            orderLimitStats = await checkOrderLimit(shop.id, user.id, locals.supabaseServiceRole);
-        }
-
         return {
-            orders: normalOrders, // Commandes normales uniquement
-            pendingOrders: pendingOrders, // Pending orders séparées
+            orders: normalOrders,
+            pendingOrders,
             groupedOrders,
             statusCounts,
             shop,
-            orderLimitStats
+            orderLimitStats: null
         };
     } catch (err) {
         throw err;

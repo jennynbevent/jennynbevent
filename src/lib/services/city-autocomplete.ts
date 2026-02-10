@@ -125,7 +125,7 @@ export const MAJOR_CITIES = [
 ] as const;
 
 /**
- * Types de gâteaux disponibles pour l'annuaire
+ * Types d'articles disponibles pour l'annuaire
  * Doit correspondre exactement aux types proposés dans les pages de l'annuaire
  */
 export const CAKE_TYPES = [
@@ -143,7 +143,7 @@ export const CAKE_TYPES = [
 ] as const;
 
 /**
- * Types de gâteaux disponibles pour les formulaires (dashboard et onboarding)
+ * Types d'articles disponibles pour les formulaires (dashboard et onboarding)
  * Exclut "Gâteau pour événement" car tous les pâtissiers sont visibles sur cette page de toute façon
  */
 export const CAKE_TYPES_FOR_FORMS = [

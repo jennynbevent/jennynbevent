@@ -13,32 +13,19 @@
 	import { Check, Store } from 'lucide-svelte';
 	import OnboardingForm from './onboarding-form.svelte';
 	import PaymentForm from './payment-form.svelte';
-	import DirectoryForm from '$lib/components/directory/directory-form.svelte';
 
 	export let data: {
 		step: number;
-		shop: {
+			shop: {
 			id: string;
 			name: string;
 			bio?: string;
 			slug: string;
 			logo_url: string | null;
-			directory_city?: string | null;
-			directory_actual_city?: string | null;
-			directory_postal_code?: string | null;
-			directory_cake_types?: string[] | null;
-			directory_enabled?: boolean | null;
 		} | null;
 		form: any;
 		paypalPolling?: boolean;
 		paypalStatus?: string;
-		stripeConnectAccount?: {
-			id: string;
-			is_active: boolean;
-			charges_enabled: boolean;
-			payouts_enabled: boolean;
-			stripe_account_id: string;
-		} | null;
 	};
 
 	// Supprimer l'export form qui n'est pas utilisé
@@ -83,7 +70,7 @@
 				<div class="absolute left-2 right-2 top-5 h-0.5 bg-neutral-200 sm:left-6 sm:right-6 sm:top-6">
 					<div
 						class="h-full bg-[#FF6F61] transition-all duration-500 ease-out"
-						style="width: {((step - 1) / 2) * 100}%"
+						style="width: {step === 2 ? 100 : 0}%"
 					></div>
 				</div>
 
@@ -151,36 +138,6 @@
 					</div>
 				</div>
 
-					<!-- Step 3 -->
-					<div class="flex flex-1 flex-col items-center">
-					<div
-							class="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 sm:h-12 sm:w-12 {step >=
-						3
-								? 'border-[#FF6F61] bg-[#FF6F61] text-white shadow-lg shadow-[#FF6F61]/20'
-								: step === 3
-									? 'border-[#FF6F61] bg-white text-[#FF6F61]'
-									: 'border-neutral-300 bg-white text-neutral-400'}"
-					>
-							{#if step > 3}
-								<Check class="h-5 w-5 sm:h-6 sm:w-6" />
-						{:else}
-								<span class="text-sm font-semibold sm:text-base">3</span>
-						{/if}
-					</div>
-						<!-- Labels mobiles -->
-						<div class="mt-2 text-center sm:hidden">
-							<p class="text-xs font-medium {step >= 3 ? 'text-[#FF6F61]' : 'text-neutral-500'}">
-								Annuaire
-							</p>
-						</div>
-						<!-- Labels desktop -->
-						<div class="mt-3 hidden text-center sm:block">
-							<p class="text-sm font-semibold {step >= 3 ? 'text-[#FF6F61]' : 'text-neutral-600'}">
-								Annuaire
-							</p>
-							<p class="mt-1 text-xs text-neutral-500">Inscription à l'annuaire</p>
-						</div>
-					</div>
 				</div>
 			</div>
 		</div>
@@ -241,39 +198,7 @@
 				</CardHeader>
 				<CardContent>
 					<!-- Formulaire de configuration des méthodes de paiement -->
-					<PaymentForm data={data.form} stripeConnectAccount={data.stripeConnectAccount} />
-				</CardContent>
-			</Card>
-		{/if}
-
-		<!-- Step 3: Annuaire -->
-		{#if step === 3}
-			<Card class="w-full">
-				<CardHeader>
-					<div class="flex items-center space-x-3">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="h-6 w-6 text-primary"
-						>
-							<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-							<circle cx="12" cy="10" r="3" />
-						</svg>
-						<div>
-							<CardTitle>Inscription à l'annuaire</CardTitle>
-							<CardDescription>
-								Renseignez vos informations pour apparaître dans l'annuaire des pâtissiers
-							</CardDescription>
-						</div>
-					</div>
-				</CardHeader>
-				<CardContent>
-					<DirectoryForm data={data.form} shop={shop} showSkipButton={true} />
+					<PaymentForm data={data.form} />
 				</CardContent>
 			</Card>
 		{/if}

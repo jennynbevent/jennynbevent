@@ -3,7 +3,7 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad, Actions } from './$types';
 import { verifyShopOwnership } from '$lib/auth';
-import { STRIPE_PRICES, STRIPE_PRODUCTS } from '$lib/config/server';
+import { STRIPE_PRICES } from '$lib/config/server';
 import { forceRevalidateShop } from '$lib/utils/catalog';
 import { toggleCustomRequestsFormSchema, updateCustomFormFormSchema } from './schema';
 
@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
     // ✅ OPTIMISÉ : Utiliser le shop du parent (déjà chargé)
     const { shop: layoutShop } = await parent();
-    
+
     if (!layoutShop) {
         throw error(404, 'Boutique non trouvée');
     }
@@ -87,7 +87,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
     } : null;
 
     // Extraire les champs (form_fields est un array via la relation Supabase)
-    const customFields = customFormData?.form_fields 
+    const customFields = customFormData?.form_fields
         ? (customFormData.form_fields as any[]).sort((a, b) => (a.order || 0) - (b.order || 0))
         : [];
 
@@ -139,18 +139,6 @@ export const actions: Actions = {
         const isOwner = await verifyShopOwnership(userId, shopId, locals.supabase);
         if (!isOwner) {
             throw error(403, 'Accès non autorisé à cette boutique');
-        }
-
-        // ✅ OPTIMISÉ : Vérifier le plan directement avec get_user_plan RPC (plus léger que getUserPermissions)
-        const { data: plan, error: planError } = await locals.supabase.rpc('get_user_plan', {
-            p_profile_id: userId,
-            premium_product_id: STRIPE_PRODUCTS.PREMIUM,
-            basic_product_id: STRIPE_PRODUCTS.BASIC,
-            lifetime_product_id: STRIPE_PRODUCTS.LIFETIME
-        });
-
-        if (planError || !plan || (plan !== 'premium' && plan !== 'exempt')) {
-            throw error(403, 'Accès refusé : fonctionnalité réservée aux plans Premium');
         }
 
         const toggleFormData = await superValidate(formData, zod(toggleCustomRequestsFormSchema));
@@ -211,18 +199,6 @@ export const actions: Actions = {
         const isOwner = await verifyShopOwnership(userId, shopId, locals.supabase);
         if (!isOwner) {
             throw error(403, 'Accès non autorisé à cette boutique');
-        }
-
-        // ✅ OPTIMISÉ : Vérifier le plan directement avec get_user_plan RPC (plus léger que getUserPermissions)
-        const { data: plan, error: planError } = await locals.supabase.rpc('get_user_plan', {
-            p_profile_id: userId,
-            premium_product_id: STRIPE_PRODUCTS.PREMIUM,
-            basic_product_id: STRIPE_PRODUCTS.BASIC,
-            lifetime_product_id: STRIPE_PRODUCTS.LIFETIME
-        });
-
-        if (planError || !plan || (plan !== 'premium' && plan !== 'exempt')) {
-            throw error(403, 'Accès refusé : fonctionnalité réservée aux plans Premium');
         }
 
         const updateFormData = await superValidate(formData, zod(updateCustomFormFormSchema));

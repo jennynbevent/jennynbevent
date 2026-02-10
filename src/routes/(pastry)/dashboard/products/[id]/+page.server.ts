@@ -115,8 +115,9 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
                 base_price: product.base_price,
                 category_id: product.category_id || '',
                 min_days_notice: product.min_days_notice,
-                cake_type: product.cake_type || null,
                 deposit_percentage: product.deposit_percentage ?? 50,
+                booking_type: (product as any).booking_type || 'pickup',
+                min_reservation_days: (product as any).min_reservation_days ?? 1,
                 customizationFields: customizationFields
             }
         }
@@ -180,7 +181,7 @@ export const actions: Actions = {
         }
 
         // Extraire les données validées
-        const { name, description, base_price, category_id, min_days_notice, cake_type, deposit_percentage, customizationFields } = form.data;
+        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, customizationFields } = form.data;
 
         // Récupérer toutes les nouvelles images depuis formData
         const newImageFiles: File[] = [];
@@ -399,14 +400,15 @@ export const actions: Actions = {
                 .limit(1);
 
             // Mettre à jour le produit
-            const updateData: any = {
+            const updateData: Record<string, unknown> = {
                 name,
-                description,
+                description: description ?? null,
                 base_price,
-                category_id: finalCategoryId || null,
-                min_days_notice,
-                cake_type: cake_type || null,
-                deposit_percentage: deposit_percentage ?? 50
+                category_id: (finalCategoryId && String(finalCategoryId).trim()) ? finalCategoryId : null,
+                min_days_notice: min_days_notice ?? 0,
+                deposit_percentage: deposit_percentage ?? 50,
+                booking_type: booking_type || 'pickup',
+                min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0
             };
 
             // Mettre à jour image_url avec la première image (pour rétrocompatibilité)

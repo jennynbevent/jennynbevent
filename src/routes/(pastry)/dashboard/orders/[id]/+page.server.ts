@@ -1,9 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { getUserPermissions, verifyShopOwnership } from '$lib/auth';
-import { PRIVATE_STRIPE_SECRET_KEY } from '$env/static/private';
 import { PUBLIC_SITE_URL } from '$env/static/public';
-import Stripe from 'stripe';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { makeQuoteFormSchema, rejectOrderFormSchema, personalNoteFormSchema } from './schema.js';
@@ -11,10 +9,6 @@ import { EmailService } from '$lib/services/email-service';
 import { ErrorLogger } from '$lib/services/error-logging';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
 
-
-const stripe = new Stripe(PRIVATE_STRIPE_SECRET_KEY, {
-    apiVersion: '2024-04-10'
-});
 
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
     try {
@@ -72,6 +66,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
                 customer_instagram: orderData.customer_instagram || null,
                 pickup_date: orderData.pickup_date,
                 pickup_time: orderData.pickup_time || null,
+                pickup_date_end: orderData.pickup_date_end || null,
                 status: 'non_finalisee',
                 total_amount: orderData.total_amount || null,
                 paid_amount: null,
@@ -248,6 +243,7 @@ export const actions: Actions = {
                     customer_instagram: orderData.customer_instagram || null,
                     pickup_date: orderData.pickup_date,
                     pickup_time: orderData.pickup_time || null,
+                    pickup_date_end: orderData.pickup_date_end || null,
                     additional_information: orderData.additional_information || null,
                     customization_data: orderData.customization_data || null,
                     status: 'confirmed',
@@ -310,11 +306,12 @@ export const actions: Actions = {
                     productName: orderData.product_name,
                     pickupDate: orderData.pickup_date,
                     pickupTime: orderData.pickup_time,
+                    pickupDateEnd: orderData.pickup_date_end ?? undefined,
                     totalAmount: totalAmount,
                     paidAmount: paidAmount,
                     remainingAmount: remainingAmount,
                     orderId: order.id,
-                    orderUrl: `${PUBLIC_SITE_URL}/${product.shops.slug}/order/${order.id}`,
+                    orderUrl: `${PUBLIC_SITE_URL}/order/${order.id}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     shopColor,
                 });
@@ -645,7 +642,7 @@ export const actions: Actions = {
                         shopName: shop.name,
                         shopLogo: shop.logo_url || undefined,
                         orderId: pendingOrder.order_ref || pendingOrder.id.slice(0, 8),
-                        orderUrl: `${PUBLIC_SITE_URL}/${shopSlug}`,
+                        orderUrl: `${PUBLIC_SITE_URL}/`,
                         date: new Date().toLocaleDateString('fr-FR'),
                         chefMessage: chefMessage || undefined,
                         willRefund: willRefund,
@@ -739,7 +736,7 @@ export const actions: Actions = {
                         shopName: shop.name,
                         shopLogo: shop.logo_url || undefined,
                         orderId: order.id.slice(0, 8),
-                        orderUrl: `${PUBLIC_SITE_URL}/${shopSlug}/order/${order.id}`,
+                        orderUrl: `${PUBLIC_SITE_URL}/order/${order.id}`,
                         date: new Date().toLocaleDateString('fr-FR'),
                         chefMessage: chefMessage || undefined,
                         willRefund: true, // Remboursement automatique pour les commandes payées
@@ -754,7 +751,7 @@ export const actions: Actions = {
                         shopLogo: shop.logo_url || undefined,
                         reason: chefMessage,
                         requestId: order.id.slice(0, 8),
-                        catalogUrl: `${PUBLIC_SITE_URL}/${shopSlug}`,
+                        catalogUrl: `${PUBLIC_SITE_URL}/`,
                         date: new Date().toLocaleDateString("fr-FR"),
                         shopColor,
                     });
@@ -887,11 +884,12 @@ export const actions: Actions = {
                     productName: order.product_name || 'Commande personnalisée',
                     pickupDate: order.pickup_date,
                     pickupTime: order.pickup_time,
+                    pickupDateEnd: (order as any).pickup_date_end ?? undefined,
                     totalAmount: totalAmount,
                     paidAmount: paidAmount,
                     remainingAmount: remainingAmount,
                     orderId: order.id,
-                    orderUrl: `${PUBLIC_SITE_URL}/${order.shops.slug}/order/${order.id}`,
+                    orderUrl: `${PUBLIC_SITE_URL}/order/${order.id}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     shopColor,
                 });
@@ -927,7 +925,7 @@ export const actions: Actions = {
     makeOrderReady: async ({ request, params, locals }) => {
         let userId: string | undefined;
         let shopId: string | undefined;
-        
+
         try {
             // ✅ OPTIMISÉ : Récupérer shopId depuis formData
             if (!request) {
@@ -1025,11 +1023,12 @@ export const actions: Actions = {
                     productName: orderData.product_name || 'Commande personnalisée',
                     pickupDate: orderData.pickup_date,
                     pickupTime: orderData.pickup_time || null,
+                    pickupDateEnd: orderData.pickup_date_end ?? undefined,
                     totalAmount: totalAmount,
                     paidAmount: paidAmount,
                     remainingAmount: remainingAmount,
                     orderId: params.id,
-                    orderUrl: `${PUBLIC_SITE_URL}/${shop.slug}/order/${params.id}`,
+                    orderUrl: `${PUBLIC_SITE_URL}/order/${params.id}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     shopColor,
                 });
@@ -1206,7 +1205,7 @@ export const actions: Actions = {
                         shopName: shop.name,
                         shopLogo: shop.logo_url || undefined,
                         orderId: order.id.slice(0, 8),
-                        orderUrl: `${PUBLIC_SITE_URL}/${shopSlug}/order/${order.id}`,
+                        orderUrl: `${PUBLIC_SITE_URL}/order/${order.id}`,
                         date: new Date().toLocaleDateString("fr-FR"),
                         shopColor,
                     })]);

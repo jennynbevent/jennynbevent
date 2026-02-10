@@ -46,9 +46,9 @@ export function EmailHeader({ logoUrl, logoAlt, type, shopColor }: EmailHeaderPr
 
 	// Pour les clients, utiliser le logo de la boutique ou Pattyly par défaut
 	// Pour les pâtissiers, toujours utiliser Pattyly
-	const finalLogoUrl = isCustomer 
-		? (logoUrl || `${PUBLIC_SITE_URL}/images/logo_icone.png`)
-		: `${PUBLIC_SITE_URL}/images/logo_icone.png`;
+	const finalLogoUrl = isCustomer
+		? (logoUrl || `${PUBLIC_SITE_URL}/images/logo_jennynbevent.jpg`)
+		: `${PUBLIC_SITE_URL}/images/logo_jennynbevent.jpg`;
 
 	return `
 		<div style="text-align: center; margin-bottom: ${logoMargin}; padding-top: ${EMAIL_SPACING.xl};">
@@ -93,7 +93,7 @@ export function EmailFooter({ orderId, requestId, date, showOrderId = true, show
  */
 export function EmailButton({ href, text, variant = 'primary', shopColor }: EmailButtonProps): string {
 	const colors = shopColor ? getShopColors(shopColor) : EMAIL_COLORS.accent;
-	
+
 	if (variant === 'outline') {
 		// Style outline (comme la homepage)
 		return `
@@ -105,7 +105,7 @@ export function EmailButton({ href, text, variant = 'primary', shopColor }: Emai
 			</a>
 		`;
 	}
-	
+
 	// Style primary (fond coloré)
 	return `
 		<a
@@ -122,10 +122,10 @@ export function EmailButton({ href, text, variant = 'primary', shopColor }: Emai
  * Style minimaliste avec espacement généreux
  */
 export function EmailSection({ title, children, showBorder = false }: EmailSectionProps): string {
-	const borderStyle = showBorder 
+	const borderStyle = showBorder
 		? `border-top: 1px solid ${EMAIL_COLORS.neutral[200]}; padding-top: ${EMAIL_SPACING.lg};`
 		: '';
-	
+
 	return `
 		<div style="margin-bottom: ${EMAIL_SPACING.lg}; ${borderStyle}">
 			${title ? `
@@ -148,12 +148,12 @@ export function EmailContainer(children: string, shopColor?: string | null): str
 	// Pour les emails clients : utiliser la couleur light de la boutique
 	// Pour les emails pâtissiers : utiliser la couleur par défaut Pattyly
 	const colors = shopColor ? getShopColors(shopColor) : EMAIL_COLORS.accent;
-	
+
 	// Dégradé subtil inspiré du hero de la homepage
 	// Le hero utilise from-[#FFE8D6]/30 via-transparent to-transparent
 	// Pour les emails clients, on adapte la couleur selon la boutique
 	const gradientColor = shopColor ? colors.light : EMAIL_COLORS.accent.light;
-	
+
 	// Convertir hex en rgb pour rgba (format: #FFE8D6 -> rgba(255, 232, 214, 0.3))
 	const hexToRgb = (hex: string) => {
 		// Retirer le # si présent
@@ -161,19 +161,19 @@ export function EmailContainer(children: string, shopColor?: string | null): str
 		const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cleanHex);
 		return result
 			? {
-					r: parseInt(result[1], 16),
-					g: parseInt(result[2], 16),
-					b: parseInt(result[3], 16),
-				}
+				r: parseInt(result[1], 16),
+				g: parseInt(result[2], 16),
+				b: parseInt(result[3], 16),
+			}
 			: null;
 	};
-	
+
 	const rgb = hexToRgb(gradientColor);
 	// Opacité de 30% comme le hero, mais adaptée pour les emails (un peu plus subtile)
-	const gradientRgba = rgb 
+	const gradientRgba = rgb
 		? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)` // Opacité subtile pour les emails
 		: `rgba(255, 232, 214, 0.25)`; // Fallback couleur Pattyly (#FFE8D6)
-	
+
 	return `
 		<div style="background: linear-gradient(to bottom, ${gradientRgba} 0%, transparent 60%); min-height: 100vh; padding: ${EMAIL_SPACING.xl} 0;">
 			<div style="font-family: ${EMAIL_TYPOGRAPHY.fontFamily}; color: ${EMAIL_COLORS.neutral[900]}; max-width: ${EMAIL_MAX_WIDTH}; margin: 0 auto; padding: ${EMAIL_SPACING.xl} ${EMAIL_SPACING.lg}; background-color: white; border-radius: ${EMAIL_BORDER_RADIUS.xl}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">

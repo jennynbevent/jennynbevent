@@ -8,6 +8,7 @@ interface OrderReadyProps {
     productName: string;
     pickupDate: string;
     pickupTime?: string | null;
+    pickupDateEnd?: string | null;
     totalAmount: number;
     paidAmount: number;
     remainingAmount: number;
@@ -24,6 +25,7 @@ export function OrderReadyEmail({
     productName,
     pickupDate,
     pickupTime,
+    pickupDateEnd,
     totalAmount,
     paidAmount,
     remainingAmount,
@@ -42,12 +44,12 @@ export function OrderReadyEmail({
     const title = EmailTitle('Votre commande est prête ! 🎉');
 
     const content = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Excellente nouvelle ! Votre commande est prête et vous pouvez venir la récupérer. Votre gâteau vous attend pour le <strong>${formatDateTimeForEmail(pickupDate, pickupTime)}</strong>.`
+        `Bonjour ${customerName},<br /><br />Excellente nouvelle ! Votre commande est prête et vous pouvez venir la récupérer. Votre commande vous attend pour le <strong>${formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd)}</strong>.`
     );
 
     const details = EmailTable([
-        { label: 'Gâteau', value: productName },
-        { label: 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime) },
+        { label: 'Article', value: productName },
+        { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
         { label: 'Prix total', value: `<strong>${totalAmount.toFixed(2)}€</strong>` },
         { label: 'Acompte payé', value: `<strong>${paidAmount.toFixed(2)}€</strong>` },
         { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },

@@ -2,16 +2,14 @@
 	import { onNavigate, goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 import Home from '~icons/lucide/home';
-import Settings from '~icons/lucide/settings';
 import ShoppingCart from '~icons/lucide/shopping-cart';
-import Cake from '~icons/lucide/cake';
+import Package from '~icons/lucide/package';
 import FileText from '~icons/lucide/file-text';
 import Calendar from '~icons/lucide/calendar';
 import Store from '~icons/lucide/store';
 import HelpCircle from '~icons/lucide/help-circle';
 import MenuIcon from '~icons/lucide/menu';
 import XIcon from '~icons/lucide/x';
-import UserPlus from '~icons/lucide/user-plus';
 
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
@@ -20,7 +18,6 @@ import UserPlus from '~icons/lucide/user-plus';
 	import { Separator } from '$lib/components/ui/separator';
 
 	import NavLink from './components/nav-link.svelte';
-	import OrderLimitAlert from './components/order-limit-alert.svelte';
 
 	export let data;
 
@@ -48,7 +45,7 @@ import UserPlus from '~icons/lucide/user-plus';
 	>
 		<nav class="flex flex-col items-center gap-4 px-2 sm:py-5">
 			<a
-				href="/{data.shop ? data.shop.slug : ''}"
+				href="/"
 				class="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 md:h-8 md:w-8"
 			>
 				{#if data.shop?.logo_url}
@@ -59,7 +56,7 @@ import UserPlus from '~icons/lucide/user-plus';
 					/>
 				{:else}
 					<img
-						src="/images/logo_icone.svg"
+						src="/images/logo_jennynbevent.jpg"
 						alt="Logo Pattyly"
 						class="h-8 w-8 rounded object-cover"
 					/>
@@ -103,11 +100,11 @@ import UserPlus from '~icons/lucide/user-plus';
 						activeClass="bg-accent text-accent-foreground"
 						{builder}
 					>
-						<Cake class="h-5 w-5" />
-						<span class="sr-only">Gâteaux</span>
+						<Package class="h-5 w-5" />
+						<span class="sr-only">Articles</span>
 					</NavLink>
 				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Gâteaux</Tooltip.Content>
+				<Tooltip.Content side="right">Articles</Tooltip.Content>
 			</Tooltip.Root>
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild let:builder>
@@ -121,12 +118,7 @@ import UserPlus from '~icons/lucide/user-plus';
 						<span class="sr-only">Formulaire personnalisé</span>
 					</NavLink>
 				</Tooltip.Trigger>
-				<Tooltip.Content side="right">
-					Formulaire personnalisé
-					{#if !data.permissions.canManageCustomForms}
-						<span class="ml-1 text-[#FF6F61]">(Premium)</span>
-					{/if}
-				</Tooltip.Content>
+				<Tooltip.Content side="right">Formulaire personnalisé</Tooltip.Content>
 			</Tooltip.Root>
 			<Tooltip.Root>
 				<Tooltip.Trigger asChild let:builder>
@@ -170,36 +162,6 @@ import UserPlus from '~icons/lucide/user-plus';
 				</Tooltip.Trigger>
 				<Tooltip.Content side="right">FAQ</Tooltip.Content>
 			</Tooltip.Root>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/affiliation"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<UserPlus class="h-5 w-5" />
-						<span class="sr-only">Affiliation</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Affiliation</Tooltip.Content>
-			</Tooltip.Root>
-		</nav>
-		<nav class="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/settings"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<Settings class="h-5 w-5" />
-						<span class="sr-only">Settings</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Paramètres</Tooltip.Content>
-			</Tooltip.Root>
 		</nav>
 	</aside>
 	<div class="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
@@ -217,7 +179,7 @@ import UserPlus from '~icons/lucide/user-plus';
 						/>
 					{:else}
 						<img
-							src="/images/logo_icone.svg"
+							src="/images/logo_jennynbevent.jpg"
 							alt="Logo Pattyly"
 							class="h-8 w-8 rounded object-cover"
 						/>
@@ -270,7 +232,7 @@ import UserPlus from '~icons/lucide/user-plus';
 										class="w-full py-6 text-base"
 										on:click={(e) => handleNavClick('/dashboard/products', e)}
 									>
-										Gâteaux
+										Articles
 									</Button>
 								</li>
 								<li>
@@ -309,27 +271,6 @@ import UserPlus from '~icons/lucide/user-plus';
 										FAQ
 									</Button>
 								</li>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/affiliation', e)}
-									>
-										Affiliation
-									</Button>
-								</li>
-							</ul>
-							<Separator />
-							<ul>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/settings', e)}
-									>
-										Paramètres
-									</Button>
-								</li>
 							</ul>
 						</nav>
 					</Drawer.Content>
@@ -337,7 +278,6 @@ import UserPlus from '~icons/lucide/user-plus';
 			</div>
 		</header>
 		<main class="flex w-full flex-col items-start p-4 sm:px-6 sm:py-0">
-			<OrderLimitAlert orderLimitStats={data.orderLimitStats} />
 			<slot />
 		</main>
 	</div>

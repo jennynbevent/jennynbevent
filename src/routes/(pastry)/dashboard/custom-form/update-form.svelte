@@ -82,7 +82,7 @@
 				<Input
 					{...attrs}
 					type="text"
-					placeholder="Ex: Votre Gâteau Sur Mesure"
+					placeholder="Ex: Votre commande sur mesure"
 					bind:value={$formData.title}
 					maxlength={200}
 				/>
@@ -101,7 +101,7 @@
 				<Form.Label>Description du formulaire (optionnel)</Form.Label>
 				<Textarea
 					{...attrs}
-					placeholder="Ex: Décrivez votre gâteau idéal et nous vous proposerons une estimation personnalisée"
+					placeholder="Ex: Décrivez votre commande idéale et nous vous proposerons une estimation personnalisée"
 					rows={3}
 					bind:value={$formData.description}
 					maxlength={500}

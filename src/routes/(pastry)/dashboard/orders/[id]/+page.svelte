@@ -380,7 +380,7 @@
 					<CardTitle>Informations générales</CardTitle>
 				</CardHeader>
 				<CardContent class="space-y-4">
-					<!-- Détails du produit si c'est une commande de gâteau -->
+					<!-- Détails du produit si c'est une commande d'article -->
 					{#if order.products && order.products.name}
 						<div class="border-b pb-4">
 							<div class="flex gap-4">
@@ -435,14 +435,18 @@
 						</div>
 						<div>
 							<Label class="text-sm font-medium text-muted-foreground"
-								>Date de récupération</Label
+								>{order.pickup_date_end ? 'Information de réservation' : 'Date de récupération'}</Label
 							>
 							<p class="text-sm">
-								{formatDate(order.pickup_date)}
-								{#if order.pickup_time}
-									<span class="ml-1 text-gray-900"
-										>{order.pickup_time.substring(0, 5)}</span
-									>
+								{#if order.pickup_date_end}
+									Du {formatDate(order.pickup_date)} au {formatDate(order.pickup_date_end)}
+								{:else}
+									{formatDate(order.pickup_date)}
+									{#if order.pickup_time}
+										<span class="ml-1 text-gray-900"
+											>{order.pickup_time.substring(0, 5)}</span
+										>
+									{/if}
 								{/if}
 							</p>
 						</div>

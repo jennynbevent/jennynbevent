@@ -7,6 +7,7 @@ interface QuotePaymentProps {
     customerEmail: string;
     pickupDate: string;
     pickupTime?: string | null;
+    pickupDateEnd?: string | null;
     totalPrice: number;
     depositAmount: number;
     remainingAmount: number;
@@ -36,7 +37,7 @@ export function QuotePaymentEmail({
     const title = EmailTitle('Paiement reçu');
 
     const intro = EmailParagraph(
-        `Le client <strong>${customerName}</strong> a accepté votre devis et effectué le paiement de l'acompte.<br /><br />Vous pouvez maintenant commencer la préparation de son gâteau.`
+        `Le client <strong>${customerName}</strong> a accepté votre devis et effectué le paiement de l'acompte.<br /><br />Vous pouvez maintenant commencer la préparation de sa commande.`
     );
 
     const customerInfo = EmailTable([
@@ -45,7 +46,7 @@ export function QuotePaymentEmail({
     ]);
 
     const orderDetails = EmailTable([
-        { label: 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime) },
+        { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
     ]);
 
     const financialDetails = EmailTable([
@@ -58,10 +59,10 @@ export function QuotePaymentEmail({
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
             <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Connectez-vous à votre dashboard pour gérer cette commande</p>
             ${EmailButton({
-                href: dashboardUrl,
-                text: 'Accéder au dashboard',
-                variant: 'primary',
-            })}
+        href: dashboardUrl,
+        text: 'Accéder au dashboard',
+        variant: 'primary',
+    })}
         </div>
     `;
 

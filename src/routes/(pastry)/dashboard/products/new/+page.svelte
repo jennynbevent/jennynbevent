@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-	<title>Nouveau Gâteau - Dashboard</title>
+	<title>Nouveau Article - Dashboard</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">
@@ -41,9 +41,9 @@
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-4">
 			<div>
-				<h1 class="text-3xl font-bold">Nouveau Gâteau</h1>
+				<h1 class="text-3xl font-bold">Nouveau Article</h1>
 				<p class="text-muted-foreground">
-					Ajoutez un nouveau gâteau à votre catalogue
+					Ajoutez un nouvel article à votre catalogue
 				</p>
 			</div>
 		</div>
