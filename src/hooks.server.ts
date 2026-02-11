@@ -1,5 +1,9 @@
 // src/hooks.server.ts
-import { env } from '$env/dynamic/private';
+import {
+	PUBLIC_SUPABASE_ANON_KEY,
+	PUBLIC_SUPABASE_URL,
+	PUBLIC_SITE_URL,
+} from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { Handle } from '@sveltejs/kit';
@@ -140,8 +144,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 		// Initialize Supabase client
 		event.locals.supabase = createServerClient(
-			env.PUBLIC_SUPABASE_URL ?? '',
-			env.PUBLIC_SUPABASE_ANON_KEY ?? '',
+			PUBLIC_SUPABASE_URL,
+			PUBLIC_SUPABASE_ANON_KEY,
 			{
 				cookies: {
 					get: (key) => event.cookies.get(key),
@@ -167,8 +171,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 		// Initialize Supabase service role client
 		event.locals.supabaseServiceRole = createClient(
-			env.PUBLIC_SUPABASE_URL ?? '',
-			env.PRIVATE_SUPABASE_SERVICE_ROLE ?? '',
+			PUBLIC_SUPABASE_URL,
+			PRIVATE_SUPABASE_SERVICE_ROLE,
 			{ auth: { persistSession: false } },
 		);
 

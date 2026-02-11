@@ -1,4 +1,7 @@
-import { env } from '$env/dynamic/public';
+import {
+	PUBLIC_SUPABASE_ANON_KEY,
+	PUBLIC_SUPABASE_URL,
+} from '$env/static/public';
 import {
 	createBrowserClient,
 	createServerClient,
@@ -92,15 +95,13 @@ function createInterceptedFetch(originalFetch: typeof globalThis.fetch): typeof 
  */
 function createSupabaseClient(
 	fetch: typeof globalThis.fetch,
-	data: { session: any },
-	url: string,
-	anonKey: string
+	data: { session: any }
 ): ReturnType<typeof createBrowserClient> | ReturnType<typeof createServerClient> {
 	if (isBrowser()) {
 		// Use intercepted fetch to handle invalid refresh token errors
 		const interceptedFetch = createInterceptedFetch(fetch);
 
-		return createBrowserClient(url, anonKey, {
+		return createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 			global: {
 				fetch: interceptedFetch,
 			},
@@ -117,7 +118,7 @@ function createSupabaseClient(
 		});
 	}
 
-	return createServerClient(url, anonKey, {
+	return createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		global: {
 			fetch: fetch,
 		},
@@ -190,14 +191,12 @@ async function getAuthData(supabase: ReturnType<typeof createBrowserClient> | Re
 // ============================================================================
 
 export const load: LayoutLoad = async ({ fetch, data, depends }) => {
-	const url = env.PUBLIC_SUPABASE_URL ?? '';
-	const anonKey = env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 	try {
 		// Mark dependency for SvelteKit's reactivity system
 		depends('supabase:auth');
 
 		// Create appropriate Supabase client
-		const supabase = createSupabaseClient(fetch, data, url, anonKey);
+		const supabase = createSupabaseClient(fetch, data);
 
 		// Retrieve authentication data safely
 		const { session, user } = await getAuthData(supabase);
@@ -211,7 +210,7 @@ export const load: LayoutLoad = async ({ fetch, data, depends }) => {
 
 		// Return fallback data to prevent app crash
 		return {
-			supabase: createServerClient(url, anonKey, {
+			supabase: createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 				global: { fetch },
 				cookies: { get: () => '{}' }
 			}),
