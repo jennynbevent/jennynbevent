@@ -81,12 +81,7 @@ export const actions: Actions = {
             if (type === 'recovery') {
                 throw redirect(303, '/new-password');
             } else {
-                // Pour signup, créer le contact dans Resend avant redirection
-                // ✅ Créer le contact dans Resend dès la confirmation (fire-and-forget)
-                const { createPastryInResend } = await import('$lib/utils/resend-sync');
-                createPastryInResend(data.user.id, email, locals.supabase).catch(err => {
-                    console.error('Erreur création contact Resend:', err);
-                });
+                // ✅ Synchronisation Resend désactivée (fonctionnalité supprimée)
 
                 // ✅ Stocker le ref dans un cookie pour l'utiliser lors de la création de la boutique
                 // Récupérer depuis l'URL ou le cookie existant
