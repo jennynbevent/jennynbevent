@@ -122,13 +122,16 @@ export const actions: Actions = {
 
             const { name, bio, slug, logo, instagram, tiktok, website } = form.data;
 
+            // Slug obligatoire pour la RPC : depuis le formulaire ou généré à partir du nom
+            const slugForRpc = (slug && slug.trim() !== '') ? slug.trim() : slugFromName(name);
+
             // ✅ OPTIMISÉ : Vérification du slug intégrée dans la fonction SQL
             // Création de la boutique avec disponibilités en une transaction (sans logo d'abord)
             const { data: shop, error: createError } = await supabase.rpc('create_shop_with_availabilities', {
                 p_profile_id: userId,
                 p_name: name,
                 p_bio: bio ?? null,
-                p_slug: slug,
+                p_slug: slugForRpc,
                 p_logo_url: null, // Logo sera ajouté après si fourni
                 p_instagram: instagram ?? null,
                 p_tiktok: tiktok ?? null,
@@ -195,7 +198,7 @@ export const actions: Actions = {
             logEventAsync(
                 supabaseServiceRole,
                 Events.SHOP_CREATED,
-                { shop_id: shop.id, shop_name: name, shop_slug: slug },
+                { shop_id: shop.id, shop_name: name, shop_slug: slugForRpc },
                 userId,
                 '/onboarding'
             );
