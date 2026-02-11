@@ -4,6 +4,7 @@ import {
 	PUBLIC_SUPABASE_URL,
 	PUBLIC_SITE_URL,
 } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { Handle } from '@sveltejs/kit';
@@ -170,9 +171,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 		);
 
 		// Initialize Supabase service role client
+		const serviceRoleKey = env.PRIVATE_SUPABASE_SERVICE_ROLE;
+		if (!serviceRoleKey) {
+			console.error('PRIVATE_SUPABASE_SERVICE_ROLE is not set');
+		}
 		event.locals.supabaseServiceRole = createClient(
 			PUBLIC_SUPABASE_URL,
-			PRIVATE_SUPABASE_SERVICE_ROLE,
+			serviceRoleKey ?? '',
 			{ auth: { persistSession: false } },
 		);
 
