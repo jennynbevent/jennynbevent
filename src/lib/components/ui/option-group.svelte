@@ -19,7 +19,7 @@
 		background_color: string;
 		background_image_url?: string;
 	} = {
-		button_color: '#ff6f61',
+		button_color: '#BC90A5',
 		button_text_color: '#ffffff',
 		text_color: '#333333',
 		icon_color: '#6b7280',

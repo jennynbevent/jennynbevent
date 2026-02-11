@@ -28,7 +28,7 @@
 
 <div class="flex items-center gap-4">
 	<label class="text-sm font-medium text-neutral-700">
-		Rayon : <span class="text-[#FF6F61] font-semibold">{value}km</span>
+		Rayon : <span class="text-[#BC90A5] font-semibold">{value}km</span>
 	</label>
 	<input
 		bind:this={inputElement}
@@ -38,8 +38,8 @@
 		step={step}
 		value={value}
 		on:input={handleInput}
-		class="flex-1 h-2 rounded-lg appearance-none bg-neutral-200 accent-[#FF6F61] cursor-pointer"
-		style="background: linear-gradient(to right, #FF6F61 0%, #FF6F61 {((value - min) / (max - min)) * 100}%, #e5e7eb {((value - min) / (max - min)) * 100}%, #e5e7eb 100%);"
+		class="flex-1 h-2 rounded-lg appearance-none bg-neutral-200 accent-[#BC90A5] cursor-pointer"
+		style="background: linear-gradient(to right, #BC90A5 0%, #BC90A5 {((value - min) / (max - min)) * 100}%, #e5e7eb {((value - min) / (max - min)) * 100}%, #e5e7eb 100%);"
 	/>
 </div>
 
@@ -49,7 +49,7 @@
 		width: 18px;
 		height: 18px;
 		border-radius: 50%;
-		background: #FF6F61;
+		background: #BC90A5;
 		cursor: pointer;
 		border: 2px solid white;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -59,7 +59,7 @@
 		width: 18px;
 		height: 18px;
 		border-radius: 50%;
-		background: #FF6F61;
+		background: #BC90A5;
 		cursor: pointer;
 		border: 2px solid white;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);

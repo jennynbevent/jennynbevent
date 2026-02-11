@@ -29,7 +29,7 @@ export function CriticalErrorNotificationEmail({
 
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'pastry',
     });
 
@@ -71,7 +71,7 @@ export function CriticalErrorNotificationEmail({
     const footer = `
         <div style="margin-top: ${EMAIL_SPACING['2xl']}; padding-top: ${EMAIL_SPACING.lg}; border-top: 1px solid ${EMAIL_COLORS.neutral[200]};">
             <p style="color: ${EMAIL_COLORS.neutral[500]}; font-size: ${EMAIL_TYPOGRAPHY.fontSize.xs};">
-                Cette notification a été envoyée automatiquement par le système de logging d'erreurs de Pattyly.
+                Cette notification a été envoyée automatiquement par le système de logging d'erreurs de Jennynbevent.
             </p>
         </div>
     `;

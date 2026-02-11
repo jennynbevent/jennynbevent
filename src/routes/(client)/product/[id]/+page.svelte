@@ -71,7 +71,7 @@
 		backgroundImage: customizations?.background_image_url
 			? `url(${customizations.background_image_url})`
 			: 'none',
-		buttonStyle: `background-color: ${customizations?.button_color || '#ff6f61'}; color: ${customizations?.button_text_color || '#ffffff'};`,
+		buttonStyle: `background-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${customizations?.text_color || '#333333'};`,
 		iconStyle: `color: ${customizations?.icon_color || '#6b7280'};`,
 		secondaryTextStyle: `color: ${customizations?.secondary_text_color || '#333333'};`,
@@ -96,7 +96,7 @@
 </script>
 
 <svelte:head>
-	<title>{product.name} - {shop.name} - Pattyly</title>
+	<title>{product.name} - {shop.name} - Jennynbevent</title>
 	<meta
 		name="description"
 		content={product.description ||
@@ -140,7 +140,7 @@
 				</div>
 			{:else}
 				<div
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFE8D6]/30 to-white shadow-sm sm:h-12 sm:w-12"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#BB91A4]/30 to-white shadow-sm sm:h-12 sm:w-12"
 				>
 					<span
 							class="text-lg font-semibold text-neutral-700 sm:text-xl"
@@ -217,13 +217,13 @@
 									<!-- Boutons de navigation -->
 									<Carousel.Previous
 										class="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 shadow-lg hover:bg-white transition-colors"
-										style={`color: ${customizations?.button_color || '#FF6F61'};`}
+										style={`color: ${customizations?.button_color || '#BC90A5'};`}
 									>
 										<ChevronLeft class="h-5 w-5" />
 									</Carousel.Previous>
 									<Carousel.Next
 										class="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 shadow-lg hover:bg-white transition-colors"
-										style={`color: ${customizations?.button_color || '#FF6F61'};`}
+										style={`color: ${customizations?.button_color || '#BC90A5'};`}
 									>
 										<ChevronRight class="h-5 w-5" />
 									</Carousel.Next>
@@ -243,7 +243,7 @@
 												? 'opacity-100'
 												: 'opacity-40'}"
 											style={selectedIndex === index
-												? `background-color: ${customizations?.button_color || '#FF6F61'};`
+												? `background-color: ${customizations?.button_color || '#BC90A5'};`
 												: 'background-color: #9ca3af;'}
 											aria-label="Aller à la photo {index + 1}"
 										/>
@@ -261,7 +261,7 @@
 									/>
 								{:else}
 									<div
-										class="flex aspect-square w-full max-w-[350px] items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFE8D6]/30 to-white shadow-sm lg:max-w-[450px] xl:max-w-[500px]"
+										class="flex aspect-square w-full max-w-[350px] items-center justify-center rounded-2xl bg-gradient-to-br from-[#BB91A4]/30 to-white shadow-sm lg:max-w-[450px] xl:max-w-[500px]"
 									>
 										<Cake class="h-16 w-16 text-neutral-300" />
 									</div>
@@ -284,7 +284,7 @@
 						</h2>
 						<p
 							class="text-xl font-semibold sm:text-2xl"
-							style={`color: ${customizations?.button_color || '#FF6F61'}; font-weight: 600;`}
+							style={`color: ${customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 						>
 							À partir de {formatPrice(product.base_price)}
 						</p>

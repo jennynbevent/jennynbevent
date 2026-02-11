@@ -95,7 +95,7 @@ function applyPerformanceHeaders(response: Response, pathname: string, hostname?
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
 	// Block indexing for test domain
-	if (hostname && (hostname === 'test.pattyly.com' || hostname.includes('test.pattyly.com'))) {
+	if (hostname && (hostname === 'test.jennynbevent.com' || hostname.includes('test.jennynbevent.com'))) {
 		response.headers.set('X-Robots-Tag', 'noindex, nofollow');
 	}
 

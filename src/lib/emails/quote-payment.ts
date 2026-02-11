@@ -30,7 +30,7 @@ export function QuotePaymentEmail({
 }: QuotePaymentProps) {
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'pastry',
     });
 

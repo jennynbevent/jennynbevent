@@ -37,15 +37,15 @@ interface EmailSectionProps {
 /**
  * Header épuré pour les emails
  * - Logo boutique (grand) pour les clients
- * - Logo Pattyly (petit, discret) pour les pâtissiers
+ * - Logo Jennynbevent (petit, discret) pour les pâtissiers
  */
 export function EmailHeader({ logoUrl, logoAlt, type, shopColor }: EmailHeaderProps): string {
 	const isCustomer = type === 'customer';
 	const logoSize = isCustomer ? '60px' : '30px';
 	const logoMargin = isCustomer ? EMAIL_SPACING.xl : EMAIL_SPACING.lg;
 
-	// Pour les clients, utiliser le logo de la boutique ou Pattyly par défaut
-	// Pour les pâtissiers, toujours utiliser Pattyly
+	// Pour les clients, utiliser le logo de la boutique ou Jennynbevent par défaut
+	// Pour les pâtissiers, toujours utiliser Jennynbevent
 	const finalLogoUrl = isCustomer
 		? (logoUrl || `${PUBLIC_SITE_URL}/images/logo_jennynbevent.jpg`)
 		: `${PUBLIC_SITE_URL}/images/logo_jennynbevent.jpg`;
@@ -146,15 +146,15 @@ export function EmailSection({ title, children, showBorder = false }: EmailSecti
  */
 export function EmailContainer(children: string, shopColor?: string | null): string {
 	// Pour les emails clients : utiliser la couleur light de la boutique
-	// Pour les emails pâtissiers : utiliser la couleur par défaut Pattyly
+	// Pour les emails pâtissiers : utiliser la couleur par défaut Jennynbevent
 	const colors = shopColor ? getShopColors(shopColor) : EMAIL_COLORS.accent;
 
 	// Dégradé subtil inspiré du hero de la homepage
-	// Le hero utilise from-[#FFE8D6]/30 via-transparent to-transparent
+	// Le hero utilise from-[#BB91A4]/30 via-transparent to-transparent
 	// Pour les emails clients, on adapte la couleur selon la boutique
 	const gradientColor = shopColor ? colors.light : EMAIL_COLORS.accent.light;
 
-	// Convertir hex en rgb pour rgba (format: #FFE8D6 -> rgba(255, 232, 214, 0.3))
+	// Convertir hex en rgb pour rgba (format: #BB91A4 -> rgba(255, 232, 214, 0.3))
 	const hexToRgb = (hex: string) => {
 		// Retirer le # si présent
 		const cleanHex = hex.replace('#', '');
@@ -172,7 +172,7 @@ export function EmailContainer(children: string, shopColor?: string | null): str
 	// Opacité de 30% comme le hero, mais adaptée pour les emails (un peu plus subtile)
 	const gradientRgba = rgb
 		? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)` // Opacité subtile pour les emails
-		: `rgba(255, 232, 214, 0.25)`; // Fallback couleur Pattyly (#FFE8D6)
+		: `rgba(255, 232, 214, 0.25)`; // Fallback couleur Jennynbevent (#BB91A4)
 
 	return `
 		<div style="background: linear-gradient(to bottom, ${gradientRgba} 0%, transparent 60%); min-height: 100vh; padding: ${EMAIL_SPACING.xl} 0;">

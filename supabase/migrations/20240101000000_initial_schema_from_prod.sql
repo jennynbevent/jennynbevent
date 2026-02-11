@@ -388,7 +388,7 @@ BEGIN
     )
     VALUES (
         NEW.id,
-        '#ff6f61',
+        '#BC90A5',
         '#ffffff',
         '#333333',
         '#6b7280',
@@ -2982,7 +2982,7 @@ COMMENT ON TABLE "public"."push_subscriptions" IS 'Push notification subscriptio
 CREATE TABLE IF NOT EXISTS "public"."shop_customizations" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "shop_id" "uuid" NOT NULL,
-    "button_color" "text" DEFAULT '#ff6f61'::"text",
+    "button_color" "text" DEFAULT '#BC90A5'::"text",
     "button_text_color" "text" DEFAULT '#ffffff'::"text",
     "text_color" "text" DEFAULT '#333333'::"text",
     "icon_color" "text" DEFAULT '#6b7280'::"text",

@@ -22,8 +22,8 @@ export function MarketingCampaignEmail({
     recipientEmail
 }: MarketingCampaignEmailProps) {
     const header = EmailHeader({
-        logoUrl: 'https://pattyly.com/images/logo_jennynbevent.jpg',
-        logoAlt: 'Pattyly',
+        logoUrl: 'https://jennynbevent.com/images/logo_jennynbevent.jpg',
+        logoAlt: 'Jennynbevent',
         type: 'customer',
     });
 

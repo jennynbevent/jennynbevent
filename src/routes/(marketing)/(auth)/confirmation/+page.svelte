@@ -37,14 +37,14 @@
 	<meta
 		name="description"
 		content={isRecovery
-			? "Entre le code de réinitialisation à 6 chiffres reçu par email pour réinitialiser ton mot de passe Pattyly et récupérer l'accès à ton compte cake designer."
-			: "Confirme ton adresse email avec le code à 6 chiffres reçu par email pour finaliser ton inscription Pattyly et accéder à ton dashboard de gestion."}
+			? "Entre le code de réinitialisation à 6 chiffres reçu par email pour réinitialiser ton mot de passe Jennynbevent et récupérer l'accès à ton compte cake designer."
+			: "Confirme ton adresse email avec le code à 6 chiffres reçu par email pour finaliser ton inscription Jennynbevent et accéder à ton dashboard de gestion."}
 	/>
 	<meta
 		name="keywords"
 		content={isRecovery
-			? "code réinitialisation mot de passe, reset password pattyly, récupérer compte cake designer, code vérification email"
-			: "confirmation email pattyly, code vérification, finaliser inscription cake designer, activer compte pâtisserie"}
+			? "code réinitialisation mot de passe, reset password Jennynbevent, récupérer compte cake designer, code vérification email"
+			: "confirmation email Jennynbevent, code vérification, finaliser inscription cake designer, activer compte pâtisserie"}
 	/>
 	<meta
 		property="og:title"
@@ -55,25 +55,25 @@
 	<meta
 		property="og:description"
 		content={isRecovery
-			? "Entre le code de réinitialisation à 6 chiffres reçu par email pour réinitialiser ton mot de passe Pattyly."
-			: "Confirme ton adresse email avec le code à 6 chiffres reçu par email pour finaliser ton inscription Pattyly."}
+			? "Entre le code de réinitialisation à 6 chiffres reçu par email pour réinitialiser ton mot de passe Jennynbevent."
+			: "Confirme ton adresse email avec le code à 6 chiffres reçu par email pour finaliser ton inscription Jennynbevent."}
 	/>
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://pattyly.com/confirmation" />
-	<link rel="canonical" href="https://pattyly.com/confirmation" />
+	<meta property="og:url" content="https://jennynbevent.com/confirmation" />
+	<link rel="canonical" href="https://jennynbevent.com/confirmation" />
 </svelte:head>
 
 <!-- Hero section premium -->
 <section class="relative flex min-h-[90vh] w-full flex-col justify-center bg-white py-16 sm:py-24 md:min-h-screen md:py-32">
-	<div class="absolute inset-0 h-full w-full bg-gradient-to-b from-[#FFE8D6]/30 via-transparent to-transparent"></div>
+	<div class="absolute inset-0 h-full w-full bg-gradient-to-b from-[#BB91A4]/30 via-transparent to-transparent"></div>
 	
 	<div class="relative z-10 mx-auto w-full max-w-2xl px-4 sm:px-6 md:px-8 lg:px-12">
 		<!-- Header minimaliste -->
 		<div class="mb-8 text-center sm:mb-12">
 			<div
-				class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#FF6F61]/10"
+				class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#BC90A5]/10"
 			>
-				<Mail class="h-10 w-10 text-[#FF6F61]" />
+				<Mail class="h-10 w-10 text-[#BC90A5]" />
 			</div>
 			<h1
 				bind:this={heroTitle}
@@ -81,9 +81,9 @@
 				style="font-weight: 600; letter-spacing: -0.03em;"
 			>
 				{#if isRecovery}
-					Réinitialise ton <span class="text-[#FF6F61]">mot de passe</span>
+					Réinitialise ton <span class="text-[#BC90A5]">mot de passe</span>
 				{:else}
-					Confirme ton <span class="text-[#FF6F61]">email</span>
+					Confirme ton <span class="text-[#BC90A5]">email</span>
 				{/if}
 			</h1>
 			<p
@@ -111,7 +111,7 @@
 							Tu as déjà un compte ?
 							<a
 								href="/login"
-								class="ml-1 text-[#FF6F61] font-medium underline transition-colors hover:text-[#e85a4f]"
+								class="ml-1 text-[#BC90A5] font-medium underline transition-colors hover:text-[#BE85A5]"
 							>
 								Se connecter
 							</a>

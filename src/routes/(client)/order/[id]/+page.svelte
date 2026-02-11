@@ -31,7 +31,7 @@
 		backgroundImage: data.customizations?.background_image_url
 			? `url(${data.customizations.background_image_url})`
 			: 'none',
-		buttonStyle: `background-color: ${data.customizations?.button_color || '#ff6f61'}; color: ${data.customizations?.button_text_color || '#ffffff'};`,
+		buttonStyle: `background-color: ${data.customizations?.button_color || '#BC90A5'}; color: ${data.customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${data.customizations?.text_color || '#333333'};`,
 		iconStyle: `color: ${data.customizations?.icon_color || '#6b7280'};`,
 		secondaryTextStyle: `color: ${data.customizations?.secondary_text_color || '#333333'};`,
@@ -208,7 +208,7 @@
 </script>
 
 <svelte:head>
-	<title>Commande confirmée - Pattyly</title>
+	<title>Commande confirmée - Jennynbevent</title>
 </svelte:head>
 
 <div
@@ -232,7 +232,7 @@
 				</div>
 			{:else}
 				<div
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFE8D6]/30 to-white shadow-sm sm:h-12 sm:w-12"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#BB91A4]/30 to-white shadow-sm sm:h-12 sm:w-12"
 				>
 					<span
 							class="text-lg font-semibold text-neutral-700 sm:text-xl"
@@ -448,7 +448,7 @@
 							</span>
 							<span
 								class="text-sm text-right sm:ml-auto whitespace-nowrap"
-								style={`color: ${data.customizations?.button_color || '#FF6F61'}; font-weight: 400;`}
+								style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 400;`}
 							>
 								{chefPickupDate ? formatDate(chefPickupDate) : ''}
 								{#if order?.chef_pickup_time}
@@ -582,7 +582,7 @@
 							<!-- Acompte payé -->
 							<div
 								class="flex items-center justify-between gap-2 font-semibold"
-								style={`color: ${data.customizations?.button_color || '#FF6F61'}; font-weight: 600;`}
+								style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 							>
 								<span>Payé aujourd'hui :</span>
 								<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
@@ -596,7 +596,7 @@
 								{#if order?.status === 'to_verify'}
 									<span
 										class="text-sm font-normal text-right sm:ml-auto"
-										style={`color: ${data.customizations?.button_color || '#FF6F61'}; font-weight: 400;`}
+										style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 400;`}
 									>
 										Paiement en cours de vérification
 									</span>
@@ -638,7 +638,7 @@
 								{:else}
 									<span
 										class="text-sm font-normal text-right sm:ml-auto"
-										style={`color: ${data.customizations?.button_color || '#FF6F61'}; font-weight: 400;`}
+										style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 400;`}
 									>
 										En attente de devis
 									</span>
@@ -661,7 +661,7 @@
 									<!-- Acompte à payer pour les devis -->
 									<div
 										class="flex items-center justify-between gap-2 font-semibold"
-										style={`color: ${data.customizations?.button_color || '#FF6F61'}; font-weight: 600;`}
+										style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 									>
 										<span>À payer aujourd'hui :</span>
 										<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
@@ -670,7 +670,7 @@
 									<!-- Acompte -->
 									<div
 										class="flex items-center justify-between gap-2 font-semibold"
-										style={`color: ${order?.status === 'to_verify' ? (data.customizations?.button_color || '#FF6F61') : '#10b981'}; font-weight: 600;`}
+										style={`color: ${order?.status === 'to_verify' ? (data.customizations?.button_color || '#BC90A5') : '#10b981'}; font-weight: 600;`}
 									>
 										<span>Acompte :</span>
 										<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>

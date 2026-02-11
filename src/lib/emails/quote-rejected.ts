@@ -18,7 +18,7 @@ export function QuoteRejectedEmail({
 }: QuoteRejectedProps) {
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'pastry',
     });
 
@@ -37,10 +37,10 @@ export function QuoteRejectedEmail({
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
             <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Retrouvez tous les détails du devis refusé</p>
             ${EmailButton({
-                href: orderUrl,
-                text: 'Voir le détail du devis',
-                variant: 'primary',
-            })}
+        href: orderUrl,
+        text: 'Voir le détail du devis',
+        variant: 'primary',
+    })}
         </div>
     `;
 

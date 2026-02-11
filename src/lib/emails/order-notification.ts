@@ -35,7 +35,7 @@ export function OrderNotificationEmail({
 }: OrderNotificationProps) {
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'pastry',
     });
 

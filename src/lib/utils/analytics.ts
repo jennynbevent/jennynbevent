@@ -75,7 +75,7 @@ function getUserTypeFromContext(): 'pastry' | 'client' | 'visitor' {
 	}
 
 	// 2. Détection basée sur localStorage (popup home page)
-	const popupAnswer = localStorage.getItem('pattyly_cake_designer_popup_answered');
+	const popupAnswer = localStorage.getItem('Jennynbevent_cake_designer_popup_answered');
 	if (popupAnswer === 'createur') {
 		return 'pastry';
 	}

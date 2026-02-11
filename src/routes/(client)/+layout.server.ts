@@ -10,7 +10,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			return {
 				shopId: null,
 				customizations: {
-					button_color: '#ff6f61',
+					button_color: '#BC90A5',
 					button_text_color: '#ffffff',
 					text_color: '#333333',
 					icon_color: '#6b7280',
@@ -48,7 +48,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		return {
 			shopId: shop.id,
 			customizations: customizations || {
-				button_color: '#ff6f61',
+				button_color: '#BC90A5',
 				button_text_color: '#ffffff',
 				text_color: '#333333',
 				icon_color: '#6b7280',
@@ -63,7 +63,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		return {
 			shopId: null,
 			customizations: {
-				button_color: '#ff6f61',
+				button_color: '#BC90A5',
 				button_text_color: '#ffffff',
 				text_color: '#333333',
 				icon_color: '#6b7280',

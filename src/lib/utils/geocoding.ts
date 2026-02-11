@@ -26,7 +26,7 @@ export async function geocodeCity(
 			`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=fr`,
 			{
 				headers: {
-					'User-Agent': 'Pattyly/1.0',
+					'User-Agent': 'Jennynbevent/1.0',
 				},
 			}
 		);

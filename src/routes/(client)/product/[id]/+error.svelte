@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>Produit non trouvé - Pattyly</title>
+	<title>Produit non trouvé - Jennynbevent</title>
 	<meta
 		name="description"
 		content="Ce produit n'existe pas ou n'est plus disponible"
@@ -49,7 +49,7 @@
 			<Button
 				href="/"
 					class="flex h-11 items-center gap-2 rounded-xl text-sm font-medium text-white shadow-sm transition-all duration-200 hover:shadow-md"
-					style="background-color: #FF6F61; font-weight: 500;"
+					style="background-color: #BC90A5; font-weight: 500;"
 				>
 				<ArrowLeft class="h-4 w-4" />
 				Retour à la boutique

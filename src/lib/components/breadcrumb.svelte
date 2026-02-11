@@ -15,7 +15,7 @@
 				'@type': 'ListItem',
 				position: index + 1,
 				name: item.name,
-				item: `https://pattyly.com${item.url}`,
+				item: `https://jennynbevent.com${item.url}`,
 			})),
 		};
 
@@ -41,7 +41,7 @@
 				{#if index < items.length - 1}
 					<a
 						href={item.url}
-						class="hover:text-[#FF6F61] hover:underline transition-colors"
+						class="hover:text-[#BC90A5] hover:underline transition-colors"
 					>
 						{item.name}
 					</a>

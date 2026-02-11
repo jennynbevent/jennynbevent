@@ -7,9 +7,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
     const isDev = import.meta.env.DEV;
     const vercelEnv = process.env.VERCEL_ENV;
     const isVercelPreview = vercelEnv === 'preview' || vercelEnv === 'development';
-    
+
     if (!isDev && !isVercelPreview) {
-        return json({ 
+        return json({
             error: 'Test endpoint only available in development or preview environment',
             currentEnv: vercelEnv || 'production'
         }, { status: 403 });
@@ -48,9 +48,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
             testEndpoint: true,
         });
 
-        return json({ 
-            success: true, 
-            message: '✅ Email de test envoyé à pattyly.saas+error@gmail.com',
+        return json({
+            success: true,
+            message: '✅ Email de test envoyé à jennynbevent@gmail.com',
             severity,
             environment: isDev ? 'development' : vercelEnv || 'unknown',
             note: 'Vérifie ta boîte email pour confirmer la réception'
@@ -58,8 +58,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
     } catch (error) {
         // En cas d'erreur, on log aussi mais sans boucle infinie
         console.error('❌ Erreur lors du test du logging:', error);
-        return json({ 
-            error: 'Erreur lors du test', 
+        return json({
+            error: 'Erreur lors du test',
             details: error instanceof Error ? error.message : String(error)
         }, { status: 500 });
     }
@@ -71,9 +71,9 @@ export const GET: RequestHandler = async ({ url }) => {
     const isDev = import.meta.env.DEV;
     const vercelEnv = process.env.VERCEL_ENV;
     const isVercelPreview = vercelEnv === 'preview' || vercelEnv === 'development';
-    
+
     if (!isDev && !isVercelPreview) {
-        return json({ 
+        return json({
             error: 'Test endpoint only available in development or preview environment',
             currentEnv: vercelEnv || 'production'
         }, { status: 403 });
@@ -100,16 +100,16 @@ export const GET: RequestHandler = async ({ url }) => {
             testEndpoint: true,
         });
 
-        return json({ 
-            success: true, 
-            message: '✅ Email de test envoyé à pattyly.saas+error@gmail.com',
+        return json({
+            success: true,
+            message: '✅ Email de test envoyé à jennynbevent@gmail.com',
             environment: isDev ? 'development' : vercelEnv || 'unknown',
             note: 'Vérifie ta boîte email pour confirmer la réception'
         });
     } catch (error) {
         console.error('❌ Erreur lors du test du logging:', error);
-        return json({ 
-            error: 'Erreur lors du test', 
+        return json({
+            error: 'Erreur lors du test',
             details: error instanceof Error ? error.message : String(error)
         }, { status: 500 });
     }

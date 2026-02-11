@@ -63,7 +63,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [customerEmail],
                 subject: `Commande confirmée - ${productName}`,
                 html: OrderConfirmationEmail({
@@ -134,7 +134,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [customerEmail],
                 subject: `Votre commande est prête ! - ${productName}`,
                 html: OrderReadyEmail({
@@ -207,7 +207,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [customerEmail],
                 subject: `Commande enregistrée - ${productName}`,
                 html: OrderPendingVerificationClientEmail({
@@ -279,7 +279,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [pastryEmail],
                 subject: `Nouvelle commande - Vérification requise`,
                 html: OrderPendingVerificationPastryEmail({
@@ -348,7 +348,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [pastryEmail],
                 subject: `Nouvelle commande - ${productName}`,
                 html: OrderNotificationEmail({
@@ -414,7 +414,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: customerEmail,
                 subject: `Commande personnalisée confirmée`,
                 html: QuoteConfirmationEmail({
@@ -476,7 +476,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [pastryEmail],
                 subject: `Paiement reçu - Commande personnalisée`,
                 html: QuotePaymentEmail({
@@ -530,7 +530,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: customerEmail,
                 subject: `Votre devis est prêt !`,
                 html: QuoteSentEmail({
@@ -576,7 +576,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: pastryEmail,
                 subject: `Devis refusé`,
                 html: QuoteRejectedEmail({
@@ -624,7 +624,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: customerEmail,
                 subject: `Demande personnalisée envoyée`,
                 html: CustomRequestConfirmationEmail({
@@ -676,7 +676,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: pastryEmail,
                 subject: `Nouvelle demande personnalisée`,
                 html: CustomRequestNotificationEmail({
@@ -730,7 +730,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: customerEmail,
                 subject: `Demande refusée`,
                 html: RequestRejectedEmail({
@@ -785,7 +785,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: customerEmail,
                 subject: `Commande annulée`,
                 html: OrderCancelledEmail({
@@ -829,9 +829,9 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: customerEmail,
-                subject: `Pattyly - Message reçu`,
+                subject: `Jennynbevent - Message reçu`,
                 html: ContactConfirmationEmail({
                     name: customerName,
                     subject,
@@ -869,8 +869,8 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
-                to: "contact@pattyly.com",
+                from: 'Jennynbevent <contact@jennynbevent.com>',
+                to: "contact@jennynbevent.com",
                 subject: `Nouveau message - ${customerEmail}`,
                 html: ContactNotificationEmail({
                     name: customerName,
@@ -909,7 +909,7 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [pastryEmail],
                 subject: `Paiement échoué - Action requise`,
                 html: PaymentFailedNotificationEmail({
@@ -943,9 +943,9 @@ export class EmailService {
     }) {
         try {
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [email],
-                subject: 'Code de connexion admin - Pattyly',
+                subject: 'Code de connexion admin - Jennynbevent',
                 html: `
                     <!DOCTYPE html>
                     <html>
@@ -958,7 +958,7 @@ export class EmailService {
                             <h1 style="color: #1f2937; margin-top: 0;">Code de connexion admin</h1>
                             <p>Votre code de connexion pour accéder au dashboard admin est :</p>
                             <div style="background-color: #ffffff; border: 2px solid #e5e7eb; border-radius: 6px; padding: 20px; text-align: center; margin: 20px 0;">
-                                <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #ff6f61;">${code}</span>
+                                <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #BC90A5;">${code}</span>
                             </div>
                             <p style="color: #6b7280; font-size: 14px;">Ce code est valide pendant 10 minutes.</p>
                             <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">Si vous n'avez pas demandé ce code, ignorez cet email.</p>
@@ -1008,9 +1008,9 @@ export class EmailService {
             };
 
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly Alerts <noreply@pattyly.com>',
-                to: ['pattyly.saas+error@gmail.com'],
-                subject: `[${severityLabels[severity]}] ${errorName} - Pattyly`,
+                from: 'Jennynbevent Alerts <noreply@jennynbevent.com>',
+                to: ['jennynbevent@gmail.com'],
+                subject: `[${severityLabels[severity]}] ${errorName} - Jennynbevent`,
                 html: CriticalErrorNotificationEmail({
                     errorMessage,
                     errorStack,
@@ -1065,9 +1065,9 @@ export class EmailService {
             };
 
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <noreply@pattyly.com>',
+                from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [pastryEmail],
-                subject: `Pattyly - 💰 Paiement de commissions d'affiliation - ${formatPrice(amount)}`,
+                subject: `Jennynbevent - 💰 Paiement de commissions d'affiliation - ${formatPrice(amount)}`,
                 html: `
                     <!DOCTYPE html>
                     <html>
@@ -1076,14 +1076,14 @@ export class EmailService {
                         <style>
                             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
                             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                            .header { background: #FF6F61; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                            .header { background: #BC90A5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
                             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-                            .amount { font-size: 32px; font-weight: bold; color: #FF6F61; text-align: center; margin: 20px 0; }
+                            .amount { font-size: 32px; font-weight: bold; color: #BC90A5; text-align: center; margin: 20px 0; }
                             .info { background: white; padding: 15px; border-radius: 4px; margin: 15px 0; }
                             .info ul { margin: 10px 0; padding-left: 20px; }
                             .info li { margin: 5px 0; }
                             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-                            .button { display: inline-block; padding: 12px 24px; background: #FF6F61; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+                            .button { display: inline-block; padding: 12px 24px; background: #BC90A5; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
                         </style>
                     </head>
                     <body>
@@ -1113,10 +1113,10 @@ export class EmailService {
                                     <a href="${PUBLIC_SITE_URL}/dashboard/affiliation" class="button">Voir l'historique</a>
                                 </div>
                                 
-                                <p>Merci de faire confiance à Pattyly ! 🎂</p>
+                                <p>Merci de faire confiance à Jennynbevent ! 🎂</p>
                                 
                                 <div class="footer">
-                                    <p>Pattyly - La plateforme pensée pour simplifier le quotidien des pâtissiers</p>
+                                    <p>Jennynbevent - La plateforme pensée pour simplifier le quotidien des pâtissiers</p>
                                 </div>
                             </div>
                         </div>
@@ -1189,11 +1189,11 @@ export class EmailService {
                 year: 'numeric'
             });
 
-            const siteUrl = env.PUBLIC_SITE_URL || 'https://pattyly.com';
+            const siteUrl = env.PUBLIC_SITE_URL || 'https://jennynbevent.com';
             const unsubscribeUrl = `${siteUrl}/unsubscribe?email=${encodeURIComponent(recipientEmail)}`;
 
             const { data, error } = await resend.emails.send({
-                from: 'Pattyly <hello@pattyly.com>',
+                from: 'Jennynbevent <hello@jennynbevent.com>',
                 to: [recipientEmail],
                 subject: subject,
                 html: MarketingCampaignEmail({
@@ -1206,7 +1206,7 @@ export class EmailService {
                     recipientEmail,
                 }),
                 headers: {
-                    'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:hello@pattyly.com?subject=Unsubscribe&body=Please%20unsubscribe%20${encodeURIComponent(recipientEmail)}>`,
+                    'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:hello@jennynbevent.com?subject=Unsubscribe&body=Please%20unsubscribe%20${encodeURIComponent(recipientEmail)}>`,
                     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
                 }
             });

@@ -112,7 +112,7 @@
 </script>
 
 <svelte:head>
-	<title>Mes disponibilités - Pattyly</title>
+	<title>Mes disponibilités - Jennynbevent</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">

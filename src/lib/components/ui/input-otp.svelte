@@ -144,7 +144,7 @@
 			pattern="[0-9]*"
 			maxlength="1"
 			{disabled}
-			class="h-12 w-12 rounded-lg border text-center text-lg font-semibold transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#FF6F61] disabled:cursor-not-allowed disabled:opacity-50 {error
+			class="h-12 w-12 rounded-lg border text-center text-lg font-semibold transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#BC90A5] disabled:cursor-not-allowed disabled:opacity-50 {error
 				? 'border-red-500 bg-red-50'
 				: 'border-gray-300 bg-white hover:border-gray-400'}"
 			on:input={(e) => handleInput(e, index)}

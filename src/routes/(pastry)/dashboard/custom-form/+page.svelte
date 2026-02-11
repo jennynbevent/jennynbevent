@@ -71,7 +71,7 @@
 </script>
 
 <svelte:head>
-	<title>Mon questionnaire personnalisé - Pattyly</title>
+	<title>Mon questionnaire personnalisé - Jennynbevent</title>
 	<style>
 		.sortable-ghost {
 			opacity: 0.5;
@@ -135,7 +135,7 @@
 				<div class="space-y-6 text-center">
 					<!-- Icône -->
 					<div
-						class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#FF6F61] to-[#e85a4f]"
+						class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#BC90A5] to-[#BE85A5]"
 					>
 						<svg
 							class="h-8 w-8 text-white"
@@ -167,10 +167,10 @@
 					<div class="mx-auto grid max-w-2xl gap-6 md:grid-cols-3">
 						<div class="space-y-2 text-center">
 							<div
-								class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FFE8D6]"
+								class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#BB91A4]"
 							>
 								<svg
-									class="h-6 w-6 text-[#FF6F61]"
+									class="h-6 w-6 text-[#BC90A5]"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -196,7 +196,7 @@
 								class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF1D6]"
 							>
 								<svg
-									class="h-6 w-6 text-[#FF6F61]"
+									class="h-6 w-6 text-[#BC90A5]"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -222,7 +222,7 @@
 								class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FFE0D6]"
 							>
 								<svg
-									class="h-6 w-6 text-[#FF6F61]"
+									class="h-6 w-6 text-[#BC90A5]"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -246,7 +246,7 @@
 					<div class="pt-6">
 						<Button
 							size="lg"
-							class="bg-[#FF6F61] px-8 py-3 text-white transition-colors duration-200 hover:bg-[#e85a4f]"
+							class="bg-[#BC90A5] px-8 py-3 text-white transition-colors duration-200 hover:bg-[#BE85A5]"
 							href="/checkout/{$page.data.premiumPriceId}"
 						>
 							<svg

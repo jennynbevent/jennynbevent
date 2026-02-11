@@ -153,7 +153,7 @@
 </script>
 
 <svelte:head>
-	<title>Mes Articles - Pattyly</title>
+	<title>Mes Articles - Jennynbevent</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">
@@ -167,11 +167,11 @@
 			{#if showLimitInfo && productLimit > 0}
 				{#if permissions.plan === 'free'}
 					<!-- Plan gratuit : afficher le message de souscription -->
-					<p class="mt-1 text-xs text-[#FF6F61]">
+					<p class="mt-1 text-xs text-[#BC90A5]">
 						{currentProductCount}/{productLimit} articles,
 						<a
 							href="/subscription"
-							class="underline transition-colors hover:text-[#e85a4f]"
+							class="underline transition-colors hover:text-[#BE85A5]"
 						>
 							souscrivez à un plan
 						</a>
@@ -179,7 +179,7 @@
 					</p>
 				{:else}
 					<!-- Plan avec limite (Starter) : afficher juste X/Y -->
-					<p class="mt-1 text-xs text-[#FF6F61]">
+					<p class="mt-1 text-xs text-[#BC90A5]">
 						{currentProductCount}/{productLimit} articles
 					</p>
 				{/if}

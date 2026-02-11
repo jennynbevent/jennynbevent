@@ -152,7 +152,7 @@
 </script>
 
 <svelte:head>
-	<title>Tableau de bord - Pattyly</title>
+	<title>Tableau de bord - Jennynbevent</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">
@@ -203,7 +203,7 @@
 						title="Copier l'URL complète"
 						disabled={!shop?.slug}
 						class={copySuccess
-							? 'border-[#FF6F61] bg-[#FF6F61] text-white hover:border-[#e85a4f] hover:bg-[#e85a4f]'
+							? 'border-[#BC90A5] bg-[#BC90A5] text-white hover:border-[#BE85A5] hover:bg-[#BE85A5]'
 							: 'border border-input bg-background text-black hover:bg-accent hover:text-accent-foreground'}
 					>
 						{#if copySuccess}
@@ -366,7 +366,7 @@
 					{#if currentPlanData}
 						<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 							<div class="flex items-center gap-3">
-								<Badge class="bg-[#FF6F61] text-white">
+								<Badge class="bg-[#BC90A5] text-white">
 									Plan actuel
 								</Badge>
 								<div>
@@ -389,7 +389,7 @@
 						</p>
 						<Button 
 							href="/subscription"
-							class="w-full sm:w-auto bg-[#FF6F61] text-white hover:bg-[#e85a4f]"
+							class="w-full sm:w-auto bg-[#BC90A5] text-white hover:bg-[#BE85A5]"
 						>
 							Souscrire
 							<ArrowUpRight class="ml-2 h-4 w-4" />

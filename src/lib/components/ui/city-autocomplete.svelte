@@ -95,7 +95,7 @@
 				}
 			}}
 			placeholder={placeholder}
-			class="w-full appearance-none rounded-lg border border-neutral-300 bg-white px-10 py-2 text-sm transition-colors focus:border-[#FF6F61] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/20 {value ? 'pr-10' : ''}"
+			class="w-full appearance-none rounded-lg border border-neutral-300 bg-white px-10 py-2 text-sm transition-colors focus:border-[#BC90A5] focus:outline-none focus:ring-2 focus:ring-[#BC90A5]/20 {value ? 'pr-10' : ''}"
 		/>
 		{#if value}
 			<button

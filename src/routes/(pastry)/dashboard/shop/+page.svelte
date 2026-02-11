@@ -51,7 +51,7 @@ import { policiesSchema } from './policies-schema';
 </script>
 
 <svelte:head>
-	<title>Paramètres de la boutique - Pattyly</title>
+	<title>Paramètres de la boutique - Jennynbevent</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">

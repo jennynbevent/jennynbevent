@@ -134,7 +134,7 @@
 						type="submit"
 						disabled={$submitting || !$formData.startDate || !$formData.endDate}
 						class="h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed sm:w-auto {submitted
-							? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+							? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 							: $submitting
 								? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 								: $formData.startDate && $formData.endDate
@@ -210,7 +210,7 @@
 						type="submit"
 						disabled={$submittingSlot || !$slotFormData.date || !$slotFormData.startTime || !$slotFormData.endTime}
 						class="h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed sm:w-auto {submitted
-							? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+							? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 							: $submittingSlot
 								? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 								: $slotFormData.date && $slotFormData.startTime && $slotFormData.endTime

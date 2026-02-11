@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-	<title>Onboarding - Pattyly</title>
+	<title>Onboarding - Jennynbevent</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-br from-secondary to-background py-12">
@@ -69,7 +69,7 @@
 				<!-- Progress bar -->
 				<div class="absolute left-2 right-2 top-5 h-0.5 bg-neutral-200 sm:left-6 sm:right-6 sm:top-6">
 					<div
-						class="h-full bg-[#FF6F61] transition-all duration-500 ease-out"
+						class="h-full bg-[#BC90A5] transition-all duration-500 ease-out"
 						style="width: {step === 2 ? 100 : 0}%"
 					></div>
 				</div>
@@ -81,9 +81,9 @@
 					<div
 							class="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 sm:h-12 sm:w-12 {step >=
 						1
-								? 'border-[#FF6F61] bg-[#FF6F61] text-white shadow-lg shadow-[#FF6F61]/20'
+								? 'border-[#BC90A5] bg-[#BC90A5] text-white shadow-lg shadow-[#BC90A5]/20'
 								: step === 1
-									? 'border-[#FF6F61] bg-white text-[#FF6F61]'
+									? 'border-[#BC90A5] bg-white text-[#BC90A5]'
 									: 'border-neutral-300 bg-white text-neutral-400'}"
 					>
 							{#if step > 1}
@@ -94,13 +94,13 @@
 					</div>
 						<!-- Labels mobiles -->
 						<div class="mt-2 text-center sm:hidden">
-							<p class="text-xs font-medium {step >= 1 ? 'text-[#FF6F61]' : 'text-neutral-500'}">
+							<p class="text-xs font-medium {step >= 1 ? 'text-[#BC90A5]' : 'text-neutral-500'}">
 								Informations
 							</p>
 						</div>
 						<!-- Labels desktop -->
 						<div class="mt-3 hidden text-center sm:block">
-							<p class="text-sm font-semibold {step >= 1 ? 'text-[#FF6F61]' : 'text-neutral-600'}">
+							<p class="text-sm font-semibold {step >= 1 ? 'text-[#BC90A5]' : 'text-neutral-600'}">
 								Informations
 							</p>
 							<p class="mt-1 text-xs text-neutral-500">Nom, logo, description</p>
@@ -112,9 +112,9 @@
 					<div
 							class="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 sm:h-12 sm:w-12 {step >=
 						2
-								? 'border-[#FF6F61] bg-[#FF6F61] text-white shadow-lg shadow-[#FF6F61]/20'
+								? 'border-[#BC90A5] bg-[#BC90A5] text-white shadow-lg shadow-[#BC90A5]/20'
 								: step === 2
-									? 'border-[#FF6F61] bg-white text-[#FF6F61]'
+									? 'border-[#BC90A5] bg-white text-[#BC90A5]'
 									: 'border-neutral-300 bg-white text-neutral-400'}"
 					>
 							{#if step > 2}
@@ -125,13 +125,13 @@
 					</div>
 						<!-- Labels mobiles -->
 						<div class="mt-2 text-center sm:hidden">
-							<p class="text-xs font-medium {step >= 2 ? 'text-[#FF6F61]' : 'text-neutral-500'}">
+							<p class="text-xs font-medium {step >= 2 ? 'text-[#BC90A5]' : 'text-neutral-500'}">
 								Paiement
 							</p>
 						</div>
 						<!-- Labels desktop -->
 						<div class="mt-3 hidden text-center sm:block">
-							<p class="text-sm font-semibold {step >= 2 ? 'text-[#FF6F61]' : 'text-neutral-600'}">
+							<p class="text-sm font-semibold {step >= 2 ? 'text-[#BC90A5]' : 'text-neutral-600'}">
 								Paiement
 							</p>
 							<p class="mt-1 text-xs text-neutral-500">Méthodes de paiement</p>
@@ -183,7 +183,7 @@
 							stroke-width="2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							class="mr-2 h-8 w-8 text-[#FF6F61]"
+							class="mr-2 h-8 w-8 text-[#BC90A5]"
 						>
 							<rect width="20" height="14" x="2" y="5" rx="2" />
 							<line x1="2" x2="22" y1="10" y2="10" />

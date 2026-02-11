@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>FAQ non disponible - Pattyly</title>
+	<title>FAQ non disponible - Jennynbevent</title>
 	<meta
 		name="description"
 		content="Les questions fréquentes ne sont pas disponibles pour cette boutique"
@@ -49,7 +49,7 @@
 			<Button
 				href="/"
 				class="flex h-11 items-center gap-2 rounded-xl text-sm font-medium text-white shadow-sm transition-all duration-200 hover:shadow-md"
-				style="background-color: #FF6F61; font-weight: 500;"
+				style="background-color: #BC90A5; font-weight: 500;"
 			>
 				<ArrowLeft class="h-4 w-4" />
 				Retour à la boutique

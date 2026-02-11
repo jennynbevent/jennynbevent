@@ -4,7 +4,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const hostname = url.hostname;
 
 	// Si c'est le domaine de test, retourner le robots.txt qui bloque tout
-	if (hostname === 'test.pattyly.com' || hostname.includes('test.pattyly.com')) {
+	if (hostname === 'test.jennynbevent.com' || hostname.includes('test.jennynbevent.com')) {
 		const testRobotsTxt = `User-agent: *
 Disallow: /
 `;
@@ -38,7 +38,7 @@ Allow: /legal
 Allow: /privacy
 
 # Sitemap
-Sitemap: https://pattyly.com/sitemap.xml
+Sitemap: https://jennynbevent.com/sitemap.xml
 `;
 
 	return new Response(productionRobotsTxt, {

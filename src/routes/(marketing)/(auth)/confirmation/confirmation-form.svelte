@@ -137,7 +137,7 @@
 	<!-- Bouton de soumission -->
 	<Button
 		type="submit"
-		class="h-12 w-full rounded-xl bg-[#FF6F61] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#e85a4f] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+		class="h-12 w-full rounded-xl bg-[#BC90A5] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#BE85A5] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
 		disabled={$submitting || $formData.code.length !== 6}
 	>
 		{#if $submitting}
@@ -159,7 +159,7 @@
 		<button
 			type="button"
 			on:click={handleResendCode}
-			class="text-sm text-[#FF6F61] underline hover:text-[#e85a4f] disabled:cursor-not-allowed disabled:opacity-50"
+			class="text-sm text-[#BC90A5] underline hover:text-[#BE85A5] disabled:cursor-not-allowed disabled:opacity-50"
 			disabled={$submitting || resendLoading || resendCountdown > 0}
 		>
 			{#if resendSuccess}

@@ -12,7 +12,7 @@
 		backgroundImage: customizations?.background_image_url
 			? `url(${customizations.background_image_url})`
 			: 'none',
-		buttonStyle: `background-color: ${customizations?.button_color || '#ff6f61'}; color: ${customizations?.button_text_color || '#ffffff'};`,
+		buttonStyle: `background-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${customizations?.text_color || '#333333'};`,
 		iconStyle: `color: ${customizations?.icon_color || '#6b7280'};`,
 		secondaryTextStyle: `color: ${customizations?.secondary_text_color || '#333333'};`,
@@ -80,7 +80,7 @@
 				</div>
 			{:else}
 				<div
-					class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FFE8D6]/30 to-white shadow-sm sm:h-24 sm:w-24 md:h-28 md:w-28"
+					class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#BB91A4]/30 to-white shadow-sm sm:h-24 sm:w-24 md:h-28 md:w-28"
 				>
 					<span
 						class="text-2xl font-semibold text-neutral-700 sm:text-3xl md:text-4xl"
@@ -103,7 +103,7 @@
 		<!-- Page title - Charte typographique avec couleur custom -->
 		<h2
 			class="text-lg font-medium leading-[110%] tracking-tight sm:text-xl"
-			style={`font-weight: 500; letter-spacing: -0.02em; color: ${customizations?.button_color || '#FF6F61'};`}
+			style={`font-weight: 500; letter-spacing: -0.02em; color: ${customizations?.button_color || '#BC90A5'};`}
 		>
 			Politiques de ventes
 		</h2>
@@ -127,7 +127,7 @@
 							<div class="mb-4 flex items-center gap-3">
 								<FileText
 									class="h-5 w-5 sm:h-6 sm:w-6"
-									style={`color: ${customizations?.button_color || '#FF6F61'};`}
+									style={`color: ${customizations?.button_color || '#BC90A5'};`}
 								/>
 								<h3
 									class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl"
@@ -151,7 +151,7 @@
 							<div class="mb-4 flex items-center gap-3">
 								<FileText
 									class="h-5 w-5 sm:h-6 sm:w-6"
-									style={`color: ${customizations?.button_color || '#FF6F61'};`}
+									style={`color: ${customizations?.button_color || '#BC90A5'};`}
 								/>
 								<h3
 									class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl"
@@ -175,7 +175,7 @@
 							<div class="mb-4 flex items-center gap-3">
 								<FileText
 									class="h-5 w-5 sm:h-6 sm:w-6"
-									style={`color: ${customizations?.button_color || '#FF6F61'};`}
+									style={`color: ${customizations?.button_color || '#BC90A5'};`}
 								/>
 								<h3
 									class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl"
@@ -199,7 +199,7 @@
 							<div class="mb-4 flex items-center gap-3">
 								<FileText
 									class="h-5 w-5 sm:h-6 sm:w-6"
-									style={`color: ${customizations?.button_color || '#FF6F61'};`}
+									style={`color: ${customizations?.button_color || '#BC90A5'};`}
 								/>
 								<h3
 									class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl"

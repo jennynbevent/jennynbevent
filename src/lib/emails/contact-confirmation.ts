@@ -10,7 +10,7 @@ interface ContactConfirmationProps {
 export function ContactConfirmationEmail({ name, subject, message }: ContactConfirmationProps) {
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'customer',
     });
 

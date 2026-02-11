@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 
-const baseUrl = 'https://pattyly.com';
+const baseUrl = 'https://jennynbevent.com';
 
 // Single-shop: boutique à la racine, pas d'annuaire ni pages multi-patissiers
 const pages = [

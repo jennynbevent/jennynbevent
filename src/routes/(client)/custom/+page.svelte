@@ -25,7 +25,7 @@
 		backgroundImage: customizations?.background_image_url
 			? `url(${customizations.background_image_url})`
 			: 'none',
-		buttonStyle: `background-color: ${customizations?.button_color || '#ff6f61'}; color: ${customizations?.button_text_color || '#ffffff'};`,
+		buttonStyle: `background-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${customizations?.text_color || '#333333'};`,
 		iconStyle: `color: ${customizations?.icon_color || '#6b7280'};`,
 		secondaryTextStyle: `color: ${customizations?.secondary_text_color || '#333333'};`,
@@ -103,7 +103,7 @@
 				</div>
 			{:else}
 				<div
-					class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FFE8D6]/30 to-white shadow-sm sm:h-24 sm:w-24 md:h-28 md:w-28"
+					class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#BB91A4]/30 to-white shadow-sm sm:h-24 sm:w-24 md:h-28 md:w-28"
 				>
 					<span
 						class="text-2xl font-semibold text-neutral-700 sm:text-3xl md:text-4xl"

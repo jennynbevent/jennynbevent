@@ -18,7 +18,7 @@ export async function forceRevalidateShop(shopSlug: string = ''): Promise<boolea
     const response = await fetch(revalidateUrl, {
       method: 'HEAD',
       headers: {
-        'User-Agent': 'Pattyly-Revalidation/1.0',
+        'User-Agent': 'Jennynbevent-Revalidation/1.0',
         'x-prerender-revalidate': env.REVALIDATION_TOKEN
       },
       // Add timeout to prevent hanging

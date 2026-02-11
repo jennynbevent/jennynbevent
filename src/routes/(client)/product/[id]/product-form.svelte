@@ -75,7 +75,7 @@
 
 	// Styles personnalisés
 	$: customStyles = {
-		buttonStyle: `background-color: ${customizations?.button_color || '#ff6f61'}; color: ${customizations?.button_text_color || '#ffffff'};`,
+		buttonStyle: `background-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${customizations?.text_color || '#333333'};`,
 		secondaryTextStyle: `color: ${customizations?.secondary_text_color || '#333333'};`,
 		inputBackgroundStyle: `background-color: white;`,
@@ -259,8 +259,8 @@
 	<Form.Errors {form} />
 
 	{#if isFormDisabled}
-		<Alert class="mb-6 border-[#FF6F61] bg-[#FFF1F0] text-[#8B1A1A]">
-			<AlertTriangle class="h-4 w-4 text-[#FF6F61]" />
+		<Alert class="mb-6 border-[#BC90A5] bg-[#FFF1F0] text-[#8B1A1A]">
+			<AlertTriangle class="h-4 w-4 text-[#BC90A5]" />
 			<AlertTitle>Commandes désactivées temporairement</AlertTitle>
 		</Alert>
 	{/if}
@@ -781,7 +781,7 @@
 					</div>
 					<div
 						class="flex items-center justify-between gap-2 font-semibold"
-						style={`color: ${customizations?.button_color || '#FF6F61'}; font-weight: 600;`}
+						style={`color: ${customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 					>
 						<span>À payer aujourd'hui :</span>
 						<span class="text-right whitespace-nowrap">{formatPrice((totalPrice * (product?.deposit_percentage ?? 50)) / 100)}</span>

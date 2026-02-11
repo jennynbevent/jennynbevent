@@ -207,7 +207,7 @@
 				disabled={paypalSubmitting || paypalSubmitted}
 				class={`mt-4 h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed ${
 					paypalSubmitted
-						? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+						? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 						: paypalSubmitting
 							? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 							: 'bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md disabled:opacity-50'
@@ -350,7 +350,7 @@
 				disabled={revolutSubmitting || revolutSubmitted}
 				class={`mt-4 h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed ${
 					revolutSubmitted
-						? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+						? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 						: revolutSubmitting
 							? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 							: 'bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md disabled:opacity-50'
@@ -471,7 +471,7 @@
 								disabled={weroSubmitting || weroSubmitted}
 								class={`mt-4 h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed ${
 									weroSubmitted
-										? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+										? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 										: weroSubmitting
 											? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 											: 'bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md disabled:opacity-50'
@@ -627,7 +627,7 @@
 							disabled={paypalSubmitting || paypalSubmitted}
 							class={`mt-4 h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed ${
 								paypalSubmitted
-									? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+									? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 									: paypalSubmitting
 										? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 										: 'bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md disabled:opacity-50'
@@ -721,7 +721,7 @@
 							disabled={revolutSubmitting || revolutSubmitted}
 							class={`mt-4 h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed ${
 								revolutSubmitted
-									? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+									? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 									: revolutSubmitting
 										? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 										: 'bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md disabled:opacity-50'
@@ -793,7 +793,7 @@
 							disabled={weroSubmitting || weroSubmitted}
 							class={`mt-4 h-10 w-full text-sm font-medium text-white transition-all duration-200 disabled:cursor-not-allowed ${
 								weroSubmitted
-									? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+									? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 									: weroSubmitting
 										? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 										: 'bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md disabled:opacity-50'

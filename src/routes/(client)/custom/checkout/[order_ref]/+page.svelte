@@ -11,7 +11,7 @@
 		backgroundImage: data.customizations?.background_image_url
 			? `url(${data.customizations.background_image_url})`
 			: 'none',
-		buttonStyle: `background-color: ${data.customizations?.button_color || '#ff6f61'}; color: ${data.customizations?.button_text_color || '#ffffff'};`,
+		buttonStyle: `background-color: ${data.customizations?.button_color || '#BC90A5'}; color: ${data.customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${data.customizations?.text_color || '#333333'};`,
 		iconStyle: `color: ${data.customizations?.icon_color || '#6b7280'};`,
 		secondaryTextStyle: `color: ${data.customizations?.secondary_text_color || '#333333'};`,
@@ -199,7 +199,7 @@
 				</div>
 			{:else}
 				<div
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFE8D6]/30 to-white shadow-sm sm:h-12 sm:w-12"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#BB91A4]/30 to-white shadow-sm sm:h-12 sm:w-12"
 				>
 					<span
 							class="text-lg font-semibold text-neutral-700 sm:text-xl"
@@ -347,7 +347,7 @@
 							</span>
 							<span
 								class="text-sm text-right sm:ml-auto whitespace-nowrap"
-								style={`color: ${data.customizations?.button_color || '#FF6F61'}; font-weight: 400;`}
+								style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 400;`}
 							>
 								{formatDate(data.order.chef_pickup_date)}
 								{#if data.order.chef_pickup_time}
@@ -435,7 +435,7 @@
 						<!-- Acompte à payer -->
 						<div
 							class="flex items-center justify-between gap-2 font-semibold"
-							style={`color: ${data.customizations?.button_color || '#FF6F61'}; font-weight: 600;`}
+							style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 						>
 							<span>À payer aujourd'hui :</span>
 							<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
@@ -461,7 +461,7 @@
 						{@const provider = stripeProvider}
 						{@const providerName = getProviderName(provider.provider_type)}
 						{@const isStripe = true}
-						{@const backgroundColor = '#ff6f61'}
+						{@const backgroundColor = '#BC90A5'}
 						{@const textColor = '#ffffff'}
 						
 						<div class="space-y-3">
@@ -481,7 +481,7 @@
 									e.currentTarget.style.backgroundColor = '#e55a4f';
 								}}
 								on:mouseleave={(e) => {
-									e.currentTarget.style.backgroundColor = '#ff6f61';
+									e.currentTarget.style.backgroundColor = '#BC90A5';
 								}}
 							>
 								{providerName}
@@ -529,7 +529,7 @@
 									<div class="mb-3 flex items-center gap-2">
 										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
-											style="background-color: {customStyles.buttonStyle ? customStyles.buttonStyle.match(/background-color:\s*([^;]+)/)?.[1] || '#ff6f61' : '#ff6f61'};"
+											style="background-color: {customStyles.buttonStyle ? customStyles.buttonStyle.match(/background-color:\s*([^;]+)/)?.[1] || '#BC90A5' : '#BC90A5'};"
 										>
 											1
 										</div>
@@ -566,7 +566,7 @@
 									<div class="mb-3 flex items-center gap-2">
 										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
-											style="background-color: {customStyles.buttonStyle ? customStyles.buttonStyle.match(/background-color:\s*([^;]+)/)?.[1] || '#ff6f61' : '#ff6f61'};"
+											style="background-color: {customStyles.buttonStyle ? customStyles.buttonStyle.match(/background-color:\s*([^;]+)/)?.[1] || '#BC90A5' : '#BC90A5'};"
 										>
 											2
 										</div>

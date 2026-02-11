@@ -68,7 +68,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
         }),
         customizationForm: await superValidate(zod(customizationSchema), {
             defaults: {
-                button_color: customizations?.button_color || '#ff6f61',
+                button_color: customizations?.button_color || '#BC90A5',
                 button_text_color: customizations?.button_text_color || '#ffffff',
                 text_color: customizations?.text_color || '#333333',
                 icon_color: customizations?.icon_color || '#6b7280',

@@ -285,7 +285,7 @@
 </script>
 
 <svelte:head>
-	<title>Mes Commandes - Pattyly</title>
+	<title>Mes Commandes - Jennynbevent</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">
@@ -299,11 +299,11 @@
 			{#if orderLimitStats}
 				{#if orderLimitStats.plan === 'free'}
 					<!-- Plan gratuit : afficher le message de souscription -->
-					<p class="mt-1 text-xs text-[#FF6F61]">
+					<p class="mt-1 text-xs text-[#BC90A5]">
 						{orderLimitStats.orderCount}/{orderLimitStats.orderLimit} ce mois, 
 						<a
 							href="/subscription"
-							class="underline transition-colors hover:text-[#e85a4f]"
+							class="underline transition-colors hover:text-[#BE85A5]"
 						>
 							souscrivez à un plan
 						</a>
@@ -311,7 +311,7 @@
 					</p>
 				{:else if orderLimitStats.orderLimit < 999999}
 					<!-- Plan avec limite (Starter) : afficher juste X/Y -->
-					<p class="mt-1 text-xs text-[#FF6F61]">
+					<p class="mt-1 text-xs text-[#BC90A5]">
 						{orderLimitStats.orderCount}/{orderLimitStats.orderLimit} ce mois
 					</p>
 				{/if}

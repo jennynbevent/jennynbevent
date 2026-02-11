@@ -77,7 +77,7 @@
 	}
 
 	// Styles personnalisés
-	$: buttonColor = customizations?.button_color || '#ff6f61';
+	$: buttonColor = customizations?.button_color || '#BC90A5';
 	$: customStyles = {
 		buttonStyle: `background-color: ${buttonColor}; color: ${customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${customizations?.text_color || '#333333'};`,
@@ -285,8 +285,8 @@
 	<Form.Errors {form} />
 
 	{#if isFormDisabled}
-		<Alert class="mb-6 border-[#FF6F61] bg-[#FFF1F0] text-[#8B1A1A]">
-			<AlertTriangle class="h-4 w-4 text-[#FF6F61]" />
+		<Alert class="mb-6 border-[#BC90A5] bg-[#FFF1F0] text-[#8B1A1A]">
+			<AlertTriangle class="h-4 w-4 text-[#BC90A5]" />
 			<AlertTitle>Commandes désactivées temporairement</AlertTitle>
 		</Alert>
 	{/if}

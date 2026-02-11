@@ -57,7 +57,7 @@ import XIcon from '~icons/lucide/x';
 				{:else}
 					<img
 						src="/images/logo_jennynbevent.jpg"
-						alt="Logo Pattyly"
+						alt="Logo Jennynbevent"
 						class="h-8 w-8 rounded object-cover"
 					/>
 				{/if}
@@ -180,12 +180,12 @@ import XIcon from '~icons/lucide/x';
 					{:else}
 						<img
 							src="/images/logo_jennynbevent.jpg"
-							alt="Logo Pattyly"
+							alt="Logo Jennynbevent"
 							class="h-8 w-8 rounded object-cover"
 						/>
 					{/if}
 					<span class="max-w-[150px] truncate text-sm font-medium">
-						{data.shop?.name || 'Pattyly'}
+						{data.shop?.name || 'Jennynbevent'}
 					</span>
 				</div>
 

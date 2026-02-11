@@ -44,9 +44,6 @@
 		<p class="rounded-lg bg-green-50 p-3 text-sm text-green-800">
 			Un code à 6 chiffres a été envoyé à <strong>{email}</strong>. Saisis-le ci-dessous.
 		</p>
-		<p class="text-sm text-neutral-500">
-			💡 Ouvre ta boîte mail dans un <strong>nouvel onglet</strong> (clic droit → « Ouvrir dans un nouvel onglet ») pour rester sur cette page.
-		</p>
 
 		<form
 			method="POST"
@@ -71,7 +68,7 @@
 				<Form.FieldErrors />
 			</Form.Field>
 			<Form.Button
-				class="h-12 w-full rounded-xl bg-[#FF6F61] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#e85a4f] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+				class="h-12 w-full rounded-xl bg-[#BC90A5] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#BE85A5] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
 				disabled={$submittingOtp || $otpFormData.code.length !== 6}
 			>
 				{#if $submittingOtp}
@@ -89,7 +86,7 @@
 				<input type="hidden" name="email" value={email} />
 				<button
 					type="submit"
-					class="text-[#FF6F61] underline hover:text-[#e85a4f]"
+					class="text-[#BC90A5] underline hover:text-[#BE85A5]"
 				>
 					Renvoyer le code
 				</button>
@@ -114,13 +111,13 @@
 					placeholder="ton@email.com"
 					required
 					bind:value={$formData.email}
-					class="h-12 rounded-xl border-neutral-300 bg-white text-base transition-all duration-200 focus:border-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]/20"
+					class="h-12 rounded-xl border-neutral-300 bg-white text-base transition-all duration-200 focus:border-[#BC90A5] focus:ring-2 focus:ring-[#BC90A5]/20"
 				/>
 			</Form.Control>
 			<Form.FieldErrors />
 		</Form.Field>
 		<Form.Button
-			class="h-12 w-full rounded-xl bg-[#FF6F61] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#e85a4f] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+			class="h-12 w-full rounded-xl bg-[#BC90A5] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#BE85A5] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
 			disabled={$submitting}
 		>
 			{#if $submitting}

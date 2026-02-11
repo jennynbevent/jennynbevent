@@ -457,7 +457,7 @@
 										class="rounded-md px-3 py-1.5 text-xs text-white transition-all duration-200 disabled:cursor-not-allowed {showSuccessFeedback[
 											availability.id
 										]
-											? 'bg-[#FF6F61] hover:bg-[#e85a4f] disabled:opacity-100'
+											? 'bg-[#BC90A5] hover:bg-[#BE85A5] disabled:opacity-100'
 											: isSubmitting[availability.id]
 												? 'bg-gray-600 hover:bg-gray-700 disabled:opacity-50'
 												: 'bg-primary hover:bg-primary/90 disabled:opacity-50'}"

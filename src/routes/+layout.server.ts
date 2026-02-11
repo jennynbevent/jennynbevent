@@ -7,9 +7,9 @@ export const load: LayoutServerLoad = async ({
 	const { session, user } = await safeGetSession();
 
 	// Détection robuste du domaine test (avec ou sans www, avec ou sans port)
-	const isTestDomain = url.hostname === 'test.pattyly.com' ||
-		url.hostname.endsWith('.test.pattyly.com') ||
-		url.hostname.includes('test.pattyly.com');
+	const isTestDomain = url.hostname === 'test.jennynbevent.com' ||
+		url.hostname.endsWith('.test.jennynbevent.com') ||
+		url.hostname.includes('test.jennynbevent.com');
 
 	return {
 		session,

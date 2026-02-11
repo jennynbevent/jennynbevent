@@ -37,7 +37,7 @@
 		backgroundImage: customizations?.background_image_url
 			? `url(${customizations.background_image_url})`
 			: 'none',
-		buttonStyle: `background-color: ${customizations?.button_color || '#ff6f61'}; color: ${customizations?.button_text_color || '#ffffff'};`,
+		buttonStyle: `background-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_text_color || '#ffffff'};`,
 		textStyle: `color: ${customizations?.text_color || '#333333'};`,
 		iconStyle: `color: ${customizations?.icon_color || '#6b7280'};`,
 		secondaryTextStyle: `color: ${customizations?.secondary_text_color || '#333333'};`,
@@ -128,7 +128,7 @@
 
 {#if notFound}
 	<div
-		class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-white via-[#FFE8D6]/10 to-white px-4 py-12"
+		class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-white via-[#BB91A4]/10 to-white px-4 py-12"
 	>
 		<div class="mx-auto max-w-md text-center">
 			<div class="mb-6 flex justify-center">
@@ -262,10 +262,10 @@
 					{#each filteredProducts as product}
 						<button
 							on:click={() => viewProduct(product.id)}
-							class="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/20"
+							class="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#BC90A5]/20"
 						>
 							<div
-								class="relative h-32 w-full overflow-hidden bg-gradient-to-br from-[#FFE8D6]/20 to-white sm:h-36"
+								class="relative h-32 w-full overflow-hidden bg-gradient-to-br from-[#BB91A4]/20 to-white sm:h-36"
 							>
 								{#if product.image_url}
 									<img
@@ -275,7 +275,7 @@
 									/>
 								{:else}
 									<div
-										class="flex h-full items-center justify-center bg-gradient-to-br from-[#FFE8D6]/30 to-white"
+										class="flex h-full items-center justify-center bg-gradient-to-br from-[#BB91A4]/30 to-white"
 									>
 										<Cake class="h-10 w-10 text-neutral-300" />
 									</div>
@@ -291,7 +291,7 @@
 								<div class="mt-auto pt-1.5">
 									<p
 										class="flex items-baseline gap-1 text-sm font-bold sm:text-base"
-										style={`color: ${customizations?.button_color || '#FF6F61'}; font-weight: 600;`}
+										style={`color: ${customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 									>
 										<span
 											class="text-xs font-normal text-neutral-600 sm:text-sm"
@@ -303,7 +303,7 @@
 									</p>
 									<div
 										class="mt-1.5 rounded-full px-2.5 py-0.5 text-center text-xs font-medium sm:text-sm"
-										style={`background-color: ${customizations?.button_color || '#ff6f61'}; color: ${customizations?.button_text_color || '#ffffff'}; font-weight: 500;`}
+										style={`background-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_text_color || '#ffffff'}; font-weight: 500;`}
 									>
 										Commander
 									</div>

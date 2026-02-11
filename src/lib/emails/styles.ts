@@ -17,18 +17,18 @@ export const EMAIL_COLORS = {
 		100: '#f5f5f5', // Arrière-plans légers
 		50: '#fafafa', // Arrière-plans très légers
 	},
-	// Couleur d'accent Pattyly
+	// Couleur d'accent Jennynbevent
 	accent: {
-		primary: '#FF6F61',
-		hover: '#e85a4f',
-		light: '#FFE8D6',
+		primary: '#BC90A5',
+		hover: '#BE85A5',
+		light: '#BB91A4',
 		light50: '#FFF5F0',
 	},
 	// Couleurs pour les boutiques (seront adaptées dynamiquement)
 	shop: {
-		primary: '#FF6F61', // Par défaut, sera remplacé par la couleur de la boutique
-		hover: '#e85a4f',
-		light: '#FFE8D6',
+		primary: '#BC90A5', // Par défaut, sera remplacé par la couleur de la boutique
+		hover: '#BE85A5',
+		light: '#BB91A4',
 		light50: '#FFF5F0',
 	},
 };
@@ -91,7 +91,7 @@ export const EMAIL_MAX_WIDTH = '600px';
 
 /**
  * Génère les styles de couleurs pour une boutique
- * Si aucune couleur n'est fournie, utilise les couleurs par défaut Pattyly
+ * Si aucune couleur n'est fournie, utilise les couleurs par défaut Jennynbevent
  */
 export function getShopColors(shopColor?: string | null) {
 	if (!shopColor) {
@@ -103,10 +103,10 @@ export function getShopColors(shopColor?: string | null) {
 		const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 		return result
 			? {
-					r: parseInt(result[1], 16),
-					g: parseInt(result[2], 16),
-					b: parseInt(result[3], 16),
-				}
+				r: parseInt(result[1], 16),
+				g: parseInt(result[2], 16),
+				b: parseInt(result[3], 16),
+			}
 			: null;
 	};
 

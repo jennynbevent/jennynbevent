@@ -87,7 +87,7 @@
 </script>
 
 <svelte:head>
-	<title>Ma FAQ - Pattyly</title>
+	<title>Ma FAQ - Jennynbevent</title>
 </svelte:head>
 
 <div class="container mx-auto space-y-6 p-3 md:p-6">

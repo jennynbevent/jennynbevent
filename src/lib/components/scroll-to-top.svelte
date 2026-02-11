@@ -36,7 +36,7 @@
 {#if showButton}
 	<button
 		on:click={scrollToTop}
-		class="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6F61] shadow-lg transition-all duration-300 hover:scale-110 hover:bg-[#e85a4f] hover:shadow-xl"
+		class="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#BC90A5] shadow-lg transition-all duration-300 hover:scale-110 hover:bg-[#BE85A5] hover:shadow-xl"
 		aria-label="Retour en haut de la page"
 	>
 		<ArrowUp class="h-6 w-6 text-white" />

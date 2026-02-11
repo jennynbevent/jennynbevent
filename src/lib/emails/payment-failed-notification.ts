@@ -14,7 +14,7 @@ export function PaymentFailedNotificationEmail({
 }: PaymentFailedNotificationProps) {
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'pastry',
     });
 
@@ -27,10 +27,10 @@ export function PaymentFailedNotificationEmail({
     const ctaSection = `
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
             ${EmailButton({
-                href: customerPortalUrl,
-                text: 'Mettre à jour le paiement',
-                variant: 'primary',
-            })}
+        href: customerPortalUrl,
+        text: 'Mettre à jour le paiement',
+        variant: 'primary',
+    })}
             <p style="margin-top: ${EMAIL_SPACING.lg}; color: ${EMAIL_COLORS.neutral[600]}; font-size: ${EMAIL_TYPOGRAPHY.fontSize.sm};">
                 Si le lien a expiré, vous pouvez vous rendre dans les paramètres de votre dashboard et cliquer sur le bouton "Gérez votre abonnement".
             </p>

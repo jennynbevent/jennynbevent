@@ -12,7 +12,7 @@ interface ContactNotificationProps {
 export function ContactNotificationEmail({ name, email, subject, message, date }: ContactNotificationProps) {
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'pastry',
     });
 

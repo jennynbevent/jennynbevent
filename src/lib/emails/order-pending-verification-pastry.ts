@@ -36,7 +36,7 @@ export function OrderPendingVerificationPastryEmail({
 }: OrderPendingVerificationPastryProps) {
     const header = EmailHeader({
         logoUrl: undefined,
-        logoAlt: 'Pattyly',
+        logoAlt: 'Jennynbevent',
         type: 'pastry',
     });
 
@@ -52,7 +52,7 @@ export function OrderPendingVerificationPastryEmail({
             <ol style="margin: 0; padding-left: 20px; list-style: decimal; color: ${EMAIL_COLORS.neutral[700]};">
                 <li style="margin-bottom: ${EMAIL_SPACING.sm};">Connectez-vous à votre compte PayPal</li>
                 <li style="margin-bottom: ${EMAIL_SPACING.sm};">Recherchez un paiement de <strong>${paidAmount.toFixed(2)}€</strong> avec la référence : <code style="font-family: monospace; background-color: white; padding: 4px 8px; border-radius: 4px; font-size: 13px;">${orderRef}</code></li>
-                <li>Une fois vérifié, validez la commande sur votre dashboard Pattyly</li>
+                <li>Une fois vérifié, validez la commande sur votre dashboard Jennynbevent</li>
             </ol>
         </div>
     `;

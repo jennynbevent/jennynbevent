@@ -13,15 +13,15 @@
 	let { supabase } = data;
 	$: ({ supabase } = data);
 	
-	// Vérifier si on est sur test.pattyly.com (déterminé côté serveur + vérification côté client)
+	// Vérifier si on est sur test.jennynbevent.com (déterminé côté serveur + vérification côté client)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	$: isTestDomain = (data as any).isTestDomain ?? false;
 	
 	// Vérification supplémentaire côté client au cas où
 	$: clientIsTestDomain = typeof window !== 'undefined' && (
-		window.location.hostname === 'test.pattyly.com' || 
-		window.location.hostname.endsWith('.test.pattyly.com') ||
-		window.location.hostname.includes('test.pattyly.com')
+		window.location.hostname === 'test.jennynbevent.com' || 
+		window.location.hostname.endsWith('.test.jennynbevent.com') ||
+		window.location.hostname.includes('test.jennynbevent.com')
 	);
 	
 	$: finalIsTestDomain = isTestDomain || clientIsTestDomain;
