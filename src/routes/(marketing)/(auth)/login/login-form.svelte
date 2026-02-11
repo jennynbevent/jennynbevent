@@ -39,10 +39,10 @@
 </script>
 
 {#if step === 'code' && email}
-	<!-- Étape 2 : saisie du code OTP à 6 chiffres -->
+	<!-- Étape 2 : saisie du code OTP à 8 chiffres -->
 	<div class="space-y-6">
 		<p class="rounded-lg bg-green-50 p-3 text-sm text-green-800">
-			Un code à 6 chiffres a été envoyé à <strong>{email}</strong>. Saisis-le ci-dessous.
+			Un code à 8 chiffres a été envoyé à <strong>{email}</strong>. Saisis-le ci-dessous.
 		</p>
 
 		<form
@@ -59,7 +59,7 @@
 					<div class="flex justify-center">
 						<InputOtp
 							value={$otpFormData.code}
-							length={6}
+							length={8}
 							disabled={$submittingOtp}
 							on:change={onOtpChange}
 						/>
@@ -69,7 +69,7 @@
 			</Form.Field>
 			<Form.Button
 				class="h-12 w-full rounded-xl bg-[#BC90A5] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#BE85A5] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-				disabled={$submittingOtp || $otpFormData.code.length !== 6}
+				disabled={$submittingOtp || $otpFormData.code.length !== 8}
 			>
 				{#if $submittingOtp}
 					<LoaderCircle class="mr-2 h-5 w-5 animate-spin" />

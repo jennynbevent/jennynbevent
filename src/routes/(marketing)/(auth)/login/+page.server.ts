@@ -63,7 +63,7 @@ export const actions: Actions = {
 		const { email } = form.data;
 		const next = event.url.searchParams.get('next') || '/dashboard';
 
-		// Envoie un email avec un code OTP 6 chiffres. Dans Supabase Dashboard > Auth > Email Templates,
+		// Envoie un email avec un code OTP 8 chiffres. Dans Supabase Dashboard > Auth > Email Templates,
 		// personnaliser le template "Magic Link" pour afficher le code : {{ .Token }}
 		const { error } = await supabase.auth.signInWithOtp({
 			email,
@@ -79,7 +79,7 @@ export const actions: Actions = {
 			return setError(form, '', error.message || 'Erreur lors de l\'envoi du code. Veuillez réessayer.');
 		}
 
-		// Rediriger vers l’étape saisie du code OTP (6 chiffres envoyés par email)
+		// Rediriger vers l’étape saisie du code OTP (8 chiffres envoyés par email)
 		throw redirect(303, `/login?email=${encodeURIComponent(email)}&step=code&next=${encodeURIComponent(next)}`);
 	},
 

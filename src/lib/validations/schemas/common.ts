@@ -94,10 +94,10 @@ export const priceSchema = z.preprocess(
     }).min(0, 'Le prix doit être positif').max(10000, 'Le prix ne peut pas dépasser 10 000€')
 );
 
-// Code OTP - pour la vérification par code à 6 chiffres
+// Code OTP - pour la vérification par code à 8 chiffres
 export const otpCodeSchema = z
     .string()
-    .regex(/^\d{6}$/, { message: 'Le code doit contenir exactement 6 chiffres' })
+    .regex(/^\d{8}$/, { message: 'Le code doit contenir exactement 8 chiffres' })
 
 // UUID - pour les identifiants
 export const uuidSchema = z
