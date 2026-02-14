@@ -44,6 +44,8 @@
 		selectedPaymentProvider = stripeLink || data.paymentLinks[0];
 	}
 
+	$: isReservationProduct = data.product?.booking_type === 'reservation';
+
 	// Séparer Stripe des autres méthodes de paiement
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	$: stripeProvider = data.paymentLinks?.find((p: any) => p.provider_type === 'stripe');
@@ -561,10 +563,12 @@
 						</span>
 					</div>
 
-					<!-- Date de récupération ou plage -->
+					<!-- Date de récupération / location ou plage -->
 					<div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
 						<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
-							{data.orderData.pickup_date_end ? 'Information de réservation :' : 'Date de récupération :'}
+							{data.orderData.pickup_date_end
+								? (isReservationProduct ? 'Information de location :' : 'Information de réservation :')
+								: (isReservationProduct ? 'Date de location :' : 'Date de récupération :')}
 						</span>
 						<span class="text-sm text-neutral-900 sm:ml-auto sm:text-right whitespace-normal sm:whitespace-nowrap" style="font-weight: 400;">
 							{#if data.orderData.pickup_date_end}

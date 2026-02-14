@@ -1,6 +1,22 @@
 import { Resend } from 'resend';
 import { env } from '$env/dynamic/private';
 
+// Clé Resend : si absente, les emails ne partent pas (erreur silencieuse côté Resend).
+// Vérifier en prod : Vercel > Settings > Environment Variables > RESEND_API_KEY
+let _resend: Resend | null = null;
+function getResend(): Resend | null {
+	if (_resend) return _resend;
+	const key = env.RESEND_API_KEY;
+	if (!key || key.trim() === '') {
+		console.error(
+			'[EmailService] RESEND_API_KEY manquante ou vide. Les emails (commandes, devis, etc.) ne seront pas envoyés. Définir la variable en production (ex. Vercel > Settings > Environment Variables).'
+		);
+		return null;
+	}
+	_resend = new Resend(key);
+	return _resend;
+}
+
 // Templates d'emails
 import { OrderConfirmationEmail } from '$lib/emails/order-confirmation';
 import { OrderReadyEmail } from '$lib/emails/order-ready';
@@ -20,9 +36,6 @@ import { ContactNotificationEmail } from '$lib/emails/contact-notification';
 import { PaymentFailedNotificationEmail } from '$lib/emails/payment-failed-notification';
 import { CriticalErrorNotificationEmail } from '$lib/emails/critical-error-notification';
 import { MarketingCampaignEmail } from '$lib/emails/marketing-campaign';
-
-// Initialisation de Resend
-const resend = new Resend(env.RESEND_API_KEY);
 
 export class EmailService {
     /**
@@ -61,6 +74,8 @@ export class EmailService {
         date: string;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -132,6 +147,8 @@ export class EmailService {
         date: string;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -205,6 +222,8 @@ export class EmailService {
         date: string;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -277,6 +296,8 @@ export class EmailService {
         dashboardUrl: string;
         date: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -346,6 +367,8 @@ export class EmailService {
         dashboardUrl: string;
         date: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -412,6 +435,8 @@ export class EmailService {
         date: string;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -474,6 +499,8 @@ export class EmailService {
         dashboardUrl: string;
         date: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -528,6 +555,8 @@ export class EmailService {
         date: string;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -574,6 +603,8 @@ export class EmailService {
         orderUrl: string;
         date: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -622,6 +653,8 @@ export class EmailService {
         date: string;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -674,6 +707,8 @@ export class EmailService {
         dashboardUrl: string;
         date: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -728,6 +763,8 @@ export class EmailService {
         date: string;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -783,6 +820,8 @@ export class EmailService {
         willRefund?: boolean;
         shopColor?: string | null;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -827,6 +866,8 @@ export class EmailService {
         message: string;
         subject: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -867,6 +908,8 @@ export class EmailService {
         message: string;
         date: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -907,6 +950,8 @@ export class EmailService {
         customerPortalUrl: string;
         date: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -941,6 +986,8 @@ export class EmailService {
         email: string;
         code: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
@@ -1000,6 +1047,8 @@ export class EmailService {
         metadata: Record<string, any>;
         timestamp: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const severityLabels = {
                 critical: 'CRITIQUE',
@@ -1053,6 +1102,8 @@ export class EmailService {
         periodYear: number;
         payoutDate: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             const { PUBLIC_SITE_URL } = await import('$env/static/public');
 
@@ -1169,6 +1220,8 @@ export class EmailService {
         ctaText?: string;
         ctaUrl?: string;
     }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
         try {
             // Vérifier si l'utilisateur est désabonné
             try {

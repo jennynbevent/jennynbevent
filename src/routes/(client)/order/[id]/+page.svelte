@@ -39,6 +39,7 @@
 	};
 
 	$: shop = data.order?.shops;
+	$: isReservationProduct = data.orderType === 'product_order' && data.product?.booking_type === 'reservation';
 
 	const { order, orderType } = data;
 
@@ -421,12 +422,12 @@
 						</div>
 					{/if}
 
-					<!-- Date de récupération -->
+					<!-- Date de récupération / location -->
 					{#if hasChefDate}
 						<!-- Date souhaitée par le client -->
 						<div class="flex items-center justify-between gap-2">
 							<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
-								Date de récupération souhaitée :
+								{isReservationProduct ? 'Date de location souhaitée :' : 'Date de récupération souhaitée :'}
 							</span>
 							<span class="text-sm text-neutral-900 text-right sm:ml-auto whitespace-nowrap" style="font-weight: 400;">
 								{#if order?.pickup_date_end}
@@ -444,7 +445,7 @@
 							<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
 								{order?.status === 'quoted'
 									? 'Date de livraison possible :'
-									: 'Date de récupération finale :'}
+									: (isReservationProduct ? 'Date de location finale :' : 'Date de récupération finale :')}
 							</span>
 							<span
 								class="text-sm text-right sm:ml-auto whitespace-nowrap"
@@ -457,10 +458,12 @@
 							</span>
 						</div>
 					{:else}
-						<!-- Date de récupération (normale) -->
+						<!-- Date de récupération / location (normale) -->
 						<div class="flex items-center justify-between gap-2">
 							<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
-								Date de récupération :
+								{order?.pickup_date_end
+									? (isReservationProduct ? 'Information de location :' : 'Information de réservation :')
+									: (isReservationProduct ? 'Date de location :' : 'Date de récupération :')}
 							</span>
 							<span class="text-sm text-neutral-900 text-right sm:ml-auto whitespace-nowrap" style="font-weight: 400;">
 								{#if order?.pickup_date_end}

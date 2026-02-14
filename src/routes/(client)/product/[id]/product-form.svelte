@@ -373,7 +373,7 @@
 				class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl"
 				style="font-weight: 600; letter-spacing: -0.02em;"
 			>
-				{isReservation ? 'Information de réservation' : 'Information de récupération'}
+				{isReservation ? 'Information de location' : 'Information de récupération'}
 			</h3>
 			{#if isReservation}
 				<div class="space-y-2">
@@ -641,7 +641,7 @@
 					{#if $formData.pickup_date}
 						<div class="flex items-center justify-between gap-2">
 							<span class="font-semibold text-neutral-700" style="font-weight: 600;">
-								{isReservation ? 'Information de réservation :' : 'Date de récupération :'}
+								{isReservation ? 'Information de location :' : 'Date de récupération :'}
 							</span>
 							<span class="text-right text-neutral-900 whitespace-nowrap" style={customStyles.textStyle}>
 								{#if isReservation && $formData.pickup_date_end}

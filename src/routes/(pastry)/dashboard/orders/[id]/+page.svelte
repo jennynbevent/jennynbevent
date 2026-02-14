@@ -36,6 +36,7 @@
 	$: ({
 		order,
 		shop,
+		product,
 		paidAmount,
 		personalNote,
 		makeQuoteForm,
@@ -43,6 +44,7 @@
 		personalNoteForm,
 		isPending,
 	} = $page.data);
+	$: isReservationProduct = product?.booking_type === 'reservation';
 
 	// État du formulaire pour les actions
 	let showQuoteForm = false;
@@ -435,7 +437,7 @@
 						</div>
 						<div>
 							<Label class="text-sm font-medium text-muted-foreground"
-								>{order.pickup_date_end ? 'Information de réservation' : 'Date de récupération'}</Label
+								>{order.pickup_date_end ? (isReservationProduct ? 'Information de location' : 'Information de réservation') : (isReservationProduct ? 'Date de location' : 'Date de récupération')}</Label
 							>
 							<p class="text-sm">
 								{#if order.pickup_date_end}

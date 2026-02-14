@@ -51,7 +51,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             if (orderData.product_id) {
                 const { data: productData } = await locals.supabase
                     .from('products')
-                    .select('base_price, deposit_percentage, image_url')
+                    .select('base_price, deposit_percentage, image_url, booking_type')
                     .eq('id', orderData.product_id)
                     .single();
                 product = productData;
@@ -124,6 +124,17 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             id: permissions.shopId
         };
 
+        // Récupérer le produit (booking_type pour libellé "Date de location")
+        let product = null;
+        if (order.product_id) {
+            const { data: productData } = await locals.supabase
+                .from('products')
+                .select('booking_type')
+                .eq('id', order.product_id)
+                .single();
+            product = productData;
+        }
+
         // Récupérer le montant payé depuis la DB
         const paidAmount = order.paid_amount;
 
@@ -142,6 +153,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
         return {
             order,
             shop: shopWithId,
+            product,
             paidAmount,
             personalNote: personalNote || null,
             makeQuoteForm,

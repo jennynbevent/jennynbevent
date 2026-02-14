@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
         if (order.product_id) {
             const { data: productData } = await (locals.supabaseServiceRole as any)
                 .from('products')
-                .select('deposit_percentage')
+                .select('deposit_percentage, booking_type')
                 .eq('id', order.product_id)
                 .single();
             product = productData;
