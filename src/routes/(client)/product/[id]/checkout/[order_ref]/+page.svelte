@@ -562,11 +562,11 @@
 					</div>
 
 					<!-- Date de récupération ou plage -->
-					<div class="flex items-center justify-between gap-2">
+					<div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
 						<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
 							{data.orderData.pickup_date_end ? 'Information de réservation :' : 'Date de récupération :'}
 						</span>
-						<span class="text-sm text-neutral-900 text-right sm:ml-auto whitespace-nowrap" style="font-weight: 400;">
+						<span class="text-sm text-neutral-900 sm:ml-auto sm:text-right whitespace-normal sm:whitespace-nowrap" style="font-weight: 400;">
 							{#if data.orderData.pickup_date_end}
 								Du {formatDate(data.orderData.pickup_date)} au {formatDate(data.orderData.pickup_date_end)}
 							{:else}

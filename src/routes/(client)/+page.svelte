@@ -92,7 +92,7 @@
 	$: productCount = products?.length || 0;
 	$: hasCustomOrders = shop?.is_custom_accepted || false;
 	$: seoTitle = shop?.name
-		? `${shop.name} - Cake Designer & Pâtissier | Commandez vos articles personnalisés en ligne`
+		? `${shop.name}`
 		: 'Boutique de pâtisserie';
 	$: seoDescription = shop?.bio
 		? `${shop.bio} Commandez vos articles personnalisés en ligne. ${productCount > 0 ? `${productCount} créations disponibles. ` : ''}${hasCustomOrders ? 'Demandes sur mesure acceptées. ' : ''}Livraison et retrait disponibles.`
