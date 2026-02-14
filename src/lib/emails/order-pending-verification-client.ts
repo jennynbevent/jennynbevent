@@ -27,6 +27,7 @@ export function OrderPendingVerificationClientEmail({
     productName,
     pickupDate,
     pickupTime,
+    pickupDateEnd,
     totalAmount,
     paidAmount,
     remainingAmount,
