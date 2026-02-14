@@ -4,7 +4,6 @@ import { zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad, Actions } from './$types';
 import { verifyShopOwnership } from '$lib/auth';
 import { formSchema } from './schema';
-import { forceRevalidateShop } from '$lib/utils/catalog';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
     // ✅ OPTIMISÉ : Réutiliser les permissions et shop du layout
@@ -93,8 +92,6 @@ export const actions: Actions = {
             return fail(500, { form });
         }
 
-        await forceRevalidateShop(shopSlug);
-
         // Retourner le formulaire pour Superforms
         const form = await superValidate(zod(formSchema));
         form.message = 'FAQ créée avec succès !';
@@ -153,8 +150,6 @@ export const actions: Actions = {
             return fail(500, { form });
         }
 
-        await forceRevalidateShop(shopSlug);
-
         // Retourner le formulaire pour Superforms
         const form = await superValidate(zod(formSchema));
         form.message = 'FAQ mise à jour avec succès !';
@@ -206,8 +201,6 @@ export const actions: Actions = {
             form.message = 'Erreur lors de la suppression de la FAQ';
             return fail(500, { form });
         }
-
-        await forceRevalidateShop(shopSlug);
 
         // Retourner le formulaire pour Superforms
         const form = await superValidate(zod(formSchema));

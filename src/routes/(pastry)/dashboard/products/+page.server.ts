@@ -2,7 +2,6 @@ import { error as svelteError, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { verifyShopOwnership } from '$lib/auth';
 import { deleteImageIfUnused } from '$lib/storage';
-import { forceRevalidateShop } from '$lib/utils/catalog';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { createCategoryFormSchema, updateCategoryFormSchema, deleteCategoryFormSchema } from './schema';
@@ -128,13 +127,6 @@ export const actions: Actions = {
             // Supprimer l'image si elle n'est plus utilisée par d'autres produits
             if (product.image_url) {
                 await deleteImageIfUnused(locals.supabase, product.image_url);
-            }
-
-            // Increment catalog version to invalidate public cache
-            try {
-                await forceRevalidateShop(shopSlug);
-            } catch (error) {
-                // Don't fail the entire operation, just log the warning
             }
 
             return { message: 'Produit et formulaire supprimés avec succès' };
@@ -283,13 +275,6 @@ export const actions: Actions = {
                 }
             }
 
-            // Increment catalog version to invalidate public cache
-            try {
-                await forceRevalidateShop(shopSlug);
-            } catch (error) {
-                // Don't fail the entire operation, just log the warning
-            }
-
             return { message: 'Produit et formulaire dupliqués avec succès' };
         } catch (err) {
             return fail(500, {
@@ -366,14 +351,6 @@ export const actions: Actions = {
                 }
 
                 newCategory = insertedCategory;
-            }
-
-            // Increment catalog version to invalidate public cache
-            try {
-                await forceRevalidateShop(shopSlug);
-            } catch (error) {
-                // Don't fail the entire operation, just log the warning
-                console.warn('⚠️ [Create Category] Cache invalidation failed:', error);
             }
 
             // ✅ Retourner le formulaire existant avec le message de succès
@@ -476,13 +453,6 @@ export const actions: Actions = {
                 return fail(500, { form, error: 'Erreur lors de la modification de la catégorie' });
             }
 
-            // Increment catalog version to invalidate public cache
-            try {
-                await forceRevalidateShop(shopSlug);
-            } catch (error) {
-                // Don't fail the entire operation, just log the warning
-            }
-
             // Retourner le formulaire mis à jour pour Superforms
             const updatedForm = await superValidate(zod(updateCategoryFormSchema));
             updatedForm.message = 'Catégorie modifiée avec succès';
@@ -564,13 +534,6 @@ export const actions: Actions = {
                 return fail(500, { form, error: 'Erreur lors de la suppression de la catégorie' });
             }
 
-            // Increment catalog version to invalidate public cache
-            try {
-                await forceRevalidateShop(shopSlug);
-            } catch (error) {
-                // Don't fail the entire operation, just log the warning
-            }
-
             // Retourner le formulaire mis à jour pour Superforms
             form.message = 'Catégorie supprimée avec succès';
             return { form };
@@ -629,13 +592,6 @@ export const actions: Actions = {
 
             if (updateError) {
                 return fail(500, { error: 'Erreur lors de la mise à jour du produit' });
-            }
-
-            // Increment catalog version to invalidate public cache
-            try {
-                await forceRevalidateShop(shopSlug);
-            } catch (error) {
-                // Don't fail the entire operation, just log the warning
             }
 
             return {

@@ -1,16 +1,8 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { loadShopCatalog } from '$lib/utils/catalog/catalog-loader';
-import { env } from '$env/dynamic/private';
 
-export const config = {
-	isr: {
-		expiration: false,
-		bypassToken: env.REVALIDATION_TOKEN
-	}
-};
-
-export const load: PageServerLoad = async ({ locals, setHeaders, url, request, parent }) => {
+export const load: PageServerLoad = async ({ locals, setHeaders, parent }) => {
 	try {
 		const { shopId } = await parent();
 		if (!shopId) {
@@ -27,33 +19,22 @@ export const load: PageServerLoad = async ({ locals, setHeaders, url, request, p
 			return { notFound: true };
 		}
 
-		const bypassToken = url.searchParams.get('bypassToken');
-		const revalidateHeader = request.headers.get('x-prerender-revalidate');
-		const isRevalidation =
-			bypassToken === env.REVALIDATION_TOKEN || revalidateHeader === env.REVALIDATION_TOKEN;
 		const isShopVisible = shopInfo.is_active;
-
-		if (!isShopVisible && !isRevalidation) {
+		if (!isShopVisible) {
 			return { notFound: true };
 		}
 
 		const catalogData = await loadShopCatalog(locals.supabaseServiceRole as any, shopId);
 
-		setHeaders({
-			'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=86400',
-			'X-ISR-Revalidated': isRevalidation ? 'true' : 'false'
-		});
+		// Pas d'ISR : une seule boutique, données toujours fraîches
+		setHeaders({ 'Cache-Control': 'public, max-age=0, must-revalidate' });
 
 		return {
 			shop: catalogData.shop,
 			categories: catalogData.categories,
 			products: catalogData.products,
 			faqs: catalogData.faqs,
-			isShopActive: isShopVisible,
-			cacheInfo: {
-				cached_at: catalogData.cached_at,
-				revalidated: isRevalidation
-			}
+			isShopActive: isShopVisible
 		};
 	} catch (err) {
 		console.error('[/] Error loading shop:', err);

@@ -2,7 +2,6 @@ import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { verifyShopOwnership } from '$lib/auth';
 import { uploadProductImage, deleteImage, extractPublicIdFromUrl } from '$lib/cloudinary';
-import { forceRevalidateShop } from '$lib/utils/catalog';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { updateProductFormSchema, createCategoryFormSchema } from './schema.js';
@@ -600,12 +599,6 @@ export const actions: Actions = {
         }
 
         // Increment catalog version to invalidate public cache
-        try {
-            await forceRevalidateShop(shopSlug);
-        } catch (error) {
-            // Don't fail the entire operation, just log the warning
-        }
-
         // Retourner un succès avec le formulaire Superforms
         form.message = 'Produit modifié avec succès';
         return { form };

@@ -2,7 +2,6 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { verifyShopOwnership } from '$lib/auth';
 import { uploadProductImage } from '$lib/cloudinary';
-import { forceRevalidateShop } from '$lib/utils/catalog';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { createProductFormSchema, createCategoryFormSchema } from './schema';
@@ -312,12 +311,6 @@ export const actions: Actions = {
         }
 
         // Increment catalog version to invalidate public cache
-        try {
-            await forceRevalidateShop(shopSlug);
-        } catch (error) {
-            // Don't fail the entire operation, just log the warning
-        }
-
         // ✅ Tracking: Product added (fire-and-forget pour ne pas bloquer)
         if (product) {
             const { logEventAsync, Events } = await import('$lib/utils/analytics');

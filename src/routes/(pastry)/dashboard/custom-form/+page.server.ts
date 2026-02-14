@@ -4,7 +4,6 @@ import { zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad, Actions } from './$types';
 import { verifyShopOwnership } from '$lib/auth';
 import { STRIPE_PRICES } from '$lib/config/server';
-import { forceRevalidateShop } from '$lib/utils/catalog';
 import { toggleCustomRequestsFormSchema, updateCustomFormFormSchema } from './schema';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
@@ -160,7 +159,6 @@ export const actions: Actions = {
                 toggleForm.message = 'Erreur lors de la mise à jour des paramètres';
                 return fail(400, { toggleForm, form: toggleForm });
             }
-            await forceRevalidateShop(shopSlug);
 
             // Retourner le formulaire pour Superforms
             const toggleForm = await superValidate(zod(toggleCustomRequestsFormSchema));
@@ -298,8 +296,6 @@ export const actions: Actions = {
                     return fail(400, { updateForm, form: updateForm });
                 }
             }
-
-            await forceRevalidateShop(shopSlug);
 
             // Retourner le formulaire pour Superforms
             const updateForm = await superValidate(zod(updateCustomFormFormSchema));

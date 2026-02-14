@@ -9,7 +9,6 @@ import { customizationSchema } from './customization-schema';
 import { policiesSchema } from './policies-schema';
 import { paymentConfigSchema } from '../../../onboarding/schema';
 import { uploadShopLogo, uploadBackgroundImage, deleteImage, extractPublicIdFromUrl } from '$lib/cloudinary';
-import { forceRevalidateShop } from '$lib/utils/catalog';
 import { verifyShopOwnership } from '$lib/auth';
 import { setError } from 'sveltekit-superforms';
 
@@ -228,27 +227,6 @@ export const actions: Actions = {
 
         // ✅ Synchronisation Resend désactivée (fonctionnalité supprimée)
 
-        // Invalidate cache for both old and new slugs if slug changed
-        if (slugChanged) {
-            try {
-                // Revalidate new slug
-                await forceRevalidateShop(slug);
-                // Also revalidate old slug to return 404
-                await forceRevalidateShop(oldSlug);
-                console.log(`🔄 Revalidated both slugs: ${oldSlug} -> ${slug}`);
-            } catch (error) {
-                console.error('Cache revalidation failed:', error);
-                // Don't fail the entire operation, just log the warning
-            }
-        } else {
-            // If slug didn't change, just revalidate current slug
-            try {
-                await forceRevalidateShop(slug);
-            } catch (error) {
-                console.error('Cache revalidation failed:', error);
-            }
-        }
-
         // Return form data for Superforms compatibility with updated data
         const updatedForm = await superValidate(zod(formSchema), {
             defaults: {
@@ -380,13 +358,6 @@ export const actions: Actions = {
             }
         });
 
-        // Revalidate shop cache to update the slug page (utiliser shopSlug depuis formData)
-        try {
-            await forceRevalidateShop(shopSlug);
-        } catch (error) {
-            console.error('🎨 [Customization] Cache revalidation failed:', error);
-        }
-
         updatedForm.message = 'Personnalisation sauvegardée avec succès !';
         // ✅ IMPORTANT : Ne pas retourner le File dans le formulaire (non sérialisable)
         // Le formulaire mis à jour ne contient que les données sérialisables
@@ -453,13 +424,6 @@ export const actions: Actions = {
         if (updateError) {
             console.error('🎨 [Dashboard Shop] Error updating customizations:', updateError);
             return { success: false, error: 'Erreur lors de la suppression' };
-        }
-
-        // Revalidate shop cache (utiliser shopSlug depuis formData)
-        try {
-            await forceRevalidateShop(shopSlug);
-        } catch (error) {
-            console.error('🎨 [Customization] Cache revalidation failed:', error);
         }
 
         return { success: true };
@@ -547,13 +511,6 @@ export const actions: Actions = {
                 console.error('❌ [Directory] Erreur lors du géocodage automatique:', error);
                 // Ne pas faire échouer la requête si le géocodage échoue
             }
-        }
-
-        // Revalidate shop cache (utiliser shopSlug depuis formData)
-        try {
-            await forceRevalidateShop(shopSlug);
-        } catch (error) {
-            console.error('📋 [Directory] Cache revalidation failed:', error);
         }
 
         // Retourner le formulaire mis à jour
@@ -657,13 +614,6 @@ export const actions: Actions = {
                 }
             }
 
-            // Revalidate shop cache
-            try {
-                await forceRevalidateShop(shopSlug);
-            } catch (error) {
-                console.error('📋 [Toggle Directory] Cache revalidation failed:', error);
-            }
-
             // Retourner le formulaire mis à jour
             const updatedForm = await superValidate(zod(toggleDirectorySchema), {
                 defaults: {
@@ -735,13 +685,6 @@ export const actions: Actions = {
             console.error('📋 [Policies] Update error:', updateError);
             form.message = 'Erreur lors de la mise à jour des politiques';
             return { form };
-        }
-
-        // Revalidate shop cache (utiliser shopSlug depuis formData)
-        try {
-            await forceRevalidateShop(shopSlug);
-        } catch (error) {
-            console.error('📋 [Policies] Cache revalidation failed:', error);
         }
 
         // Retourner le formulaire mis à jour
