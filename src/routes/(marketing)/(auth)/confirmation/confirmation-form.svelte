@@ -124,7 +124,7 @@
 				<input {...attrs} type="hidden" bind:value={$formData.code} />
 				<InputOtp
 					value={$formData.code}
-					length={6}
+					length={8}
 					disabled={$submitting}
 					error={!!$page.url.searchParams.get('error')}
 					on:change={handleOtpChange}
@@ -138,7 +138,7 @@
 	<Button
 		type="submit"
 		class="h-12 w-full rounded-xl bg-[#BC90A5] text-base font-medium text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:bg-[#BE85A5] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-		disabled={$submitting || $formData.code.length !== 6}
+		disabled={$submitting || $formData.code.length !== 8}
 	>
 		{#if $submitting}
 			<LoaderCircle class="mr-2 h-5 w-5 animate-spin" />

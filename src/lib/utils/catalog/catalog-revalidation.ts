@@ -2,13 +2,16 @@ import { env } from '$env/dynamic/private';
 import { PUBLIC_SITE_URL } from '$env/static/public';
 
 /**
- * Force la revalidation ISR d'une boutique
- * @param shopSlug Slug de la boutique, ou vide pour revalider la racine (single-shop)
+ * Force la revalidation ISR d'une boutique.
+ * En mode single-shop (PUBLIC_SINGLE_SHOP_ID défini), le catalogue est toujours à la racine /
+ * donc on revalide toujours "/" pour que le cache soit bien rafraîchi après chaque modification.
+ * @param shopSlug Slug de la boutique (ignoré en single-shop), ou vide pour revalider la racine
  * @returns true si la revalidation a réussi
  */
 export async function forceRevalidateShop(shopSlug: string = ''): Promise<boolean> {
   try {
-    const path = shopSlug ? `/${shopSlug}` : '';
+    const singleShopId = (env as Record<string, string | undefined>).PUBLIC_SINGLE_SHOP_ID;
+    const path = singleShopId ? '/' : shopSlug ? `/${shopSlug}` : '/';
     const revalidateUrl = `${PUBLIC_SITE_URL}${path}?bypassToken=${env.REVALIDATION_TOKEN}`;
 
     console.log(`🔄 [REVALIDATION] Starting revalidation for shop: ${shopSlug || '(root)'}`);

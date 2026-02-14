@@ -63,7 +63,7 @@ export const actions: Actions = {
 		const { email } = form.data;
 		const next = event.url.searchParams.get('next') || '/dashboard';
 
-		// Envoie un email avec un code OTP 8 chiffres. Dans Supabase Dashboard > Auth > Email Templates,
+		// Envoie un email avec un code OTP 8 chiffres (aligné Supabase Cloud, config local dans config.toml).
 		// personnaliser le template "Magic Link" pour afficher le code : {{ .Token }}
 		const { error } = await supabase.auth.signInWithOtp({
 			email,

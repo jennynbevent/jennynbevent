@@ -60,6 +60,8 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
 max_frequency = "60s"
+# Aligné sur Supabase Cloud (Dashboard > Auth > Email) : OTP 8 chiffres
+otp_length = 8
 
 # Décommenter et utiliser env vars pour SMTP
 # [auth.email.smtp]
