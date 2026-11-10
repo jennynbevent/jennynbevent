@@ -103,6 +103,7 @@
 		$formData.deposit_percentage = initialData.deposit_percentage ?? 50;
 		$formData.booking_type = initialData.booking_type || 'pickup';
 		$formData.min_reservation_days = initialData.min_reservation_days ?? 1;
+		$formData.show_delivery_options = !!initialData.show_delivery_options;
 		// Charger les images existantes
 		if (initialData.images && Array.isArray(initialData.images)) {
 			existingImages = initialData.images.map((img: any, index: number) => ({
@@ -661,6 +662,16 @@
 					</Form.Control>
 					<Form.FieldErrors />
 				</Form.Field>
+
+				{#if $formData.booking_type !== 'reservation'}
+					<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-3 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+						<input type="checkbox" bind:checked={$formData.show_delivery_options} class="mt-0.5 h-4 w-4" />
+						<span>
+							<span class="block text-sm font-medium">Afficher « Comment recevoir votre commande » et « Votre QR code »</span>
+							<span class="block text-sm text-muted-foreground">Le client choisit entre le retrait à Andrésy et l'envoi par e-mail, et peut ajouter son QR code.</span>
+						</span>
+					</label>
+				{/if}
 
 				{#if $formData.booking_type === 'reservation'}
 					<Form.Field {form} name="min_reservation_days">

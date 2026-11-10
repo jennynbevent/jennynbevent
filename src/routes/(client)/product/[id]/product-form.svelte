@@ -234,14 +234,19 @@
 
 	// Charger les créneaux quand la date change
 	// Mode de remise et QR code
-	$: isEmailDelivery = $formData.delivery_mode === 'email';
+	$: showDeliveryOptions = !!product?.show_delivery_options && !isReservation;
+	$: isEmailDelivery = showDeliveryOptions && $formData.delivery_mode === 'email';
+	function isoInDays(days: number) {
+		const d = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+	}
 	function chooseDelivery(mode: 'retrait' | 'email') {
+		if ($formData.delivery_mode === mode) return;
 		$formData.delivery_mode = mode;
-		// Pas de créneau horaire pour un envoi par e-mail
-		if (mode === 'email') {
-			$formData.pickup_time = undefined;
-			selectedTimeSlot = '';
-		}
+		$formData.pickup_time = undefined;
+		selectedTimeSlot = '';
+		// Envoi par e-mail : pas de calendrier, la date est fixée automatiquement (48 h)
+		$formData.pickup_date = mode === 'email' ? isoInDays(2) : '';
 	}
 	let qrUploading = false;
 	let qrError = '';
@@ -401,7 +406,7 @@
 			</div>
 		{/if}
 
-		{#if !isReservation}
+		{#if showDeliveryOptions}
 			<!-- Mode de remise -->
 			<div class="space-y-3">
 				<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="font-weight: 600; letter-spacing: -0.02em;">
@@ -415,7 +420,7 @@
 						on:click={() => chooseDelivery('retrait')}
 						class="rounded-full border px-4 py-2 text-sm font-medium transition-colors {!isEmailDelivery ? 'border-neutral-900 bg-white text-neutral-900' : 'border-neutral-300 bg-white/60 text-neutral-600 hover:border-neutral-500'}"
 					>
-						📍 Retrait à Andrésy
+						📍 Retrait à Andrésy (78)
 					</button>
 					<span class="cursor-not-allowed rounded-full border border-dashed border-neutral-300 px-4 py-2 text-sm text-neutral-400 line-through" aria-disabled="true" title="Bientôt disponible">
 						🚚 Livraison
@@ -455,7 +460,7 @@
 						<span class="text-2xl" aria-hidden="true">▦</span>
 						<span>
 							<span class="block font-medium text-neutral-900">{qrUploading ? 'Envoi en cours…' : 'Ajouter mon QR code'}</span>
-							<span class="block text-xs">Image PNG ou JPG, par exemple depuis votre espace Souvientoi</span>
+							<span class="block text-xs">Image PNG ou JPG, par exemple depuis votre espace Souvientoi ou Placemoi</span>
 						</span>
 						<input bind:this={qrInput} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="sr-only" disabled={qrUploading} on:change={onQrSelected} />
 					</label>
@@ -468,8 +473,14 @@
 			</div>
 		{/if}
 
+		{#if isEmailDelivery}
+			<div class="rounded-2xl border bg-white p-4 text-sm text-neutral-700">
+				✉️ Votre fichier vous sera envoyé par e-mail <strong>sous 48 h maximum</strong> après la confirmation de votre commande.
+			</div>
+		{/if}
+
 		<!-- Section 2: Information de récupération ou plage de réservation -->
-		<div class="space-y-4">
+		<div class="space-y-4" class:hidden={isEmailDelivery}>
 			<h3
 				class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl"
 				style="font-weight: 600; letter-spacing: -0.02em;"
@@ -684,22 +695,6 @@
 					</Form.Field>
 				</div>
 
-				<div class="space-y-2">
-					<Form.Field {form} name="customer_instagram">
-						<Form.Control let:attrs>
-							<Form.Label>Instagram (facultatif)</Form.Label>
-							<Input
-								{...attrs}
-								id="instagram"
-								placeholder="@votre_compte"
-								disabled={isFormDisabled}
-								style={customStyles.inputBackgroundStyle}
-								bind:value={$formData.customer_instagram}
-							/>
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
-				</div>
 
 				<div class="space-y-2">
 					<Form.Field {form} name="additional_information">
@@ -739,10 +734,10 @@
 					d'erreur votre commande pourra être retardée.
 				</p>
 				<div class="space-y-3 text-sm">
-					{#if !isReservation}
+					{#if showDeliveryOptions}
 						<div class="flex items-center justify-between gap-2">
 							<span class="font-semibold text-neutral-700" style="font-weight: 600;">Mode de remise :</span>
-							<span class="text-right text-neutral-900" style={customStyles.textStyle}>{isEmailDelivery ? 'Par e-mail' : 'Retrait à Andrésy'}</span>
+							<span class="text-right text-neutral-900" style={customStyles.textStyle}>{isEmailDelivery ? 'Par e-mail, sous 48 h' : 'Retrait à Andrésy (78)'}</span>
 						</div>
 						{#if $formData.qr_code_url}
 							<div class="flex items-center justify-between gap-2">
@@ -751,7 +746,7 @@
 							</div>
 						{/if}
 					{/if}
-					{#if $formData.pickup_date}
+					{#if $formData.pickup_date && !isEmailDelivery}
 						<div class="flex items-center justify-between gap-2">
 							<span class="font-semibold text-neutral-700" style="font-weight: 600;">
 								{isReservation ? 'Information de location :' : isEmailDelivery ? 'Date souhaitée :' : 'Date de récupération :'}

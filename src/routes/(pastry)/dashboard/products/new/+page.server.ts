@@ -71,7 +71,7 @@ export const actions: Actions = {
         }
 
         // Extraire les données validées
-        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, customizationFields } = form.data;
+        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, show_delivery_options, customizationFields } = form.data;
 
         // Récupérer toutes les images depuis formData
         const imageFiles: File[] = [];
@@ -146,7 +146,8 @@ export const actions: Actions = {
                     cake_type: null,
                     deposit_percentage: deposit_percentage ?? 50,
                     booking_type: booking_type || 'pickup',
-                    min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0
+                    min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0,
+                    show_delivery_options: booking_type === 'reservation' ? false : !!show_delivery_options
                 })
                 .select()
                 .single();

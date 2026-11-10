@@ -68,10 +68,21 @@ export const load: PageServerLoad = async ({ params, locals, url, parent }) => {
 			}).filter((r: { start_date: string; end_date: string }) => r.start_date && r.end_date);
 		}
 
+		// Option « mode de remise + QR code » (colonne ajoutée séparément : ignorée si absente)
+		let showDeliveryOptions = false;
+		{
+			const { data: opt, error: optError } = await (locals.supabaseServiceRole as any)
+				.from('products')
+				.select('show_delivery_options')
+				.eq('id', product.id)
+				.single();
+			if (!optError && opt) showDeliveryOptions = !!opt.show_delivery_options;
+		}
+
 		const dynamicSchema = createLocalDynamicSchema(customFields || []);
 		return {
 			shop,
-			product: { ...product, images: productImages },
+			product: { ...product, images: productImages, show_delivery_options: showDeliveryOptions },
 			productImages,
 			customForm,
 			customFields: customFields || [],
@@ -130,6 +141,16 @@ export const actions: Actions = {
 
 			const bookingType = product.booking_type || 'pickup';
 
+			let showDeliveryOptions = false;
+			{
+				const { data: opt, error: optError } = await (locals.supabaseServiceRole as any)
+					.from('products')
+					.select('show_delivery_options')
+					.eq('id', product.id)
+					.single();
+				if (!optError && opt) showDeliveryOptions = !!opt.show_delivery_options && bookingType !== 'reservation';
+			}
+
 			let customFields: any[] = [];
 			if (product.form_id) {
 				const { data: formFields } = await (locals.supabaseServiceRole as any)
@@ -157,7 +178,8 @@ export const actions: Actions = {
 				delivery_mode,
 				qr_code_url
 			} = form.data;
-			const isEmailDelivery = delivery_mode === 'email';
+			const isEmailDelivery = showDeliveryOptions && delivery_mode === 'email';
+			const qrCodeUrl = showDeliveryOptions ? qr_code_url : '';
 
 			if (bookingType === 'reservation') {
 				if (!pickup_date_end) {
@@ -193,7 +215,8 @@ export const actions: Actions = {
 			let selectedDate: string;
 			let selectedDateObj: Date;
 			try {
-				selectedDateObj = new Date(pickup_date);
+				// Envoi par e-mail : pas de date à choisir, fichier envoyé sous 48 h
+				selectedDateObj = isEmailDelivery ? new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) : new Date(pickup_date);
 				selectedDate = `${selectedDateObj.getFullYear()}-${String(selectedDateObj.getMonth() + 1).padStart(2, '0')}-${String(selectedDateObj.getDate()).padStart(2, '0')}`;
 			} catch {
 				return fail(400, { form, error: 'Date de retrait invalide' });
@@ -263,13 +286,15 @@ export const actions: Actions = {
 			});
 
 			// Mode de remise, visible dans le tableau de bord et les e-mails
-			selectedOptions['Mode de remise'] = {
-				value: isEmailDelivery ? 'Par e-mail (fichier à imprimer)' : 'Retrait à Andrésy',
-				type: 'short-text',
-				price: 0,
-				fieldId: 'delivery_mode',
-				fieldType: 'short-text'
-			};
+			if (showDeliveryOptions) {
+				selectedOptions['Mode de remise'] = {
+					value: isEmailDelivery ? 'Par e-mail (fichier à imprimer, sous 48 h)' : 'Retrait à Andrésy (78)',
+					type: 'short-text',
+					price: 0,
+					fieldId: 'delivery_mode',
+					fieldType: 'short-text'
+				};
+			}
 
 			let totalPrice = product.base_price || 0;
 			Object.values(selectedOptions).forEach((val: any) => {
@@ -303,7 +328,7 @@ export const actions: Actions = {
 				total_amount: totalPrice,
 				product_name: product.name,
 				order_ref,
-				inspiration_photos: qr_code_url ? [qr_code_url] : []
+				inspiration_photos: qrCodeUrl ? [qrCodeUrl] : []
 			};
 			if (bookingType === 'reservation' && pickup_date_end) {
 				const endStr = `${new Date(pickup_date_end).getFullYear()}-${String(new Date(pickup_date_end).getMonth() + 1).padStart(2, '0')}-${String(new Date(pickup_date_end).getDate()).padStart(2, '0')}`;

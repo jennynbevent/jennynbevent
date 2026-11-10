@@ -58,6 +58,8 @@ export const productBaseSchema = z.object({
         }).int().min(0, 'Le pourcentage doit être entre 0 et 100').max(100, 'Le pourcentage doit être entre 0 et 100')
     ).default(50),
     booking_type: z.enum(['pickup', 'reservation']).default('pickup'),
+    // Affiche le choix du mode de remise et l'ajout du QR code sur la page du produit
+    show_delivery_options: z.boolean().default(false),
     min_reservation_days: z.preprocess(
         (val) => {
             if (val === '' || val === undefined) return undefined;
@@ -90,7 +92,8 @@ export const updateProductSchema = productBaseSchema.pick({
     min_days_notice: true,
     deposit_percentage: true,
     booking_type: true,
-    min_reservation_days: true
+    min_reservation_days: true,
+    show_delivery_options: true
 });
 // Note: images ne sont pas dans le schéma car elles sont gérées manuellement via FormData
 

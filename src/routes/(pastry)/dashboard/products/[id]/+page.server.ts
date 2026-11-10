@@ -117,6 +117,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
                 deposit_percentage: product.deposit_percentage ?? 50,
                 booking_type: (product as any).booking_type || 'pickup',
                 min_reservation_days: (product as any).min_reservation_days ?? 1,
+                show_delivery_options: !!(product as any).show_delivery_options,
                 customizationFields: customizationFields
             }
         }
@@ -180,7 +181,7 @@ export const actions: Actions = {
         }
 
         // Extraire les données validées
-        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, customizationFields } = form.data;
+        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, show_delivery_options, customizationFields } = form.data;
 
         // Récupérer toutes les nouvelles images depuis formData
         const newImageFiles: File[] = [];
@@ -407,7 +408,8 @@ export const actions: Actions = {
                 min_days_notice: min_days_notice ?? 0,
                 deposit_percentage: deposit_percentage ?? 50,
                 booking_type: booking_type || 'pickup',
-                min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0
+                min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0,
+                show_delivery_options: booking_type === 'reservation' ? false : !!show_delivery_options
             };
 
             // Mettre à jour image_url avec la première image (pour rétrocompatibilité)
