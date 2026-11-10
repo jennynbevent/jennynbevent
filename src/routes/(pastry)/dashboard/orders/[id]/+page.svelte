@@ -674,7 +674,7 @@
 			{#if order.inspiration_photos && order.inspiration_photos.length > 0}
 				<Card>
 					<CardHeader>
-						<CardTitle>Photos d'inspiration</CardTitle>
+						<CardTitle>{order.product_name === 'Demande personnalisée' ? "Photos d'inspiration" : 'QR code du client'}</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div class="grid grid-cols-2 gap-4 sm:grid-cols-3">

@@ -153,8 +153,11 @@ export const actions: Actions = {
 				pickup_time,
 				pickup_date_end,
 				additional_information,
-				customization_data
+				customization_data,
+				delivery_mode,
+				qr_code_url
 			} = form.data;
+			const isEmailDelivery = delivery_mode === 'email';
 
 			if (bookingType === 'reservation') {
 				if (!pickup_date_end) {
@@ -181,7 +184,7 @@ export const actions: Actions = {
 						});
 					}
 				}
-			} else {
+			} else if (!isEmailDelivery) {
 				if (!pickup_time) {
 					return fail(400, { form, error: 'Veuillez sélectionner un créneau horaire de récupération.' });
 				}
@@ -204,7 +207,7 @@ export const actions: Actions = {
 				.eq('day', pickupDay)
 				.single();
 
-			if (bookingType === 'pickup' && availability?.daily_order_limit) {
+			if (bookingType === 'pickup' && !isEmailDelivery && availability?.daily_order_limit) {
 				const { data: existingOrders } = await (locals.supabaseServiceRole as any)
 					.from('orders')
 					.select('id')
@@ -259,6 +262,15 @@ export const actions: Actions = {
 				}
 			});
 
+			// Mode de remise, visible dans le tableau de bord et les e-mails
+			selectedOptions['Mode de remise'] = {
+				value: isEmailDelivery ? 'Par e-mail (fichier à imprimer)' : 'Retrait à Andrésy',
+				type: 'short-text',
+				price: 0,
+				fieldId: 'delivery_mode',
+				fieldType: 'short-text'
+			};
+
 			let totalPrice = product.base_price || 0;
 			Object.values(selectedOptions).forEach((val: any) => {
 				if (val?.price !== undefined) totalPrice += val.price || 0;
@@ -285,12 +297,13 @@ export const actions: Actions = {
 				customer_phone,
 				customer_instagram,
 				pickup_date: selectedDate,
-				pickup_time: bookingType === 'reservation' ? null : pickup_time,
+				pickup_time: bookingType === 'reservation' || isEmailDelivery ? null : pickup_time,
 				additional_information,
 				customization_data: selectedOptions,
 				total_amount: totalPrice,
 				product_name: product.name,
-				order_ref
+				order_ref,
+				inspiration_photos: qr_code_url ? [qr_code_url] : []
 			};
 			if (bookingType === 'reservation' && pickup_date_end) {
 				const endStr = `${new Date(pickup_date_end).getFullYear()}-${String(new Date(pickup_date_end).getMonth() + 1).padStart(2, '0')}-${String(new Date(pickup_date_end).getDate()).padStart(2, '0')}`;

@@ -156,6 +156,7 @@ export const actions: Actions = {
 					pickup_date_end: orderData.pickup_date_end || null,
 					additional_information: orderData.additional_information || null,
 					customization_data: orderData.customization_data || null,
+					inspiration_photos: orderData.inspiration_photos || [],
 					status: 'to_verify',
 					total_amount: totalAmount,
 					paid_amount: paidAmount,

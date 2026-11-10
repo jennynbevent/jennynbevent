@@ -111,8 +111,17 @@ export function createDynamicProductOrderSchema(fields: Array<{
     required: boolean;
     options?: Array<{ label: string; price?: number }>;
 }>) {
-    return createBaseOrderSchema(fields);
-    // product_id n'est plus requis côté client, on l'utilise depuis params.id
+    return createBaseOrderSchema(fields).extend({
+        // Mode de remise : retrait sur place ou fichier envoyé par e-mail
+        delivery_mode: z.enum(['retrait', 'email']).default('retrait'),
+        // QR code du client (image déjà envoyée sur Cloudinary)
+        qr_code_url: z
+            .string()
+            .max(500)
+            .regex(/^https:\/\/res\.cloudinary\.com\//, 'Lien de QR code invalide')
+            .optional()
+            .or(z.literal('')),
+    });
 }
 
 // Mise à jour du statut d'une commande

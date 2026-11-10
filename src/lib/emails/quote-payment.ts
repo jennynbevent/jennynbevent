@@ -21,6 +21,7 @@ export function QuotePaymentEmail({
     customerEmail,
     pickupDate,
     pickupTime,
+    pickupDateEnd,
     totalPrice,
     depositAmount,
     remainingAmount,

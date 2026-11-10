@@ -233,8 +233,42 @@
 	}
 
 	// Charger les créneaux quand la date change
+	// Mode de remise et QR code
+	$: isEmailDelivery = $formData.delivery_mode === 'email';
+	function chooseDelivery(mode: 'retrait' | 'email') {
+		$formData.delivery_mode = mode;
+		// Pas de créneau horaire pour un envoi par e-mail
+		if (mode === 'email') {
+			$formData.pickup_time = undefined;
+			selectedTimeSlot = '';
+		}
+	}
+	let qrUploading = false;
+	let qrError = '';
+	let qrInput: HTMLInputElement;
+
+	async function onQrSelected(event: Event) {
+		const file = (event.currentTarget as HTMLInputElement).files?.[0];
+		if (!file) return;
+		qrError = '';
+		qrUploading = true;
+		try {
+			const body = new FormData();
+			body.set('file', file);
+			const res = await fetch('/api/upload-qr-code', { method: 'POST', body });
+			const result = await res.json().catch(() => ({}));
+			if (!res.ok || !result.url) throw new Error(result.error || "L'envoi a échoué, réessayez.");
+			$formData.qr_code_url = result.url;
+		} catch (e) {
+			qrError = e instanceof Error ? e.message : "L'envoi a échoué, réessayez.";
+		} finally {
+			qrUploading = false;
+			if (qrInput) qrInput.value = '';
+		}
+	}
+
 	$: pickupDate = $formData.pickup_date;
-	$: if (pickupDate && !isReservation) {
+	$: if (pickupDate && !isReservation && !isEmailDelivery) {
 		loadTimeSlots(pickupDate);
 	}
 	$: if (isReservation) {
@@ -367,13 +401,80 @@
 			</div>
 		{/if}
 
+		{#if !isReservation}
+			<!-- Mode de remise -->
+			<div class="space-y-3">
+				<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="font-weight: 600; letter-spacing: -0.02em;">
+					Comment recevoir votre commande
+				</h3>
+				<div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Mode de remise">
+					<button
+						type="button"
+						role="radio"
+						aria-checked={!isEmailDelivery}
+						on:click={() => chooseDelivery('retrait')}
+						class="rounded-full border px-4 py-2 text-sm font-medium transition-colors {!isEmailDelivery ? 'border-neutral-900 bg-white text-neutral-900' : 'border-neutral-300 bg-white/60 text-neutral-600 hover:border-neutral-500'}"
+					>
+						📍 Retrait à Andrésy
+					</button>
+					<span class="cursor-not-allowed rounded-full border border-dashed border-neutral-300 px-4 py-2 text-sm text-neutral-400 line-through" aria-disabled="true" title="Bientôt disponible">
+						🚚 Livraison
+					</span>
+					<button
+						type="button"
+						role="radio"
+						aria-checked={isEmailDelivery}
+						on:click={() => chooseDelivery('email')}
+						class="rounded-full border px-4 py-2 text-sm font-medium transition-colors {isEmailDelivery ? 'border-neutral-900 bg-white text-neutral-900' : 'border-neutral-300 bg-white/60 text-neutral-600 hover:border-neutral-500'}"
+					>
+						✉️ Par e-mail (à imprimer)
+					</button>
+				</div>
+				<p class="text-xs text-neutral-500">
+					{#if isEmailDelivery}
+						Vous recevrez votre design en fichier, à imprimer vous-même ou à envoyer à vos invités.
+					{:else}
+						La livraison sera bientôt disponible.
+					{/if}
+				</p>
+			</div>
+
+			<!-- QR code du client -->
+			<div class="space-y-2">
+				<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="font-weight: 600; letter-spacing: -0.02em;">
+					Votre QR code <span class="text-sm font-normal text-neutral-500">(facultatif)</span>
+				</h3>
+				{#if $formData.qr_code_url}
+					<div class="flex items-center gap-3 rounded-xl border bg-white p-3">
+						<img src={$formData.qr_code_url} alt="Votre QR code" class="h-16 w-16 rounded object-contain" />
+						<span class="flex-1 text-sm text-neutral-700">QR code ajouté ✓</span>
+						<button type="button" class="text-sm font-medium text-neutral-600 underline" on:click={() => ($formData.qr_code_url = '')}>Retirer</button>
+					</div>
+				{:else}
+					<label class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed bg-white p-4 text-sm text-neutral-600 hover:border-neutral-500" style={`border-color: ${customizations?.button_color || '#BC90A5'};`}>
+						<span class="text-2xl" aria-hidden="true">▦</span>
+						<span>
+							<span class="block font-medium text-neutral-900">{qrUploading ? 'Envoi en cours…' : 'Ajouter mon QR code'}</span>
+							<span class="block text-xs">Image PNG ou JPG, par exemple depuis votre espace Souvientoi</span>
+						</span>
+						<input bind:this={qrInput} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="sr-only" disabled={qrUploading} on:change={onQrSelected} />
+					</label>
+				{/if}
+				{#if qrError}<p class="text-sm font-medium text-destructive">{qrError}</p>{/if}
+			</div>
+
+			<div class="pt-2">
+				<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
+			</div>
+		{/if}
+
 		<!-- Section 2: Information de récupération ou plage de réservation -->
 		<div class="space-y-4">
 			<h3
 				class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl"
 				style="font-weight: 600; letter-spacing: -0.02em;"
 			>
-				{isReservation ? 'Information de location' : 'Information de récupération'}
+				{isReservation ? 'Information de location' : isEmailDelivery ? 'Date souhaitée' : 'Information de récupération'}
 			</h3>
 			{#if isReservation}
 				<div class="space-y-2">
@@ -427,7 +528,7 @@
 				<div class="space-y-2">
 					<Form.Field {form} name="pickup_date">
 						<Form.Control let:attrs>
-							<Form.Label>Date de récupération *</Form.Label>
+							<Form.Label>{isEmailDelivery ? 'Pour quelle date souhaitez-vous recevoir votre fichier ? *' : 'Date de récupération *'}</Form.Label>
 							<DatePicker
 								{availabilities}
 								{unavailabilities}
@@ -442,8 +543,8 @@
 					</Form.Field>
 				</div>
 
-				<!-- Sélecteur de créneau horaire -->
-				<div class="space-y-2">
+				<!-- Sélecteur de créneau horaire (pas besoin pour un envoi par e-mail) -->
+				<div class="space-y-2" class:hidden={isEmailDelivery}>
 					{#if $formData.pickup_date && availableTimeSlots.length > 0}
 						<div class="space-y-2">
 							<Form.Field {form} name="pickup_time">
@@ -638,10 +739,22 @@
 					d'erreur votre commande pourra être retardée.
 				</p>
 				<div class="space-y-3 text-sm">
+					{#if !isReservation}
+						<div class="flex items-center justify-between gap-2">
+							<span class="font-semibold text-neutral-700" style="font-weight: 600;">Mode de remise :</span>
+							<span class="text-right text-neutral-900" style={customStyles.textStyle}>{isEmailDelivery ? 'Par e-mail' : 'Retrait à Andrésy'}</span>
+						</div>
+						{#if $formData.qr_code_url}
+							<div class="flex items-center justify-between gap-2">
+								<span class="font-semibold text-neutral-700" style="font-weight: 600;">QR code :</span>
+								<span class="text-right text-neutral-900" style={customStyles.textStyle}>Ajouté ✓</span>
+							</div>
+						{/if}
+					{/if}
 					{#if $formData.pickup_date}
 						<div class="flex items-center justify-between gap-2">
 							<span class="font-semibold text-neutral-700" style="font-weight: 600;">
-								{isReservation ? 'Information de location :' : 'Date de récupération :'}
+								{isReservation ? 'Information de location :' : isEmailDelivery ? 'Date souhaitée :' : 'Date de récupération :'}
 							</span>
 							<span class="text-right text-neutral-900 whitespace-nowrap" style={customStyles.textStyle}>
 								{#if isReservation && $formData.pickup_date_end}

@@ -244,6 +244,30 @@ export async function uploadInspirationPhoto(
 }
 
 /**
+ * Upload du QR code d'un client (sans retouche, pour qu'il reste lisible)
+ */
+export async function uploadCustomerQrCode(file: File, shopId: string) {
+	const buffer = Buffer.from(await file.arrayBuffer());
+	const result = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+		cloudinary.uploader
+			.upload_stream(
+				{
+					folder: `qr-codes/${shopId}`,
+					resource_type: 'image',
+					overwrite: false
+				},
+				(error, res) => {
+					if (error) reject(error);
+					else if (res) resolve(res);
+					else reject(new Error('Upload failed'));
+				}
+			)
+			.end(buffer);
+	});
+	return { secure_url: result.secure_url, public_id: result.public_id };
+}
+
+/**
  * Supprime toutes les photos d'inspiration d'une commande
  * @param shopId - ID de la boutique
  * @param orderId - ID de la commande

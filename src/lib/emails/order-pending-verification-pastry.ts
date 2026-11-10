@@ -26,6 +26,7 @@ export function OrderPendingVerificationPastryEmail({
     productName,
     pickupDate,
     pickupTime,
+    pickupDateEnd,
     totalAmount,
     paidAmount,
     remainingAmount,
