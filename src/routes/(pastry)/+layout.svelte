@@ -10,16 +10,24 @@ import Store from '~icons/lucide/store';
 import HelpCircle from '~icons/lucide/help-circle';
 import MenuIcon from '~icons/lucide/menu';
 import XIcon from '~icons/lucide/x';
+import LogOut from '~icons/lucide/log-out';
 
 	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
 	import * as Drawer from '$lib/components/ui/drawer';
-	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { Separator } from '$lib/components/ui/separator';
 
 	import NavLink from './components/nav-link.svelte';
 
 	export let data;
+
+	const navItems = [
+		{ href: '/dashboard', label: 'Tableau de bord', icon: Home, exact: true },
+		{ href: '/dashboard/orders', label: 'Commandes', icon: ShoppingCart, exact: false },
+		{ href: '/dashboard/products', label: 'Articles', icon: Package, exact: false },
+		{ href: '/dashboard/custom-form', label: 'Formulaire', icon: FileText, exact: false },
+		{ href: '/dashboard/availability', label: 'Disponibilités', icon: Calendar, exact: false },
+		{ href: '/dashboard/shop', label: 'Ma boutique', icon: Store, exact: false },
+		{ href: '/dashboard/faq', label: 'Aide', icon: HelpCircle, exact: false },
+	];
 
 	let menuOpen = false;
 	onNavigate((_) => {
@@ -39,246 +47,106 @@ import XIcon from '~icons/lucide/x';
 	}
 </script>
 
-<div class="flex min-h-screen w-full flex-col bg-muted/40">
-	<aside
-		class="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex"
-	>
-		<nav class="flex flex-col items-center gap-4 px-2 sm:py-5">
-			<a
-				href="/"
-				class="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 md:h-8 md:w-8"
-			>
-				{#if data.shop?.logo_url}
-					<img
-						src={data.shop.logo_url}
-						alt={data.shop.name}
-						class="h-8 w-8 rounded object-cover"
-					/>
-				{:else}
-					<img
-						src="/images/logo_jennynbevent.jpg"
-						alt="Logo Jennynbevent"
-						class="h-8 w-8 rounded object-cover"
-					/>
-				{/if}
-				<span class="sr-only">{data.shop?.name || 'SaaS Kit'}</span>
-			</a>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						exact={true}
-						{builder}
-					>
-						<Home class="h-5 w-5" />
-						<span class="sr-only">Dashboard</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Dashboard</Tooltip.Content>
-			</Tooltip.Root>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/orders"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<ShoppingCart class="h-5 w-5" />
-						<span class="sr-only">Commandes</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Commandes</Tooltip.Content>
-			</Tooltip.Root>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/products"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<Package class="h-5 w-5" />
-						<span class="sr-only">Articles</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Articles</Tooltip.Content>
-			</Tooltip.Root>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/custom-form"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<FileText class="h-5 w-5" />
-						<span class="sr-only">Formulaire personnalisé</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Formulaire personnalisé</Tooltip.Content>
-			</Tooltip.Root>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/availability"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<Calendar class="h-5 w-5" />
-						<span class="sr-only">Disponibilités</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Disponibilités</Tooltip.Content>
-			</Tooltip.Root>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/shop"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<Store class="h-5 w-5" />
-						<span class="sr-only">Boutique</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">Boutique</Tooltip.Content>
-			</Tooltip.Root>
-			<Tooltip.Root>
-				<Tooltip.Trigger asChild let:builder>
-					<NavLink
-						href="/dashboard/faq"
-						class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-						activeClass="bg-accent text-accent-foreground"
-						{builder}
-					>
-						<HelpCircle class="h-5 w-5" />
-						<span class="sr-only">FAQ</span>
-					</NavLink>
-				</Tooltip.Trigger>
-				<Tooltip.Content side="right">FAQ</Tooltip.Content>
-			</Tooltip.Root>
-		</nav>
-	</aside>
-	<div class="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-		<header
-			class="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6"
-		>
-			<div class="flex w-full items-center justify-between sm:hidden">
-				<!-- Logo + nom du shop à gauche -->
-				<div class="flex items-center gap-2">
-					{#if data.shop?.logo_url}
-						<img
-							src={data.shop.logo_url}
-							alt={data.shop.name || 'Logo boutique'}
-							class="h-8 w-8 rounded object-cover"
-						/>
-					{:else}
-						<img
-							src="/images/logo_jennynbevent.jpg"
-							alt="Logo Jennynbevent"
-							class="h-8 w-8 rounded object-cover"
-						/>
-					{/if}
-					<span class="max-w-[150px] truncate text-sm font-medium">
-						{data.shop?.name || 'Jennynbevent'}
-					</span>
-				</div>
+<svelte:head>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap"
+		rel="stylesheet"
+	/>
+</svelte:head>
 
-				<!-- Bouton drawer à droite -->
-				<Drawer.Root bind:open={menuOpen}>
-					<Drawer.Trigger asChild let:builder>
-						<Button builders={[builder]} size="icon" variant="outline">
-							<MenuIcon class="h-5 w-5" />
-							<span class="sr-only">Menu</span>
-						</Button>
-					</Drawer.Trigger>
-					<Drawer.Content>
-						<Drawer.Header class="flex justify-end py-0">
-							<Drawer.Close asChild let:builder>
-								<Button variant="ghost" size="icon" builders={[builder]}>
-									<span class="sr-only">Close</span>
-									<XIcon />
-								</Button>
-							</Drawer.Close>
-						</Drawer.Header>
-						<nav class="[&_ul]:flex [&_ul]:flex-col [&_ul]:p-2">
-							<ul>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard', e)}
-									>
-										Dashboard
-									</Button>
-								</li>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/orders', e)}
-									>
-										Commandes
-									</Button>
-								</li>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/products', e)}
-									>
-										Articles
-									</Button>
-								</li>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/custom-form', e)}
-									>
-										Formulaire personnalisé
-									</Button>
-								</li>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/availability', e)}
-									>
-										Disponibilités
-									</Button>
-								</li>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/shop', e)}
-									>
-										Boutique
-									</Button>
-								</li>
-								<li>
-									<Button
-										variant="ghost"
-										class="w-full py-6 text-base"
-										on:click={(e) => handleNavClick('/dashboard/faq', e)}
-									>
-										FAQ
-									</Button>
-								</li>
-							</ul>
-						</nav>
-					</Drawer.Content>
-				</Drawer.Root>
+<div class="dash flex min-h-screen w-full flex-col bg-[#F7F2F0]">
+	<!-- Menu latéral (ordinateur) -->
+	<aside class="fixed inset-y-0 left-0 z-20 hidden w-56 flex-col bg-[#7A4F60] px-3 py-5 text-[#F1DDE3] md:flex">
+		<a href="/" class="mb-6 flex items-center gap-3 px-2">
+			<img
+				src={data.shop?.logo_url || '/images/logo_jennynbevent.jpg'}
+				alt={data.shop?.name || 'Logo Jennynbevent'}
+				class="h-9 w-9 rounded-lg object-cover"
+			/>
+			<div class="min-w-0">
+				<div class="dash-serif truncate text-lg leading-tight text-white">{data.shop?.name || 'Jennynbevent'}</div>
+				<div class="text-[11px] text-[#E3C9D1]">Espace boutique</div>
 			</div>
+		</a>
+		<nav class="flex flex-col gap-1">
+			{#each navItems as item}
+				<NavLink
+					href={item.href}
+					exact={item.exact}
+					class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[#F1DDE3] transition-colors hover:bg-white/10 hover:text-white"
+					activeClass="!bg-white/[0.16] !text-white"
+				>
+					<svelte:component this={item.icon} class="h-[18px] w-[18px]" />
+					{item.label}
+				</NavLink>
+			{/each}
+		</nav>
+		<div class="mt-auto border-t border-white/15 px-2 pt-4 text-xs text-[#E3C9D1]">
+			<div class="truncate">{data.user?.email || ''}</div>
+			<form method="POST" action="/logout" class="mt-2">
+				<button type="submit" class="flex items-center gap-2 text-[#F1DDE3] hover:text-white">
+					<LogOut class="h-4 w-4" /> Déconnexion
+				</button>
+			</form>
+		</div>
+	</aside>
+
+	<div class="flex flex-col md:pl-56">
+		<!-- En-tête (téléphone) -->
+		<header class="sticky top-0 z-30 flex h-14 items-center justify-between bg-[#7A4F60] px-4 text-white md:hidden">
+			<div class="flex items-center gap-2">
+				<img
+					src={data.shop?.logo_url || '/images/logo_jennynbevent.jpg'}
+					alt={data.shop?.name || 'Logo Jennynbevent'}
+					class="h-8 w-8 rounded-lg object-cover"
+				/>
+				<span class="dash-serif max-w-[180px] truncate text-lg">{data.shop?.name || 'Jennynbevent'}</span>
+			</div>
+			<Drawer.Root bind:open={menuOpen}>
+				<Drawer.Trigger asChild let:builder>
+					<Button builders={[builder]} size="icon" variant="ghost" class="text-white hover:bg-white/10 hover:text-white">
+						<MenuIcon class="h-5 w-5" />
+						<span class="sr-only">Menu</span>
+					</Button>
+				</Drawer.Trigger>
+				<Drawer.Content class="bg-[#7A4F60] text-white">
+					<Drawer.Header class="flex justify-end py-0">
+						<Drawer.Close asChild let:builder>
+							<Button variant="ghost" size="icon" builders={[builder]} class="text-white hover:bg-white/10 hover:text-white">
+								<span class="sr-only">Fermer</span>
+								<XIcon />
+							</Button>
+						</Drawer.Close>
+					</Drawer.Header>
+					<nav class="flex flex-col gap-1 p-3 pb-6">
+						{#each navItems as item}
+							<a
+								href={item.href}
+								on:click={(e) => handleNavClick(item.href, e)}
+								class="flex items-center gap-3 rounded-lg px-4 py-3 text-base text-[#F1DDE3] hover:bg-white/10 hover:text-white"
+							>
+								<svelte:component this={item.icon} class="h-5 w-5" />
+								{item.label}
+							</a>
+						{/each}
+						<form method="POST" action="/logout" class="mt-2 border-t border-white/15 pt-3">
+							<button type="submit" class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-base text-[#E3C9D1] hover:bg-white/10">
+								<LogOut class="h-5 w-5" /> Déconnexion
+							</button>
+						</form>
+					</nav>
+				</Drawer.Content>
+			</Drawer.Root>
 		</header>
-		<main class="flex w-full flex-col items-start p-4 sm:px-6 sm:py-0">
+		<main class="flex w-full flex-col items-start p-4 sm:p-6 lg:p-8">
 			<slot />
 		</main>
 	</div>
 </div>
+
+<style>
+	:global(.dash-serif) {
+		font-family: 'Cormorant Garamond', Georgia, serif;
+	}
+</style>

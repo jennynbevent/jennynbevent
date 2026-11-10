@@ -2,30 +2,17 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardHeader,
-		CardTitle,
-	} from '$lib/components/ui/card';
-	import { Badge } from '$lib/components/ui/badge';
 	import {
 		Package,
 		ShoppingCart,
 		Euro,
-		TrendingUp,
 		Plus,
 		Calendar,
 		FileText,
-		ArrowUpRight,
-		ArrowDownRight,
-		Minus,
 		Copy,
 		Check,
-		CreditCard,
-		Crown,
+		BellRing,
+		ChevronRight,
 	} from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
 	// Données de la page
@@ -111,14 +98,45 @@
 	// Fonction pour obtenir le revenu actuel
 	$: currentRevenue = metrics.revenue[selectedRevenuePeriod];
 
-	// Fonction pour obtenir l'accompte actuel
-	$: currentDeposit = metrics.deposit[selectedRevenuePeriod];
-
 	// Fonction pour obtenir le nombre de commandes actuel
 	$: currentOrdersCount = metrics.ordersCount[selectedRevenuePeriod];
 
-	// Fonction pour calculer la variation (simulation)
-	$: revenueVariation = 0; // À implémenter avec les données historiques
+	$: periodLabel =
+		selectedRevenuePeriod === 'weekly'
+			? 'cette semaine'
+			: selectedRevenuePeriod === 'monthly'
+				? 'ce mois'
+				: selectedRevenuePeriod === 'threeMonths'
+					? 'ces 3 mois'
+					: 'cette année';
+
+	const periods: { id: 'weekly' | 'monthly' | 'threeMonths' | 'yearly'; label: string }[] = [
+		{ id: 'weekly', label: 'Semaine' },
+		{ id: 'monthly', label: 'Mois' },
+		{ id: 'threeMonths', label: '3 mois' },
+		{ id: 'yearly', label: 'Année' },
+	];
+
+	// Couleur de la pastille de statut
+	function statusClass(status: string): string {
+		switch (status) {
+			case 'to_verify':
+			case 'pending':
+				return 'bg-[#F3E6EA] text-[#7A4F60]';
+			case 'confirmed':
+			case 'ready':
+				return 'bg-[#EEF3EC] text-[#3C5A45]';
+			case 'completed':
+				return 'bg-[#EFEAE6] text-[#5E5350]';
+			case 'quoted':
+				return 'bg-[#F6EEDF] text-[#7A5A2E]';
+			case 'cancelled':
+			case 'refused':
+				return 'bg-[#F7E4E1] text-[#9A3B32]';
+			default:
+				return 'bg-[#EFEAE6] text-[#5E5350]';
+		}
+	}
 
 	// Actions rapides
 	function goToAddProduct() {
@@ -155,410 +173,196 @@
 	<title>Tableau de bord - Jennynbevent</title>
 </svelte:head>
 
-<div class="container mx-auto space-y-6 p-3 md:p-6">
+<div class="w-full space-y-5 text-[#3A2F33]">
 	<!-- En-tête -->
-	<div class="mb-8">
-		<div class="mb-2 flex items-center gap-3">
-			<h1 class="text-3xl font-bold">Tableau de bord</h1>
-			{#if hasLifetimePlan}
-				<Badge
-					variant="secondary"
-					class="border-0 bg-primary text-white shadow-sm"
-				>
-					<Crown class="mr-1 h-3 w-3" />
-					Plan à vie
-				</Badge>
-			{/if}
+	<div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+		<div>
+			<h1 class="dash-serif text-3xl font-medium sm:text-4xl">Tableau de bord</h1>
+			<p class="mt-1 text-sm text-[#7A6A70]">
+				Bienvenue {shop?.name || 'Jennynbevent'}, voici votre activité
+			</p>
 		</div>
-		<p class="mt-2 text-muted-foreground">
-			Bienvenue {shop?.name || 'Pâtissier'}, voici un aperçu de votre activité
-		</p>
-	</div>
-
-	<!-- ✅ Bannière d'essai gratuit déplacée dans (pastry)/+layout.svelte -->
-
-	<!-- URL du shop -->
-	{#if shop?.slug}
-		<Card>
-			<CardContent class="pt-6">
-				<div
-					class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-				>
-					<div>
-						<h3
-							class="text-xs font-medium text-muted-foreground sm:text-sm md:text-base"
-						>
-							URL de votre boutique
-						</h3>
-						<p
-							class="break-all font-mono text-sm text-foreground sm:text-base md:text-lg"
-						>
-							{env.PUBLIC_SITE_URL}/
-						</p>
-					</div>
-					<Button
-						type="button"
-						size="sm"
-						on:click={copyShopUrl}
-						title="Copier l'URL complète"
-						disabled={!shop?.slug}
-						class={copySuccess
-							? 'border-[#BC90A5] bg-[#BC90A5] text-white hover:border-[#BE85A5] hover:bg-[#BE85A5]'
-							: 'border border-input bg-background text-black hover:bg-accent hover:text-accent-foreground'}
-					>
-						{#if copySuccess}
-							<Check class="mr-2 h-4 w-4" />
-							Copiée
-						{:else}
-							<Copy class="mr-2 h-4 w-4" />
-							Copier
-						{/if}
-					</Button>
-				</div>
-			</CardContent>
-		</Card>
-	{/if}
-
-	<!-- Métriques principales -->
-	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-		<!-- Nombre d'articles -->
-		<Card>
-			<CardHeader
-				class="flex flex-row items-center justify-between space-y-0 pb-2"
+		{#if shop?.slug}
+			<button
+				type="button"
+				on:click={copyShopUrl}
+				title="Copier l'adresse de la boutique"
+				class="flex items-center gap-2 self-start rounded-xl border border-[#EADDE1] bg-white px-3 py-2 text-sm text-[#3A2F33] transition-colors hover:border-[#BC90A5] sm:self-auto"
 			>
-				<CardTitle class="text-sm font-medium">Articles en vente</CardTitle>
-				<Package class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{metrics.productsCount}</div>
-				<p class="text-xs text-muted-foreground">
-					{metrics.productsCount === 0 ? 'Aucun article' : 'articles actifs'}
-				</p>
-			</CardContent>
-		</Card>
-
-		<!-- Total des commandes -->
-		<Card>
-			<CardHeader
-				class="flex flex-row items-center justify-between space-y-0 pb-2"
-			>
-				<CardTitle class="text-sm font-medium">Total des commandes</CardTitle>
-				<ShoppingCart class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{currentOrdersCount}</div>
-				<p class="text-xs text-muted-foreground">
-					{currentOrdersCount === 0
-						? 'Aucune commande'
-						: `commandes ${selectedRevenuePeriod === 'weekly' ? 'cette semaine' : selectedRevenuePeriod === 'monthly' ? 'ce mois' : selectedRevenuePeriod === 'threeMonths' ? 'ces 3 mois' : 'cette année'}`}
-				</p>
-			</CardContent>
-		</Card>
-
-		<!-- Chiffre d'affaires -->
-		<Card>
-			<CardHeader
-				class="flex flex-row items-center justify-between space-y-0 pb-2"
-			>
-				<CardTitle class="text-sm font-medium">Chiffre d'affaires</CardTitle>
-				<Euro class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div>
-					<div class="flex items-baseline gap-2">
-						<div class="text-2xl font-bold">{formatPrice(currentRevenue)}</div>
-						<div class="text-sm text-muted-foreground">
-							({formatPrice(currentDeposit)} accompte)
-						</div>
-					</div>
-				</div>
-				<div class="mt-2 flex items-center text-xs text-muted-foreground">
-					{#if revenueVariation > 0}
-						<ArrowUpRight class="mr-1 h-3 w-3 text-green-500" />
-						<span class="text-green-500">+{revenueVariation}%</span>
-					{:else if revenueVariation < 0}
-						<ArrowDownRight class="mr-1 h-3 w-3 text-red-500" />
-						<span class="text-red-500">{revenueVariation}%</span>
-					{:else}
-						<Minus class="mr-1 h-3 w-3 text-muted-foreground" />
-						<span>0%</span>
-					{/if}
-					<span class="ml-1">vs période précédente</span>
-				</div>
-			</CardContent>
-		</Card>
-
-		<!-- Articles populaires -->
-		<Card>
-			<CardHeader
-				class="flex flex-row items-center justify-between space-y-0 pb-2"
-			>
-				<CardTitle class="text-sm font-medium">Articles populaires</CardTitle>
-				<TrendingUp class="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div class="text-2xl font-bold">{metrics.popularProducts.length}</div>
-				<p class="text-xs text-muted-foreground">
-					{metrics.popularProducts.length === 0
-						? 'Aucune vente'
-						: 'articles vendus'}
-				</p>
-			</CardContent>
-		</Card>
-	</div>
-
-	<!-- Filtres de revenus -->
-	<div class="flex justify-center">
-		<div class="flex space-x-1 rounded-lg bg-muted p-1">
-			<Button
-				variant={selectedRevenuePeriod === 'weekly' ? 'default' : 'ghost'}
-				size="sm"
-				on:click={() => (selectedRevenuePeriod = 'weekly')}
-			>
-				Semaine
-			</Button>
-			<Button
-				variant={selectedRevenuePeriod === 'monthly' ? 'default' : 'ghost'}
-				size="sm"
-				on:click={() => (selectedRevenuePeriod = 'monthly')}
-			>
-				Mois
-			</Button>
-			<Button
-				variant={selectedRevenuePeriod === 'threeMonths' ? 'default' : 'ghost'}
-				size="sm"
-				on:click={() => (selectedRevenuePeriod = 'threeMonths')}
-			>
-				3 mois
-			</Button>
-			<Button
-				variant={selectedRevenuePeriod === 'yearly' ? 'default' : 'ghost'}
-				size="sm"
-				on:click={() => (selectedRevenuePeriod = 'yearly')}
-			>
-				Année
-			</Button>
-		</div>
-	</div>
-
-	<!-- Section Plans (masquée si utilisateur a un plan lifetime ou est exempt) -->
-	{#if !hasLifetimePlan && !permissions?.isExempt}
-		<Card>
-			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<CreditCard class="h-5 w-5" />
-					Votre abonnement
-				</CardTitle>
-				<CardDescription>
-					{#if currentPlan}
-						{@const currentPlanData = plans.find(p => p.id === currentPlan)}
-						{#if currentPlanData}
-							Plan {currentPlanData.name} - {currentPlanData.price}€/mois
-						{/if}
-					{:else}
-						Aucun abonnement actif
-					{/if}
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
-				{#if currentPlan}
-					{@const currentPlanData = plans.find(p => p.id === currentPlan)}
-					{#if currentPlanData}
-						<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-							<div class="flex items-center gap-3">
-								<Badge class="bg-[#BC90A5] text-white">
-									Plan actuel
-								</Badge>
-								<div>
-									<p class="font-semibold">{currentPlanData.name}</p>
-									<p class="text-sm text-muted-foreground">
-										{currentPlanData.price}€/mois
-									</p>
-								</div>
-							</div>
-							<Button href="/subscription" class="w-full sm:w-auto">
-								Gérer l'abonnement
-								<ArrowUpRight class="ml-2 h-4 w-4" />
-							</Button>
-						</div>
-					{/if}
+				<span class="max-w-[240px] truncate">{(env.PUBLIC_SITE_URL || '').replace(/^https?:\/\//, '')}</span>
+				{#if copySuccess}
+					<Check class="h-4 w-4 text-[#7A4F60]" />
+					<span class="text-xs text-[#7A4F60]">Copiée</span>
 				{:else}
-					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-						<p class="text-muted-foreground">
-							Vous n'avez pas encore d'abonnement actif
-						</p>
-						<Button 
-							href="/subscription"
-							class="w-full sm:w-auto bg-[#BC90A5] text-white hover:bg-[#BE85A5]"
-						>
-							Souscrire
-							<ArrowUpRight class="ml-2 h-4 w-4" />
-						</Button>
-					</div>
+					<Copy class="h-4 w-4 text-[#7A4F60]" />
 				{/if}
-			</CardContent>
-		</Card>
-	{/if}
+			</button>
+		{/if}
+	</div>
 
+	<!-- Période -->
+	<div class="flex flex-wrap gap-1">
+		{#each periods as p}
+			<button
+				type="button"
+				on:click={() => (selectedRevenuePeriod = p.id)}
+				class="rounded-full px-4 py-1.5 text-sm transition-colors {selectedRevenuePeriod === p.id
+					? 'bg-[#7A4F60] text-white'
+					: 'text-[#7A6A70] hover:bg-[#F3E6EA]'}"
+			>
+				{p.label}
+			</button>
+		{/each}
+	</div>
+
+	<!-- Chiffres clés -->
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+		<div class="rounded-2xl border border-[#EADDE1] bg-white p-4">
+			<div class="flex items-center justify-between text-xs text-[#7A6A70] sm:text-sm">
+				Articles en vente <Package class="h-4 w-4 text-[#BC90A5]" />
+			</div>
+			<div class="mt-2 text-2xl font-medium text-[#7A4F60] sm:text-3xl">{metrics.productsCount}</div>
+			<div class="mt-1 text-xs text-[#9A8A90]">
+				{metrics.productsCount === 0 ? 'aucun article' : 'actifs'}
+			</div>
+		</div>
+		<div class="rounded-2xl border border-[#EADDE1] bg-white p-4">
+			<div class="flex items-center justify-between text-xs text-[#7A6A70] sm:text-sm">
+				Commandes <ShoppingCart class="h-4 w-4 text-[#BC90A5]" />
+			</div>
+			<div class="mt-2 text-2xl font-medium text-[#7A4F60] sm:text-3xl">{currentOrdersCount}</div>
+			<div class="mt-1 text-xs text-[#9A8A90]">{periodLabel}</div>
+		</div>
+		<div class="rounded-2xl border border-[#EADDE1] bg-white p-4">
+			<div class="flex items-center justify-between text-xs text-[#7A6A70] sm:text-sm">
+				Chiffre d'affaires <Euro class="h-4 w-4 text-[#BC90A5]" />
+			</div>
+			<div class="mt-2 text-2xl font-medium text-[#7A4F60] sm:text-3xl">{formatPrice(currentRevenue)}</div>
+			<div class="mt-1 text-xs text-[#9A8A90]">{periodLabel}</div>
+		</div>
+		<a
+			href="/dashboard/orders"
+			class="rounded-2xl border p-4 transition-colors {metrics.toVerifyCount > 0
+				? 'border-[#BC90A5] bg-[#FBF3F6] hover:bg-[#F7EAF0]'
+				: 'border-[#EADDE1] bg-white hover:bg-[#FBF6F7]'}"
+		>
+			<div class="flex items-center justify-between text-xs text-[#7A6A70] sm:text-sm">
+				À traiter <BellRing class="h-4 w-4 text-[#BC90A5]" />
+			</div>
+			<div class="mt-2 text-2xl font-medium text-[#7A4F60] sm:text-3xl">{metrics.toVerifyCount}</div>
+			<div class="mt-1 text-xs text-[#9A8A90]">
+				{metrics.toVerifyCount > 1 ? 'commandes à vérifier' : 'commande à vérifier'}
+			</div>
+		</a>
+	</div>
 
 	<!-- Actions rapides -->
-	<Card>
-		<CardHeader>
-			<CardTitle>Actions rapides</CardTitle>
-			<CardDescription>
-				Accédez rapidement aux fonctionnalités principales
-			</CardDescription>
-		</CardHeader>
-		<CardContent>
-			<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-				<Button
-					variant="outline"
-					class="h-auto flex-col space-y-2 p-4"
-					on:click={goToAddProduct}
-					disabled={isProductLimitReached}
-					title={isProductLimitReached
-						? 'Limite d\'articles atteinte'
-						: 'Ajouter un article'}
-				>
-					<Plus class="h-6 w-6" />
-					<span>Ajouter un article</span>
-				</Button>
-				<Button
-					variant="outline"
-					class="h-auto flex-col space-y-2 p-4"
-					on:click={goToOrders}
-				>
-					<ShoppingCart class="h-6 w-6" />
-					<span>Voir les commandes</span>
-				</Button>
-				<Button
-					variant="outline"
-					class="h-auto flex-col space-y-2 p-4"
-					on:click={goToAvailability}
-				>
-					<Calendar class="h-6 w-6" />
-					<span>Gérer les disponibilités</span>
-				</Button>
-				<Button
-					variant="outline"
-					class="h-auto flex-col space-y-2 p-4"
-					on:click={goToCustomForm}
-				>
-					<FileText class="h-6 w-6" />
-					<span>Formulaire personnalisé</span>
-				</Button>
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+		<button
+			type="button"
+			on:click={goToAddProduct}
+			disabled={isProductLimitReached}
+			class="flex items-center gap-3 rounded-2xl border border-[#EADDE1] bg-white p-3 text-left text-sm transition-colors hover:border-[#BC90A5] disabled:opacity-50"
+		>
+			<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F3E6EA] text-[#7A4F60]"><Plus class="h-5 w-5" /></span>
+			Ajouter un article
+		</button>
+		<button
+			type="button"
+			on:click={goToOrders}
+			class="flex items-center gap-3 rounded-2xl border border-[#EADDE1] bg-white p-3 text-left text-sm transition-colors hover:border-[#BC90A5]"
+		>
+			<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F3E6EA] text-[#7A4F60]"><ShoppingCart class="h-5 w-5" /></span>
+			Voir les commandes
+		</button>
+		<button
+			type="button"
+			on:click={goToAvailability}
+			class="flex items-center gap-3 rounded-2xl border border-[#EADDE1] bg-white p-3 text-left text-sm transition-colors hover:border-[#BC90A5]"
+		>
+			<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F3E6EA] text-[#7A4F60]"><Calendar class="h-5 w-5" /></span>
+			Disponibilités
+		</button>
+		<button
+			type="button"
+			on:click={goToCustomForm}
+			class="flex items-center gap-3 rounded-2xl border border-[#EADDE1] bg-white p-3 text-left text-sm transition-colors hover:border-[#BC90A5]"
+		>
+			<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F3E6EA] text-[#7A4F60]"><FileText class="h-5 w-5" /></span>
+			Formulaire
+		</button>
+	</div>
+
+	<!-- Dernières commandes -->
+	<div class="overflow-hidden rounded-2xl border border-[#EADDE1] bg-white">
+		<div class="flex items-center justify-between px-4 py-3">
+			<h2 class="font-medium">Dernières commandes</h2>
+			<a href="/dashboard/orders" class="text-sm text-[#7A4F60] underline underline-offset-2">Tout voir</a>
+		</div>
+		{#if metrics.recentOrders.length === 0}
+			<div class="border-t border-[#F1E6E9] px-4 py-10 text-center text-sm text-[#9A8A90]">
+				<ShoppingCart class="mx-auto mb-3 h-8 w-8 opacity-50" />
+				Aucune commande pour le moment
 			</div>
-		</CardContent>
-	</Card>
-
-	<!-- Contenu principal -->
-	<div class="grid gap-6 lg:grid-cols-2">
-		<!-- Commandes récentes -->
-		<Card>
-			<CardHeader>
-				<CardTitle>Commandes récentes</CardTitle>
-				<CardDescription>Les dernières commandes reçues</CardDescription>
-			</CardHeader>
-			<CardContent>
-				{#if metrics.recentOrders.length === 0}
-					<div class="py-8 text-center text-muted-foreground">
-						<ShoppingCart class="mx-auto mb-4 h-12 w-12 opacity-50" />
-						<p>Aucune commande récente</p>
-					</div>
-				{:else}
-					<div class="space-y-4">
-						{#each metrics.recentOrders as order}
-							<button
-								class="w-full text-left"
-								on:click={() => goto(`/dashboard/orders/${order.id}`)}
-							>
-								<div
-									class="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-gray-50"
-								>
-									<div class="flex-1">
-										<div class="flex items-center space-x-2">
-											<p class="font-medium">
-												{order.product_name || 'Commande personnalisée'}
-											</p>
-											<Badge variant={getOrderStatus(order.status).variant}>
-												{getOrderStatus(order.status).label}
-											</Badge>
-										</div>
-										<p class="text-sm text-muted-foreground">
-											{order.customer_name || order.customer_email}
-										</p>
-										<p class="text-xs text-muted-foreground">
-											{formatDate(order.created_at)}
-										</p>
-									</div>
-									<div class="text-right">
-										{#if (order.total_amount || 0) > 0}
-											<p class="font-medium">
-												{formatPrice(order.total_amount)}
-											</p>
-										{/if}
-									</div>
-								</div>
-							</button>
-						{/each}
-					</div>
-					<div class="mt-4">
-						<Button variant="outline" class="w-full" on:click={goToOrders}>
-							Voir toutes les commandes
-							<ArrowUpRight class="ml-2 h-4 w-4" />
-						</Button>
-					</div>
-				{/if}
-			</CardContent>
-		</Card>
-
-		<!-- Articles populaires -->
-		<Card>
-			<CardHeader>
-				<CardTitle>Articles populaires</CardTitle>
-				<CardDescription>Vos articles les plus vendus</CardDescription>
-			</CardHeader>
-			<CardContent>
-				{#if metrics.popularProducts.length === 0}
-					<div class="py-8 text-center text-muted-foreground">
-						<Package class="mx-auto mb-4 h-12 w-12 opacity-50" />
-						<p>Aucune vente enregistrée</p>
-					</div>
-				{:else}
-					<div class="space-y-4">
-						{#each metrics.popularProducts as item, index}
-							<div class="flex items-center space-x-4 rounded-lg border p-3">
-								<div
-									class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10"
-								>
-									<span class="text-sm font-medium text-primary"
-										>#{index + 1}</span
-									>
-								</div>
-								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium">{item.product.name}</p>
-									<p class="text-sm text-muted-foreground">
-										{item.totalQuantity} vendu(s)
-									</p>
-								</div>
-								<div class="text-right">
-									<p class="font-medium">{formatPrice(item.totalRevenue)}</p>
-								</div>
-							</div>
-						{/each}
-					</div>
-					<div class="mt-4">
-						<Button
-							variant="outline"
-							class="w-full"
-							on:click={() => goto('/dashboard/products')}
+		{:else}
+			<!-- Ordinateur : tableau -->
+			<table class="hidden w-full table-fixed border-collapse text-sm md:table">
+				<thead>
+					<tr class="bg-[#FBF6F7] text-left text-xs text-[#7A6A70]">
+						<th class="px-4 py-2 font-normal">Article</th>
+						<th class="px-4 py-2 font-normal">Client</th>
+						<th class="w-32 px-4 py-2 font-normal">Remise</th>
+						<th class="w-32 px-4 py-2 font-normal">Statut</th>
+						<th class="w-28 px-4 py-2 text-right font-normal">Total</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each metrics.recentOrders as order}
+						<tr
+							class="cursor-pointer border-t border-[#F1E6E9] transition-colors hover:bg-[#FBF6F7]"
+							on:click={() => goto(`/dashboard/orders/${order.id}`)}
 						>
-							Voir tous les articles
-							<ArrowUpRight class="ml-2 h-4 w-4" />
-						</Button>
-					</div>
-				{/if}
-			</CardContent>
-		</Card>
+							<td class="truncate px-4 py-3">
+								<div class="truncate">{order.product_name || 'Demande personnalisée'}</div>
+								<div class="text-xs text-[#9A8A90]">{formatDate(order.created_at)}</div>
+							</td>
+							<td class="truncate px-4 py-3">{order.customer_name || order.customer_email}</td>
+							<td class="px-4 py-3 text-[#7A6A70]">{order.delivery || '—'}</td>
+							<td class="px-4 py-3">
+								<span class="whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs {statusClass(order.status)}">
+									{getOrderStatus(order.status).label}
+								</span>
+							</td>
+							<td class="px-4 py-3 text-right">
+								{(order.total_amount || 0) > 0 ? formatPrice(order.total_amount) : '—'}
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+			<!-- Téléphone : liste -->
+			<div class="md:hidden">
+				{#each metrics.recentOrders as order}
+					<a
+						href="/dashboard/orders/{order.id}"
+						class="flex items-center gap-3 border-t border-[#F1E6E9] px-4 py-3"
+					>
+						<div class="min-w-0 flex-1">
+							<div class="truncate text-sm font-medium">{order.product_name || 'Demande personnalisée'}</div>
+							<div class="truncate text-xs text-[#7A6A70]">
+								{order.customer_name || order.customer_email}{order.delivery ? ` · ${order.delivery}` : ''}
+							</div>
+							<span class="mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] {statusClass(order.status)}">
+								{getOrderStatus(order.status).label}
+							</span>
+						</div>
+						<div class="text-right text-sm">
+							{(order.total_amount || 0) > 0 ? formatPrice(order.total_amount) : ''}
+						</div>
+						<ChevronRight class="h-4 w-4 text-[#BC90A5]" />
+					</a>
+				{/each}
+			</div>
+		{/if}
 	</div>
 </div>

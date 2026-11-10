@@ -69,6 +69,43 @@ export const load = async ({ locals, parent }) => {
         .eq('shop_id', shop.id)
         .eq('is_active', true);
 
+    // Commandes à vérifier + 5 dernières commandes (avec le mode de remise)
+    const { count: toVerifyCount } = await (locals.supabase as any)
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('shop_id', shop.id)
+        .eq('status', 'to_verify');
+
+    const { data: latestOrders, error: latestOrdersError } = await (locals.supabase as any)
+        .from('orders')
+        .select('id, created_at, total_amount, status, customer_name, customer_email, product_name, customization_data')
+        .eq('shop_id', shop.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+    if (latestOrdersError) {
+        console.error('Error fetching latest orders:', latestOrdersError);
+    }
+
+    const recentOrders = (latestOrders || metrics?.recent_orders || []).map((o: any) => {
+        const mode = o?.customization_data?.['Mode de remise'];
+        const modeLabel = typeof mode === 'string' ? mode : mode?.value ?? mode?.label ?? null;
+        let delivery: string | null = null;
+        if (modeLabel) {
+            delivery = /mail/i.test(String(modeLabel)) ? 'Par e-mail' : 'Retrait (78)';
+        }
+        return {
+            id: o.id,
+            created_at: o.created_at,
+            total_amount: o.total_amount,
+            status: o.status,
+            customer_name: o.customer_name,
+            customer_email: o.customer_email,
+            product_name: o.product_name,
+            delivery,
+        };
+    });
+
     const currentPlan = null;
     const plans: Array<{ id: string; name: string; price: number; currency: string; stripePriceId?: string; features: string[]; limitations: string[]; popular: boolean; isFree: boolean }> = [];
     const hasLifetimePlan = false;
@@ -82,7 +119,8 @@ export const load = async ({ locals, parent }) => {
         hasLifetimePlan,
         metrics: {
             productsCount: productsCount ?? 0,
-            recentOrders: metrics?.recent_orders || [],
+            recentOrders,
+            toVerifyCount: toVerifyCount ?? 0,
             ordersCount: {
                 weekly: metrics?.weekly_count || 0,
                 monthly: metrics?.monthly_count || 0,
