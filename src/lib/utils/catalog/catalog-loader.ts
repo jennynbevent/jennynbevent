@@ -6,6 +6,17 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * @param shopId ID de la boutique
  * @returns Données du catalogue (produits, catégories, infos boutique)
  */
+async function loadCategories(supabase: SupabaseClient, shopId: string) {
+    const withDescription = await supabase
+        .from('categories')
+        .select('id, name, description')
+        .eq('shop_id', shopId)
+        .order('name');
+    if (!withDescription.error) return withDescription;
+    // La colonne « description » n'a pas encore été ajoutée dans Supabase
+    return supabase.from('categories').select('id, name').eq('shop_id', shopId).order('name');
+}
+
 export async function loadShopCatalog(
     supabase: SupabaseClient,
     shopId: string
@@ -44,12 +55,8 @@ export async function loadShopCatalog(
                 .eq('is_active', true)
                 .order('created_at', { ascending: false }),
 
-            // Récupérer les catégories
-            supabase
-                .from('categories')
-                .select('id, name')
-                .eq('shop_id', shopId)
-                .order('name'),
+            // Récupérer les catégories (avec sous-titre si la colonne existe)
+            loadCategories(supabase, shopId),
 
             // Récupérer les FAQ
             supabase

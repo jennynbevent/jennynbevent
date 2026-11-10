@@ -16,6 +16,12 @@ export const categorySchema = z.object({
         .min(2, 'Le nom de la catégorie doit faire au moins 2 caractères')
         .max(30, 'Le nom de la catégorie ne peut pas dépasser 30 caractères')
         .trim(),
+    description: z
+        .string()
+        .max(120, 'Le sous-titre ne peut pas dépasser 120 caractères')
+        .trim()
+        .optional()
+        .default(''),
     shop_id: uuidSchema
 });
 
@@ -27,7 +33,8 @@ export const createCategorySchema = categorySchema.omit({
 
 // Mise à jour d'une catégorie
 export const updateCategorySchema = categorySchema.pick({
-    name: true
+    name: true,
+    description: true
 });
 
 // Suppression d'une catégorie

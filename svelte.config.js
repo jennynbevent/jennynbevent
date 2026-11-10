@@ -5,7 +5,7 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	kit: {
 		adapter: adapter({
-			runtime: 'nodejs20.x'  // optionnel mais recommandé pour Node 20
+			runtime: 'nodejs22.x' // Vercel n'accepte plus Node 20
 		}),
 		alias: {
 			'$src': 'src',

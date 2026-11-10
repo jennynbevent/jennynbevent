@@ -19,7 +19,20 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
         throw svelteError(500, 'Erreur lors du chargement des données');
     }
 
-    const { products, categories, shop } = productsData;
+    const { products, shop } = productsData;
+    let categories = productsData.categories;
+
+    // Sous-titres des catégories (colonne ajoutée séparément : ignorée si absente)
+    if (Array.isArray(categories) && categories.length) {
+        const { data: extra } = await (locals.supabase as any)
+            .from('categories')
+            .select('id, description')
+            .in('id', categories.map((c: { id: string }) => c.id));
+        if (extra) {
+            const byId = new Map(extra.map((c: { id: string; description: string | null }) => [c.id, c.description]));
+            categories = categories.map((c: { id: string }) => ({ ...c, description: byId.get(c.id) ?? '' }));
+        }
+    }
 
     // Initialiser les formulaires Superforms
     const createCategoryForm = await superValidate(zod(createCategoryFormSchema));
@@ -316,6 +329,7 @@ export const actions: Actions = {
 
         const { name: categoryName } = form.data;
         const trimmedName = categoryName.trim();
+        const description = (form.data.description ?? '').trim() || null;
 
         try {
             // Vérifier si la catégorie existe déjà
@@ -337,7 +351,8 @@ export const actions: Actions = {
                     .from('categories')
                     .insert({
                         name: trimmedName,
-                        shop_id: shopId
+                        shop_id: shopId,
+                        ...(description ? { description } : {})
                     })
                     .select('id, name')
                     .single();
@@ -357,6 +372,7 @@ export const actions: Actions = {
             form.message = 'Catégorie créée avec succès';
             // Réinitialiser le formulaire pour permettre une nouvelle création
             form.data.name = '';
+            form.data.description = '';
             return { form };
         } catch (err) {
             console.error('❌ [Create Category] Unexpected error:', err);
@@ -405,6 +421,7 @@ export const actions: Actions = {
 
         const { name: categoryName } = form.data;
         const trimmedName = categoryName.trim();
+        const description = (form.data.description ?? '').trim() || null;
 
         try {
             // Vérifier que la catégorie appartient à l'utilisateur
@@ -417,12 +434,6 @@ export const actions: Actions = {
 
             if (checkError || !existingCategory) {
                 return fail(404, { form, error: 'Catégorie non trouvée' });
-            }
-
-            // Si le nom n'a pas changé, pas besoin de mettre à jour
-            if (existingCategory.name === trimmedName) {
-                form.message = 'Aucune modification nécessaire';
-                return { form };
             }
 
             // Vérifier si le nouveau nom existe déjà
@@ -445,7 +456,7 @@ export const actions: Actions = {
             // Mettre à jour la catégorie
             const { error: updateError } = await locals.supabase
                 .from('categories')
-                .update({ name: trimmedName })
+                .update({ name: trimmedName, description })
                 .eq('id', categoryId)
                 .eq('shop_id', shopId);
 

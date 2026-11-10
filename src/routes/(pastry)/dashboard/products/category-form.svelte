@@ -20,6 +20,7 @@
 	export let isEditing: boolean = false;
 	export let editingCategoryId: string | null = null;
 	export let editingCategoryName: string = '';
+	export let editingCategoryDescription: string = '';
 	export let onSuccess: () => void = () => {};
 	export let onCancel: () => void = () => {};
 	export let showDeleteButton: boolean = false;
@@ -35,8 +36,11 @@
 	const { form: formData, enhance, submitting, message } = form;
 
 	// Initialiser les valeurs du formulaire
-	$: if (isEditing && editingCategoryName) {
+	let initialized = false;
+	$: if (isEditing && editingCategoryName && !initialized) {
 		$formData.name = editingCategoryName;
+		$formData.description = editingCategoryDescription ?? '';
+		initialized = true;
 	}
 
 	// Gérer le succès
@@ -49,7 +53,7 @@
 	method="POST"
 	action={isEditing ? '?/updateCategory' : '?/createCategory'}
 	use:enhance
-	class="flex items-center gap-1"
+	class="flex flex-wrap items-start gap-1"
 >
 	<Form.Errors {form} />
 
@@ -74,6 +78,20 @@
 				type="text"
 				placeholder="Nom de la catégorie"
 				class="h-9 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+			/>
+		</Form.Control>
+		<Form.FieldErrors />
+	</Form.Field>
+
+	<Form.Field {form} name="description">
+		<Form.Control let:attrs>
+			<Input
+				{...attrs}
+				bind:value={$formData.description}
+				type="text"
+				maxlength={120}
+				placeholder="Sous-titre (ex : Bienvenue, plan de table…)"
+				class="h-9 w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
 			/>
 		</Form.Control>
 		<Form.FieldErrors />

@@ -56,6 +56,7 @@
 	// État pour l'édition de catégorie
 	let editingCategoryId: string | null = null;
 	let editingCategoryName = '';
+	let editingCategoryDescription = '';
 
 	// État pour la confirmation de suppression
 	let confirmingDeleteId: string | null = null;
@@ -137,9 +138,10 @@
 	}
 
 	// Fonctions pour l'édition de catégorie
-	function startEditingCategory(categoryId: string, categoryName: string) {
+	function startEditingCategory(categoryId: string, categoryName: string, categoryDescription = '') {
 		editingCategoryId = categoryId;
 		editingCategoryName = categoryName;
+		editingCategoryDescription = categoryDescription;
 	}
 
 	// Fonctions pour la confirmation de suppression
@@ -238,6 +240,7 @@
 								isEditing={true}
 								editingCategoryId={category.id}
 								{editingCategoryName}
+								{editingCategoryDescription}
 								showDeleteButton={true}
 								onSuccess={() => {
 									editingCategoryId = null;
@@ -267,7 +270,7 @@
 								class="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 opacity-60 hover:opacity-100"
 								on:click={(e) => {
 									e.stopPropagation();
-									startEditingCategory(category.id, category.name);
+									startEditingCategory(category.id, category.name, category.description ?? '');
 								}}
 								title="Modifier la catégorie"
 							>

@@ -2,15 +2,8 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
-	import {
-		HelpCircle,
-		Search,
-		Cake,
-		ArrowLeft,
-	} from 'lucide-svelte';
+	import { Search, Cake, ArrowLeft, Instagram } from 'lucide-svelte';
 	import { ClientFooter } from '$lib/components';
-	import SocialMediaIcons from '$lib/components/client/social-media-icons.svelte';
 
 	$: ({ shop, categories, products, faqs, isShopActive, notFound } =
 		$page.data);
@@ -45,8 +38,12 @@
 		separatorColor: 'rgba(0, 0, 0, 0.3)',
 	};
 
-	let selectedCategory: string | null = null;
-	let filteredProducts = products;
+	type Product = { id: string; name: string; base_price: number; image_url: string | null; category_id: string | null };
+	type Category = { id: string; name: string; description?: string | null };
+
+	// « Tout voir » : ?categorie=<id> affiche toute la catégorie
+	$: selectedCategory = $page.url.searchParams.get('categorie');
+	let filteredProducts: Product[] = products;
 	$: showBackButton = $page.url.searchParams.get('from') === 'app';
 
 	function goBack() {
@@ -57,13 +54,7 @@
 		}
 	}
 
-	$: filteredProducts =
-		selectedCategory === null
-			? products
-			: products.filter(
-					(product: { category_id: string | null }) =>
-						product.category_id === selectedCategory,
-				);
+	$: filteredProducts = currentSection ? currentSection.items : products;
 
 	function formatPrice(price: number): string {
 		return new Intl.NumberFormat('fr-FR', {
@@ -83,6 +74,39 @@
 
 	function goToCustomRequest() {
 		goto('/custom');
+	}
+
+	// Lien « Contact » : formulaire sur mesure s'il est activé, sinon Instagram
+	$: contactHref = shop?.is_custom_accepted
+		? '/custom'
+		: shop?.instagram
+			? `https://instagram.com/${shop.instagram.replace('@', '')}`
+			: null;
+	$: contactExternal = !!contactHref?.startsWith('http');
+
+	// Un univers par catégorie contenant au moins un produit
+	$: sections = [
+		...((categories ?? []) as Category[])
+			.map((c) => ({ ...c, items: (products as Product[]).filter((p) => p.category_id === c.id) }))
+			.filter((c) => c.items.length > 0),
+		...(() => {
+			const ids = new Set(((categories ?? []) as Category[]).map((c) => c.id));
+			const rest = (products as Product[]).filter((p) => !p.category_id || !ids.has(p.category_id));
+			return rest.length ? [{ id: 'autres', name: 'Autres créations', description: '', items: rest }] : [];
+		})(),
+	];
+	$: currentSection = selectedCategory ? sections.find((sec) => sec.id === selectedCategory) : null;
+	// Photos d'accueil : les 4 dernières créations avec image
+	$: heroImages = (products as Product[]).filter((p) => p.image_url).slice(0, 4);
+
+	function categoryHref(id: string) {
+		const params = new URLSearchParams();
+		params.set('categorie', id);
+		if ($page.url.searchParams.get('from') === 'app') params.set('from', 'app');
+		return `/?${params.toString()}#creations`;
+	}
+	function productHref(id: string) {
+		return $page.url.searchParams.get('from') === 'app' ? `/product/${id}?from=app` : `/product/${id}`;
 	}
 
 	function goToFAQ() {
@@ -123,6 +147,11 @@
 		<meta name="twitter:title" content={seoTitle} />
 		<meta name="twitter:description" content={seoDescription} />
 		<meta name="twitter:image" content={ogImageUrl} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap"
+			rel="stylesheet"
+		/>
 	{/if}
 </svelte:head>
 
@@ -155,222 +184,144 @@
 {:else}
 	<div
 		class="flex min-h-screen flex-col overflow-x-hidden"
-		style="background-color: {customStyles.background}; background-image: {customStyles.backgroundImage}; background-size: cover; background-position: center; background-repeat: no-repeat;"
+		style="background-color: {customStyles.background}; background-image: {customStyles.backgroundImage}; background-size: cover; background-position: center; background-repeat: no-repeat; {customStyles.textStyle}"
 	>
-		<header class="relative px-4 py-6 text-center sm:py-8 md:py-12">
-			{#if shop && (shop.instagram || shop.tiktok || shop.website)}
-				<SocialMediaIcons {shop} iconStyle={customStyles.iconStyle} />
-			{/if}
-			{#if showBackButton}
-				<button
-					on:click={goBack}
-					class="absolute left-4 top-4 flex items-center justify-center rounded-full bg-white/80 p-2 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:shadow-sm"
-					style={customStyles.iconStyle}
-					title="Retour"
-				>
-					<ArrowLeft class="h-5 w-5" />
-				</button>
-			{/if}
-			<div class="mb-4 flex justify-center">
-				<div
-					class="relative h-20 w-20 overflow-hidden rounded-full bg-white p-2.5 shadow-sm transition-transform duration-300 hover:scale-105 sm:h-24 sm:w-24 sm:p-3 md:h-28 md:w-28"
-				>
-					<img
-						src={shop.logo_url || '/images/logo_jennynbevent.jpg'}
-						alt={shop.name}
-						class="h-full w-full object-contain"
-					/>
-				</div>
+		<!-- EN-TÊTE -->
+		<header class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+			<div class="flex min-w-0 items-center gap-3">
+				{#if showBackButton}
+					<button on:click={goBack} class="rounded-full bg-white/80 p-2 shadow-sm" style={customStyles.iconStyle} title="Retour">
+						<ArrowLeft class="h-5 w-5" />
+					</button>
+				{/if}
+				<a href="/" class="flex min-w-0 items-center gap-3">
+					<span class="h-11 w-11 flex-none overflow-hidden rounded-full bg-white p-1 shadow-sm">
+						<img src={shop.logo_url || '/images/logo_jennynbevent.jpg'} alt="" class="h-full w-full object-contain" />
+					</span>
+					<span class="serif truncate text-2xl font-semibold">{shop.name}</span>
+				</a>
 			</div>
-
-			<h1
-				class="mb-3 text-2xl font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-3xl"
-				style="font-weight: 600; letter-spacing: -0.03em;"
-			>
-				{shop.name}
-			</h1>
-
-			{#if shop.bio}
-				<p
-					class="mx-auto mb-6 max-w-2xl whitespace-pre-wrap text-sm leading-[180%] text-neutral-600 sm:text-base"
-					style="font-weight: 300; letter-spacing: -0.01em;"
-				>
-					{shop.bio}
-				</p>
-			{/if}
-
-			{#if shop.is_custom_accepted && isShopActive}
-				<Button
-					on:click={goToCustomRequest}
-					class="mb-4 rounded-full px-6 py-2.5 text-sm shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md sm:px-8 sm:py-3 sm:text-base"
-					style={customStyles.buttonStyle}
-				>
-					Composer ma commande
-				</Button>
-			{/if}
-
-			{#if faqs && faqs.length > 0}
-				<button
-					on:click={goToFAQ}
-					class="mx-auto flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-sm font-medium shadow-sm backdrop-blur-sm transition-all duration-300 hover:bg-white/80 hover:shadow-sm sm:text-base"
-					style={`font-weight: 500; letter-spacing: -0.01em; color: ${customizations?.secondary_text_color || '#6b7280'}; border: 1px solid ${customizations?.secondary_text_color || '#e5e7eb'}20;`}
-				>
-					<HelpCircle class="h-4 w-4" />
-					<span>Questions fréquentes</span>
-				</button>
-			{/if}
+			<nav class="flex flex-none items-center gap-1 text-sm sm:gap-2">
+				{#if faqs && faqs.length > 0}
+					<a href="/faq" class="hidden rounded-full px-3 py-2 hover:bg-black/5 sm:inline-block">FAQ</a>
+				{/if}
+				{#if shop.instagram}
+					<a href="https://instagram.com/{shop.instagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" class="rounded-full p-2 hover:bg-black/5" style={customStyles.iconStyle} title="Instagram">
+						<Instagram class="h-5 w-5" />
+					</a>
+				{/if}
+				{#if contactHref}
+					<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="rounded-full px-4 py-2 font-medium" style={customStyles.buttonStyle}>Contact</a>
+				{/if}
+			</nav>
 		</header>
 
-		<div class="px-4">
-			<div class="mx-auto mb-6 max-w-7xl sm:mb-8">
-				<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
-			</div>
-		</div>
-
-		{#if isShopActive}
-			<div class="mb-6 px-4 sm:mb-8 md:px-6 lg:px-8">
-				<div class="flex flex-wrap gap-2">
-					<Button
-						on:click={() => (selectedCategory = null)}
-						class="whitespace-nowrap rounded-full text-xs shadow-sm transition-all duration-200 hover:shadow-sm sm:text-sm"
-						style={selectedCategory === null
-							? customStyles.buttonStyle
-							: customStyles.categoryBorderStyle}
-					>
-						Tout
-					</Button>
-					{#each categories as category}
-						<Button
-							on:click={() => (selectedCategory = category.id)}
-							class="whitespace-nowrap rounded-full text-xs shadow-sm transition-all duration-200 hover:shadow-sm sm:text-sm"
-							style={selectedCategory === category.id
-								? customStyles.buttonStyle
-								: customStyles.categoryBorderStyle}
-						>
-							{category.name}
-						</Button>
-					{/each}
+		{#if !isShopActive}
+			<div class="flex flex-1 items-center justify-center px-4 py-16 text-center">
+				<div class="max-w-md">
+					<h2 class="serif mb-3 text-3xl font-semibold">Boutique temporairement fermée</h2>
+					<p class="text-neutral-600">Cette boutique n'est pas disponible pour le moment. Revenez bientôt découvrir nos créations !</p>
 				</div>
 			</div>
-		{/if}
-
-		<div class="flex-1 px-4 pb-6 sm:pb-8 md:px-6 lg:px-8">
-			{#if isShopActive}
-				<div
-					class="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-				>
-					{#each filteredProducts as product}
-						<button
-							on:click={() => viewProduct(product.id)}
-							class="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#BC90A5]/20"
-						>
-							<div
-								class="relative h-32 w-full overflow-hidden bg-gradient-to-br from-[#BB91A4]/20 to-white sm:h-36"
-							>
+		{:else if currentSection}
+			<!-- PAGE D'UNE CATÉGORIE (« Tout voir ») -->
+			<main id="creations" class="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-4 sm:px-6">
+				<a href={showBackButton ? '/?from=app' : '/'} class="text-sm text-neutral-600 hover:underline">← Toutes les créations</a>
+				<h1 class="serif mt-3 text-4xl font-semibold">{currentSection.name}</h1>
+				{#if currentSection.description}<p class="mt-1 text-neutral-600">{currentSection.description}</p>{/if}
+				<div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+					{#each currentSection.items as product (product.id)}
+						<a href={productHref(product.id)} class="group block">
+							<div class="aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
 								{#if product.image_url}
-									<img
-										src={product.image_url}
-										alt={product.name}
-										class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-									/>
+									<img src={product.image_url} alt={product.name} loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
 								{:else}
-									<div
-										class="flex h-full items-center justify-center bg-gradient-to-br from-[#BB91A4]/30 to-white"
-									>
-										<Cake class="h-10 w-10 text-neutral-300" />
-									</div>
+									<div class="flex h-full items-center justify-center bg-[#BB91A4]/15"><Cake class="h-10 w-10 text-neutral-300" /></div>
 								{/if}
 							</div>
-							<div class="flex flex-1 flex-col p-2.5 sm:p-3">
-								<h3
-									class="mb-1 line-clamp-2 text-left text-sm font-semibold leading-tight text-neutral-900"
-									style="font-weight: 600; letter-spacing: -0.02em;"
-								>
-									{product.name}
-								</h3>
-								<div class="mt-auto pt-1.5">
-									<p
-										class="flex items-baseline gap-1 text-sm font-bold sm:text-base"
-										style={`color: ${customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
-									>
-										<span
-											class="text-xs font-normal text-neutral-600 sm:text-sm"
-											style="font-weight: 400;"
-										>
-											À partir de
-										</span>
-										{formatPrice(product.base_price)}
-									</p>
-									<div
-										class="mt-1.5 rounded-full px-2.5 py-0.5 text-center text-xs font-medium sm:text-sm"
-										style={`background-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_text_color || '#ffffff'}; font-weight: 500;`}
-									>
-										Commander
-									</div>
-								</div>
-							</div>
-						</button>
+							<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight">{product.name}</p>
+							<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>dès {formatPrice(product.base_price)}</p>
+						</a>
 					{/each}
 				</div>
-
-				{#if filteredProducts.length === 0}
-					<div
-						class="flex flex-1 items-center justify-center py-12 text-center sm:py-16"
-					>
-						<p
-							class="text-base leading-[180%] text-neutral-600 sm:text-lg"
-							style="font-weight: 300; letter-spacing: -0.01em;"
-						>
-							{#if selectedCategory}
-								Aucun produit dans cette catégorie pour le moment.
-							{:else}
-								Aucun produit disponible pour le moment.
-							{/if}
-						</p>
-					</div>
-				{/if}
-			{:else}
-				<div
-					class="flex flex-1 items-center justify-center py-12 text-center sm:py-16"
-				>
-					<div class="max-w-md">
-						<div class="mb-6 flex justify-center">
-							<div
-								class="rounded-full bg-gradient-to-br from-neutral-100 to-white p-4 shadow-sm"
-							>
-								<svg
-									class="h-8 w-8 text-neutral-600"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-									/>
-								</svg>
-							</div>
-						</div>
-						<h3
-							class="mb-3 text-xl font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-2xl"
-							style="font-weight: 600; letter-spacing: -0.03em;"
-						>
-							Boutique temporairement fermée
-						</h3>
-						<p
-							class="text-base leading-[180%] text-neutral-600 sm:text-lg"
-							style="font-weight: 300; letter-spacing: -0.01em;"
-						>
-							Cette boutique n'est pas disponible pour le moment. Revenez
-							bientôt pour découvrir nos délicieuses créations !
-						</p>
+			</main>
+		{:else}
+			<!-- ACCUEIL -->
+			<section class="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 pb-10 pt-6 sm:px-6 md:grid-cols-2 md:pt-10">
+				<div>
+					<h1 class="serif text-4xl font-semibold leading-[1.1] sm:text-5xl">{shop.name}</h1>
+					{#if shop.bio}
+						<p class="mt-4 max-w-xl whitespace-pre-wrap text-[15px] leading-relaxed text-neutral-600 sm:text-base">{shop.bio}</p>
+					{/if}
+					<div class="mt-6 flex flex-wrap gap-3">
+						<a href="#creations" class="rounded-full px-6 py-3 text-sm font-medium shadow-sm" style={customStyles.buttonStyle}>Voir les créations</a>
+						{#if contactHref}
+							<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="rounded-full border px-6 py-3 text-sm font-medium" style={`border-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_color || '#BC90A5'};`}>Contact</a>
+						{/if}
 					</div>
 				</div>
-			{/if}
-		</div>
+				{#if heroImages.length}
+					<div class="grid grid-cols-2 gap-3">
+						{#each heroImages as img, i (img.id)}
+							<a href={productHref(img.id)} class="block self-start overflow-hidden rounded-xl bg-white shadow-sm {i % 2 ? 'mt-6' : ''}">
+								<img src={img.image_url} alt={img.name} class="aspect-[4/5] w-full object-cover" />
+							</a>
+						{/each}
+					</div>
+				{/if}
+			</section>
+
+			<main id="creations" class="mx-auto w-full max-w-6xl flex-1 scroll-mt-4 px-4 pb-10 sm:px-6">
+				{#each sections as section (section.id)}
+					<section class="border-t py-8" style="border-color: rgba(0,0,0,0.08);">
+						<div class="flex items-end justify-between gap-4">
+							<div class="min-w-0">
+								<h2 class="serif text-[28px] font-semibold leading-tight">{section.name}</h2>
+								{#if section.description}<p class="mt-0.5 text-sm text-neutral-600">{section.description}</p>{/if}
+							</div>
+							{#if section.items.length > 4}
+								<a href={categoryHref(section.id)} class="flex-none text-sm font-medium hover:underline" style={`color: ${customizations?.button_color || '#BC90A5'};`}>Tout voir ({section.items.length}) →</a>
+							{/if}
+						</div>
+						<div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+							{#each section.items.slice(0, 4) as product (product.id)}
+								<a href={productHref(product.id)} class="group block">
+									<div class="aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
+										{#if product.image_url}
+											<img src={product.image_url} alt={product.name} loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+										{:else}
+											<div class="flex h-full items-center justify-center bg-[#BB91A4]/15"><Cake class="h-10 w-10 text-neutral-300" /></div>
+										{/if}
+									</div>
+									<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight">{product.name}</p>
+									<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>dès {formatPrice(product.base_price)}</p>
+								</a>
+							{/each}
+						</div>
+					</section>
+				{:else}
+					<p class="py-16 text-center text-neutral-600">Aucune création disponible pour le moment.</p>
+				{/each}
+
+				{#if contactHref}
+					<section class="mt-4 rounded-2xl px-6 py-10 text-center" style={`background-color: ${customizations?.button_color || '#BC90A5'}1A;`}>
+						<h2 class="serif text-3xl font-semibold">Une idée sur mesure ?</h2>
+						<p class="mx-auto mt-2 max-w-md text-neutral-600">Panneau photo, création personnalisée… Racontez-nous votre événement, on vous répond rapidement.</p>
+						<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="mt-5 inline-block rounded-full px-7 py-3 text-sm font-medium shadow-sm" style={customStyles.buttonStyle}>
+							{shop.is_custom_accepted ? 'Demander un devis' : 'Me contacter'}
+						</a>
+					</section>
+				{/if}
+			</main>
+		{/if}
 
 		<ClientFooter {customizations} shopSlug={undefined} hasPolicies={$page.data.hasPolicies} />
 	</div>
 {/if}
+
+<style>
+	.serif {
+		font-family: 'Cormorant Garamond', Georgia, serif;
+		letter-spacing: -0.01em;
+	}
+</style>
