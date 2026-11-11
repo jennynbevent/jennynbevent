@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
+import { isAllowedAdminEmail } from '$lib/auth/admin-access';
 
 /**
  * Single-user dashboard: no plans nor permission limits.
@@ -11,6 +12,11 @@ export const load: LayoutServerLoad = async ({
 	const { session, user } = await safeGetSession();
 	if (!session || !user) {
 		redirect(303, '/login');
+	}
+
+	// Espace réservé à la propriétaire : toute autre personne est déconnectée
+	if (!isAllowedAdminEmail(user.email)) {
+		redirect(303, '/logout?refuse=1');
 	}
 
 	const { data: shop, error: shopError } = await (supabase as any)

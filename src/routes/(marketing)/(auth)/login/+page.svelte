@@ -71,6 +71,12 @@
 	<div class="absolute inset-0 h-full w-full bg-gradient-to-b from-[#BB91A4]/30 via-transparent to-transparent"></div>
 	
 	<div class="relative z-10 mx-auto max-w-2xl px-6 sm:px-8 lg:px-12">
+		{#if $page.url.searchParams.get('refuse') === '1'}
+			<div class="mb-8 rounded-xl border border-[#BC90A5]/40 bg-[#FBF3F6] p-4 text-center text-sm text-[#7A4F60]">
+				Cet espace est réservé à l'administratrice de la boutique.
+				<a href="/" class="underline">Retour à la boutique</a>
+			</div>
+		{/if}
 		{#if $page.url.searchParams.get('verified') == 'true'}
 			<div class="mb-8 text-center">
 				<Alert.Root class="mb-6" variant="default">

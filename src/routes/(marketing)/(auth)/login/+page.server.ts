@@ -6,6 +6,7 @@ import { setError, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad } from './$types.js';
 import { formSchema, loginOtpSchema } from './schema';
+import { isAllowedAdminEmail, ADMIN_ONLY_MESSAGE } from '$lib/auth/admin-access';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const step = url.searchParams.get('step');
@@ -63,6 +64,11 @@ export const actions: Actions = {
 		const { email } = form.data;
 		const next = event.url.searchParams.get('next') || '/dashboard';
 
+		// Espace réservé : aucune autre adresse ne peut recevoir de code ni créer de compte
+		if (!isAllowedAdminEmail(email)) {
+			return setError(form, '', ADMIN_ONLY_MESSAGE);
+		}
+
 		// Envoie un email avec un code OTP 8 chiffres (aligné Supabase Cloud, config local dans config.toml).
 		// personnaliser le template "Magic Link" pour afficher le code : {{ .Token }}
 		const { error } = await supabase.auth.signInWithOtp({
@@ -94,6 +100,12 @@ export const actions: Actions = {
 		}
 
 		const { code } = loginOtpForm.data;
+
+		if (!isAllowedAdminEmail(email)) {
+			setError(loginOtpForm, '', ADMIN_ONLY_MESSAGE);
+			const emptyForm = await superValidate(zod(formSchema));
+			return fail(403, { form: emptyForm, otpForm: loginOtpForm, step: 'code' as const, email, next });
+		}
 
 		const { data, error } = await event.locals.supabase.auth.verifyOtp({
 			email,

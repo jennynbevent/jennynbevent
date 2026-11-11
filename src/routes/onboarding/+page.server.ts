@@ -6,6 +6,7 @@ import { shopCreationSchema, paypalConfigSchema, paymentConfigSchema } from './s
 import { directorySchema } from '$lib/validations/schemas/shop';
 import { z } from 'zod';
 import { uploadShopLogo } from '$lib/cloudinary';
+import { isAllowedAdminEmail } from '$lib/auth/admin-access';
 // import { paypalClient } from '$lib/paypal/client.js';
 
 
@@ -17,6 +18,11 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase 
     // 🟢 Redirection 1 — pas connecté
     if (!session || !user) {
         throw redirect(303, '/login');
+    }
+
+    // Création de boutique réservée à la propriétaire
+    if (!isAllowedAdminEmail(user.email)) {
+        throw redirect(303, '/logout?refuse=1');
     }
 
     const userId = user.id;
@@ -102,7 +108,7 @@ export const actions: Actions = {
         try {
             const { session, user } = await safeGetSession();
 
-            if (!session || !user) {
+            if (!session || !user || !isAllowedAdminEmail(user.email)) {
                 const form = await superValidate(zod(shopCreationSchema));
                 setError(form, 'name', 'Non autorisé');
                 console.log('Return error');
@@ -223,7 +229,7 @@ export const actions: Actions = {
         try {
             const { session, user } = await locals.safeGetSession();
 
-            if (!session || !user) {
+            if (!session || !user || !isAllowedAdminEmail(user.email)) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 setError(cleanForm, 'paypal_me', 'Non autorisé');
                 return { form: cleanForm };
@@ -357,7 +363,7 @@ export const actions: Actions = {
         try {
             const { session, user } = await locals.safeGetSession();
 
-            if (!session || !user) {
+            if (!session || !user || !isAllowedAdminEmail(user.email)) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 setError(cleanForm, 'paypal_me', 'Non autorisé');
                 return { form: cleanForm };
@@ -473,7 +479,7 @@ export const actions: Actions = {
         try {
             const { session, user } = await locals.safeGetSession();
 
-            if (!session || !user) {
+            if (!session || !user || !isAllowedAdminEmail(user.email)) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 setError(cleanForm, 'revolut_me', 'Non autorisé');
                 return { form: cleanForm };
@@ -589,7 +595,7 @@ export const actions: Actions = {
         try {
             const { session, user } = await locals.safeGetSession();
 
-            if (!session || !user) {
+            if (!session || !user || !isAllowedAdminEmail(user.email)) {
                 const cleanForm = await superValidate(zod(paymentConfigSchema));
                 setError(cleanForm, 'wero_me', 'Non autorisé');
                 return { form: cleanForm };
@@ -709,7 +715,7 @@ export const actions: Actions = {
             console.log('📋 [Onboarding Directory] updateDirectory called');
             const { session, user } = await safeGetSession();
 
-            if (!session || !user) {
+            if (!session || !user || !isAllowedAdminEmail(user.email)) {
                 console.log('📋 [Onboarding Directory] No session or user');
                 const form = await superValidate(zod(directorySchema));
                 setError(form, 'directory_city', 'Non autorisé');
@@ -840,7 +846,7 @@ export const actions: Actions = {
         try {
             const { session, user } = await safeGetSession();
 
-            if (!session || !user) {
+            if (!session || !user || !isAllowedAdminEmail(user.email)) {
                 throw redirect(303, '/login');
             }
 

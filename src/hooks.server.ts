@@ -1,4 +1,5 @@
 // src/hooks.server.ts
+import { isAllowedAdminEmail } from '$lib/auth/admin-access';
 import {
 	PUBLIC_SUPABASE_ANON_KEY,
 	PUBLIC_SUPABASE_URL,
@@ -239,6 +240,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 				console.warn('[Supabase Auth] Network error during session check, continuing without session:', code);
 			} else {
 				throw authError;
+			}
+		}
+
+		// Espace boutique réservé à la propriétaire (voir src/lib/auth/admin-access.ts)
+		const path = event.url.pathname;
+		if (path.startsWith('/dashboard') || path.startsWith('/onboarding')) {
+			const { user: currentUser } = await event.locals.safeGetSession();
+			if (currentUser && !isAllowedAdminEmail(currentUser.email)) {
+				// /logout?refuse=1 déconnecte la personne puis l'envoie sur /login avec un message
+				return new Response(null, {
+					status: 303,
+					headers: { location: '/logout?refuse=1' },
+				});
 			}
 		}
 
