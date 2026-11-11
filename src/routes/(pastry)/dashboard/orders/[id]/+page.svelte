@@ -52,6 +52,8 @@
 	let printUploading = false;
 	let printProgress = 0;
 	let printError = '';
+	let readySubmitting = false;
+	let readyError = '';
 	const PRINT_MAX_BYTES = 10 * 1024 * 1024;
 
 	async function onPrintFileSelected(event: Event) {
@@ -1065,9 +1067,21 @@
 							method="POST"
 							action="?/makeOrderReady"
 							use:enhance={() => {
+								readySubmitting = true;
+								readyError = '';
 								return async ({ result }) => {
+									readySubmitting = false;
 									if (result.type === 'success') {
+										const d = result.data || {};
+										if (d.emailError) {
+											readyError = String(d.emailError);
+											return;
+										}
 										goto('/dashboard/orders');
+									} else if (result.type === 'failure') {
+										readyError = String(result.data?.error || 'Une erreur est survenue. Réessayez.');
+									} else if (result.type === 'error') {
+										readyError = 'Une erreur est survenue. Réessayez.';
 									}
 								};
 							}}
@@ -1111,10 +1125,17 @@
 								{/if}
 							</div>
 
-							<Button type="submit" class="h-10 w-full gap-2" disabled={printUploading}>
+							<Button type="submit" class="h-10 w-full gap-2" disabled={printUploading || readySubmitting}>
 								<PackageCheck class="h-4 w-4" />
-								{printFile ? 'Marquer comme prête et envoyer le PDF' : 'Marquer comme prête'}
+								{#if readySubmitting}
+									Envoi en cours…
+								{:else}
+									{printFile ? 'Marquer comme prête et envoyer le PDF' : 'Marquer comme prête'}
+								{/if}
 							</Button>
+							{#if readyError}
+								<p class="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-700">{readyError}</p>
+							{/if}
 						</form>
 					{:else if order.status === 'ready'}
 						<!-- Actions pour les commandes prêtes -->

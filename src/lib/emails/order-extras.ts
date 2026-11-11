@@ -6,7 +6,7 @@ export interface OrderEmailExtras {
 	qrCodeUrl?: string | null;
 	deliveryMode?: DeliveryMode;
 	/** Pièces jointes (ex. fichier PDF à imprimer envoyé avec « Commande prête ») */
-	attachments?: Array<{ filename: string; path: string }>;
+	attachments?: Array<{ filename: string; content?: Buffer | string; path?: string }>;
 }
 
 /** Construit les infos complémentaires à partir d'une commande */

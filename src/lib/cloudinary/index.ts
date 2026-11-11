@@ -356,3 +356,34 @@ export function isOwnPrintFileUrl(url: string, shopId: string): boolean {
 	return url.startsWith(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/raw/upload/`) &&
 		url.includes(`/print-files/${shopId}/`);
 }
+
+/**
+ * Récupère le contenu d'un fichier à imprimer pour le joindre à un e-mail.
+ * On essaie d'abord le lien public, puis un lien de téléchargement signé
+ * (utile si la diffusion des PDF est bloquée sur le compte Cloudinary).
+ */
+export async function fetchPrintFile(url: string): Promise<Buffer> {
+	try {
+		const res = await fetch(url);
+		if (res.ok) {
+			const buf = Buffer.from(await res.arrayBuffer());
+			if (buf.length > 0) return buf;
+		}
+	} catch {
+		// on passe au lien signé
+	}
+	const marker = '/raw/upload/';
+	const i = url.indexOf(marker);
+	if (i === -1) throw new Error('Lien de fichier invalide');
+	const publicId = decodeURIComponent(url.slice(i + marker.length).replace(/^v\d+\//, ''));
+	const signedUrl = cloudinary.utils.private_download_url(publicId, '', {
+		resource_type: 'raw',
+		type: 'upload',
+		expires_at: Math.round(Date.now() / 1000) + 600,
+	});
+	const res = await fetch(signedUrl);
+	if (!res.ok) throw new Error(`Téléchargement du PDF impossible (${res.status})`);
+	const buf = Buffer.from(await res.arrayBuffer());
+	if (buf.length === 0) throw new Error('PDF vide');
+	return buf;
+}

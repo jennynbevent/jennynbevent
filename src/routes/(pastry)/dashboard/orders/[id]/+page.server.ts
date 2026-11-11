@@ -10,7 +10,7 @@ import { ErrorLogger } from '$lib/services/error-logging';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
 import { amountDueNow } from '$lib/utils/deposit';
 import { buildOrderEmailExtras } from '$lib/emails/order-extras';
-import { isOwnPrintFileUrl } from '$lib/cloudinary';
+import { isOwnPrintFileUrl, fetchPrintFile } from '$lib/cloudinary';
 
 
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
@@ -989,6 +989,18 @@ export const actions: Actions = {
             if (printFileUrl && !isOwnPrintFileUrl(printFileUrl, shopId)) {
                 return fail(400, { error: 'Fichier à imprimer invalide' });
             }
+            // Récupérer le PDF AVANT de changer le statut : s'il est illisible, rien n'est envoyé
+            let printFileContent: Buffer | null = null;
+            if (printFileUrl) {
+                try {
+                    printFileContent = await fetchPrintFile(printFileUrl);
+                } catch (e) {
+                    console.error('[makeOrderReady] PDF fetch failed:', e);
+                    return fail(400, {
+                        error: "Le PDF n'a pas pu être récupéré. Réessayez de l'ajouter, puis cliquez à nouveau sur « Marquer comme prête ».",
+                    });
+                }
+            }
 
             // Récupérer les données de la commande et de la boutique avant la mise à jour
             const { data: orderData, error: orderFetchError } = await locals.supabase
@@ -1067,12 +1079,12 @@ export const actions: Actions = {
                     productImage = p?.image_url || null;
                 }
                 const extras = buildOrderEmailExtras(orderData as any, productImage);
-                if (printFileUrl) {
+                if (printFileUrl && printFileContent) {
                     const safeName = (printFileName || 'fichier-a-imprimer.pdf')
                         .replace(/[^\w.\-À-ÿ ]+/g, '')
                         .slice(0, 80) || 'fichier-a-imprimer.pdf';
                     extras.attachments = [
-                        { filename: safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`, path: printFileUrl },
+                        { filename: safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`, content: printFileContent },
                     ];
                 }
 
@@ -1107,9 +1119,13 @@ export const actions: Actions = {
                     step: 'send_email',
                 });
                 console.error('Failed to send order ready email, but order was marked as ready:', emailError);
+                return {
+                    message: 'Commande marquée comme prête',
+                    emailError: "La commande est bien marquée comme prête, mais l'e-mail n'a pas pu être envoyé au client. Envoyez-lui le fichier directement par e-mail.",
+                };
             }
 
-            return { message: 'Commande marquée comme prête' };
+            return { message: 'Commande marquée comme prête', emailSent: true, withPdf: !!printFileContent };
         } catch (err) {
             await ErrorLogger.logCritical(err, {
                 userId: userId,
