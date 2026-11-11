@@ -11,6 +11,7 @@ import { paymentConfigSchema } from '../../../onboarding/schema';
 import { uploadShopLogo, uploadBackgroundImage, deleteImage, extractPublicIdFromUrl } from '$lib/cloudinary';
 import { verifyShopOwnership } from '$lib/auth';
 import { setError } from 'sveltekit-superforms';
+import { isStripeConfigured, stripeMode } from '$lib/stripe/shop-payments';
 
 export const load: PageServerLoad = async ({ locals, parent, url }) => {
     // ✅ OPTIMISÉ : Réutiliser les permissions et shop du layout
@@ -99,7 +100,12 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
                 return defaults;
             })()
         }),
-        permissions
+        permissions,
+        stripe: {
+            configured: isStripeConfigured(),
+            mode: stripeMode(),
+            enabled: !!paymentLinksResult.data?.some((l) => l.provider_type === 'stripe'),
+        }
     };
 };
 
@@ -931,6 +937,36 @@ export const actions: Actions = {
             setError(cleanForm, 'revolut_me', 'Une erreur inattendue est survenue');
             return { form: cleanForm };
         }
+    },
+
+    // Paiement par carte (Stripe) : activer / désactiver
+    enableStripe: async ({ locals }) => {
+        const { user } = await locals.safeGetSession();
+        if (!user) return fail(401, { error: 'Non autorisé' });
+        if (!isStripeConfigured()) return fail(400, { error: 'Les clés Stripe ne sont pas encore en place.' });
+        const { error: upsertError } = await locals.supabase
+            .from('payment_links')
+            .upsert(
+                { profile_id: user.id, provider_type: 'stripe', payment_identifier: 'carte', is_active: true },
+                { onConflict: 'profile_id,provider_type' }
+            );
+        if (upsertError) {
+            console.error('[Stripe] activation impossible:', upsertError);
+            return fail(500, { error: "Impossible d'activer le paiement par carte." });
+        }
+        return { success: true };
+    },
+
+    disableStripe: async ({ locals }) => {
+        const { user } = await locals.safeGetSession();
+        if (!user) return fail(401, { error: 'Non autorisé' });
+        const { error: deleteError } = await locals.supabase
+            .from('payment_links')
+            .delete()
+            .eq('profile_id', user.id)
+            .eq('provider_type', 'stripe');
+        if (deleteError) return fail(500, { error: 'Impossible de désactiver le paiement par carte.' });
+        return { success: true };
     },
 
     updateWero: async ({ request, locals }) => {

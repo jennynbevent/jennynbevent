@@ -387,7 +387,7 @@ export class EmailService {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [pastryEmail],
-                subject: `Nouvelle commande - ${productName}`,
+                subject: `Nouvelle commande payée – ${productName}`,
                 html: OrderNotificationEmail({
                     customerName,
                     customerEmail,

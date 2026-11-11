@@ -17,6 +17,9 @@ import { policiesSchema } from './policies-schema';
 	import { Store, Palette, FileText, CreditCard } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import PaymentForm from './payment-form.svelte';
+	import StripeCard from './stripe-card.svelte';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	$: stripeState = (data as any).stripe ?? { configured: false, mode: null, enabled: false };
 
 	export let data: {
 		shop: {
@@ -136,6 +139,7 @@ import { policiesSchema } from './policies-schema';
 				</div>
 			</CardHeader>
 			<CardContent class="pt-0">
+				<StripeCard stripe={stripeState} />
 				<PaymentForm data={data.paymentForm} />
 			</CardContent>
 		</Card>

@@ -1,11 +1,25 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error, redirect, fail } from '@sveltejs/kit';
+import { isStripeConfigured, createQuoteCheckout, finalizeStripeSession } from '$lib/stripe/shop-payments';
 import type { PageServerLoad, Actions } from './$types';
 import { EmailService } from '$lib/services/email-service';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
 import { PUBLIC_SITE_URL } from '$env/static/public';
 
-export const load: PageServerLoad = async ({ params, locals, parent }) => {
+export const load: PageServerLoad = async ({ params, locals, parent, url }) => {
 	const { order_ref } = params;
+
+	// Retour après un paiement par carte : confirmer la commande puis afficher le récapitulatif
+	const stripeSessionId = url.searchParams.get('session_id');
+	if (url.searchParams.get('payment') === 'success' && stripeSessionId && isStripeConfigured()) {
+		let paidOrderId: string | null = null;
+		try {
+			paidOrderId = await finalizeStripeSession(locals.supabaseServiceRole as any, stripeSessionId);
+		} catch (e) {
+			console.error('[Stripe] finalisation au retour impossible:', e);
+		}
+		if (paidOrderId) throw redirect(303, `/order/${paidOrderId}`);
+	}
+
 	try {
 		const { hasPolicies } = await parent();
 		const { data: order, error: orderError } = await (locals.supabaseServiceRole as any)
@@ -15,7 +29,16 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 			.eq('status', 'quoted')
 			.single();
 
-		if (orderError || !order) throw error(404, 'Devis non trouvé');
+		if (orderError || !order) {
+			// Devis déjà réglé : afficher directement la commande
+			const { data: existing } = await (locals.supabaseServiceRole as any)
+				.from('orders')
+				.select('id')
+				.eq('order_ref', order_ref)
+				.maybeSingle();
+			if (existing) throw redirect(303, `/order/${existing.id}`);
+			throw error(404, 'Devis non trouvé');
+		}
 		const shop = order.shops;
 
 		const { data: paymentLinks, error: paymentLinkError } = await (locals.supabaseServiceRole as any)
@@ -25,7 +48,10 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 			.eq('is_active', true)
 			.order('provider_type', { ascending: true });
 
-		const allPaymentLinks = [...(paymentLinks || [])];
+		// Le paiement par carte n'apparaît que si les clés Stripe sont en place
+		const allPaymentLinks = [...(paymentLinks || [])].filter(
+			(pl: any) => pl.provider_type !== 'stripe' || isStripeConfigured()
+		);
 		allPaymentLinks.sort((a, b) => {
 			const orderMap = { stripe: 0, wero: 1, paypal: 2, revolut: 3 };
 			const aOrder = orderMap[a.provider_type as keyof typeof orderMap] ?? 99;
@@ -56,6 +82,17 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 
 export const actions: Actions = {
 	openPayPal: async () => ({ success: true }),
+	// Paiement par carte : crée la page de paiement Stripe et renvoie son adresse
+	createStripeCheckoutSession: async ({ params, locals, url }) => {
+		if (!isStripeConfigured()) return fail(400, { success: false, error: 'Paiement par carte indisponible' });
+		try {
+			const checkoutUrl = await createQuoteCheckout(locals.supabaseServiceRole as any, params.order_ref, url.origin);
+			return { success: true, checkoutUrl };
+		} catch (e) {
+			console.error('[Stripe] création de session impossible:', e);
+			return fail(400, { success: false, error: e instanceof Error ? e.message : 'Erreur' });
+		}
+	},
 	confirmPayment: async ({ params, request, locals }) => {
 		const { order_ref } = params;
 		try {

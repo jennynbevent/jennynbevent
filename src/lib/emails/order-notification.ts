@@ -1,5 +1,5 @@
 import { formatDateTimeForEmail, generateInstagramEmailRow } from '$lib/utils/email-formatters';
-import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable } from './components';
+import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable, amountRows } from './components';
 import { EMAIL_SPACING, EMAIL_COLORS, EMAIL_TYPOGRAPHY } from './styles';
 
 interface OrderNotificationProps {
@@ -39,11 +39,11 @@ export function OrderNotificationEmail({
         type: 'pastry',
     });
 
-    const title = EmailTitle('Nouvelle commande reçue');
+    const title = EmailTitle('Nouvelle commande payée 🎉');
     const pickupLabel = formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd);
 
     const intro = EmailParagraph(
-        `Vous avez reçu une nouvelle commande de <strong>${customerName}</strong>.<br /><br />Action requise : Préparer la commande pour le <strong>${pickupLabel}</strong>.`
+        `Vous avez reçu une nouvelle commande de <strong>${customerName}</strong>, payée par carte. Elle est déjà confirmée : rien à vérifier.<br /><br />À préparer pour le <strong>${pickupLabel}</strong>.`
     );
 
     const customerInfoRows = [
@@ -58,17 +58,15 @@ export function OrderNotificationEmail({
     const orderDetails = EmailTable([
         { label: 'Article', value: productName },
         { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
-        { label: 'Prix total', value: `<strong>${totalAmount.toFixed(2)}€</strong>` },
-        { label: 'Acompte reçu', value: `<strong>${paidAmount.toFixed(2)}€</strong>` },
-        { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
+        ...amountRows(totalAmount, paidAmount, { total: 'Total', paid: 'Acompte reçu' }),
     ]);
 
     const ctaSection = `
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
-            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Connectez-vous à votre dashboard pour gérer cette commande</p>
+            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Retrouvez cette commande dans votre tableau de bord</p>
             ${EmailButton({
         href: dashboardUrl,
-        text: 'Accéder au dashboard',
+        text: 'Voir la commande',
         variant: 'primary',
     })}
         </div>

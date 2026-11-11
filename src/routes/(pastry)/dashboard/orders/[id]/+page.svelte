@@ -385,6 +385,9 @@
 		if (order.payment_provider === 'revolut') {
 			return 'Le client doit inclure cette référence lors du paiement Revolut';
 		}
+		if (order.payment_provider === 'stripe') {
+			return 'Payé par carte (Stripe) : retrouvez ce paiement dans Stripe avec cette référence';
+		}
 		return 'Le client doit inclure cette référence lors du paiement (PayPal, Revolut, etc.)';
 	}
 </script>
