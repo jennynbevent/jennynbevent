@@ -1,0 +1,18 @@
+{
+  "name": "Jnb Event – Espace boutique",
+  "short_name": "Jnb Event",
+  "description": "Tableau de bord de la boutique Jnb Event",
+  "id": "/dashboard",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F7F2F0",
+  "theme_color": "#7A4F60",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icons/jnb-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/jnb-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/jnb-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

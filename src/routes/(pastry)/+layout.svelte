@@ -48,6 +48,13 @@ import LogOut from '~icons/lucide/log-out';
 </script>
 
 <svelte:head>
+	<!-- Installation comme application (iPad / iPhone / ordinateur) -->
+	<link rel="manifest" href="/manifest-dashboard.webmanifest" />
+	<link rel="apple-touch-icon" href="/icons/apple-touch-icon-dashboard.png" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-title" content="Jnb Event" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="theme-color" content="#7A4F60" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link
 		href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap"

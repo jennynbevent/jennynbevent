@@ -306,7 +306,7 @@
 			</div>
 		{:else}
 			<!-- Ordinateur : tableau -->
-			<table class="hidden w-full table-fixed border-collapse text-sm md:table">
+			<table class="hidden w-full table-fixed border-collapse text-sm lg:table">
 				<thead>
 					<tr class="bg-[#FBF6F7] text-left text-xs text-[#7A6A70]">
 						<th class="px-4 py-2 font-normal">Article</th>
@@ -341,7 +341,7 @@
 				</tbody>
 			</table>
 			<!-- Téléphone : liste -->
-			<div class="md:hidden">
+			<div class="lg:hidden">
 				{#each metrics.recentOrders as order}
 					<a
 						href="/dashboard/orders/{order.id}"
