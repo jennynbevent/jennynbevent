@@ -886,7 +886,7 @@
 				</CardContent>
 			</Card>
 
-			<!-- Message du pâtissier -->
+			<!-- Message de la boutique -->
 			{#if order.chef_message}
 				<Card>
 					<CardHeader>

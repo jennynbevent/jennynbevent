@@ -18,6 +18,9 @@ import { policiesSchema } from './policies-schema';
 	import { cn } from '$lib/utils';
 	import PaymentForm from './payment-form.svelte';
 	import StripeCard from './stripe-card.svelte';
+	import LayoutForm from './layout-form.svelte';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	$: layoutState = (data as any).layout ?? { categories: [], products: [], heroIds: [], ready: false };
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	$: stripeState = (data as any).stripe ?? { configured: false, mode: null, enabled: false };
 
@@ -123,6 +126,9 @@ import { policiesSchema } from './policies-schema';
 		</Card>
 	{:else if activeTab === 'customization'}
 		<CustomizationForm form={data.customizationForm} />
+		{#key layoutState}
+			<LayoutForm layout={layoutState} />
+		{/key}
 	{:else if activeTab === 'policies'}
 		<PoliciesForm data={data.policiesForm} />
 	{:else if activeTab === 'payment'}

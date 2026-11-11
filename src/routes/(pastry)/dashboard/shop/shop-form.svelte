@@ -161,7 +161,7 @@
 					<Input
 						{...attrs}
 						type="text"
-						placeholder="Ma Pâtisserie"
+						placeholder="Jnb Event"
 						required
 						bind:value={$formData.name}
 						class="h-10"

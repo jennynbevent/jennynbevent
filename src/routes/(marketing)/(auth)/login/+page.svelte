@@ -50,16 +50,16 @@
 	<title>Se connecter - Accès dashboard cake designer | {WebsiteName}</title>
 	<meta
 		name="description"
-		content="Connecte-toi à ton compte Jennynbevent pour accéder à ton dashboard de gestion de pâtisserie. Gère tes commandes, devis et factures en ligne."
+		content="Espace boutique Jnb Event."
 	/>
 	<meta
 		name="keywords"
-		content="connexion Jennynbevent, login cake designer, dashboard pâtisserie, gestion commandes, logiciel pâtissier"
+		content="Jnb Event, espace boutique"
 	/>
 	<meta property="og:title" content="Se connecter - Accès dashboard cake designer | {WebsiteName}" />
 	<meta
 		property="og:description"
-		content="Connecte-toi à ton compte Jennynbevent pour accéder à ton dashboard de gestion de pâtisserie."
+		content="Espace boutique Jnb Event."
 	/>
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://jennynbevent.com/login" />

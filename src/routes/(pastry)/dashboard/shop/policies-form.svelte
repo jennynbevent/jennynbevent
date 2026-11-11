@@ -70,7 +70,7 @@
 						<Form.Label>Conditions générales (optionnel)</Form.Label>
 						<Textarea
 							{...attrs}
-							placeholder="Ex: Les commandes sont confirmées après validation du pâtissier. Les prix peuvent varier selon les personnalisations..."
+							placeholder="Ex: Les commandes sont confirmées après validation de la boutique. Les prix peuvent varier selon les personnalisations..."
 							rows={8}
 							bind:value={$formData.terms_and_conditions}
 							class="resize-none"
@@ -99,7 +99,7 @@
 						<Form.Label>Politique de retour (optionnel)</Form.Label>
 						<Textarea
 							{...attrs}
-							placeholder="Ex: Les produits pâtissiers ne peuvent pas être retournés pour des raisons d'hygiène. En cas de problème, contactez-nous dans les 24h..."
+							placeholder="Ex: Les créations personnalisées ne peuvent pas être retournées. En cas de problème, contactez-nous dans les 24h..."
 							rows={8}
 							bind:value={$formData.return_policy}
 							class="resize-none"

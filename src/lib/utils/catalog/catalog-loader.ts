@@ -7,6 +7,14 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * @returns Données du catalogue (produits, catégories, infos boutique)
  */
 async function loadCategories(supabase: SupabaseClient, shopId: string) {
+    // Ordre choisi dans l'espace admin (colonne « position »), puis alphabétique
+    const withPosition = await supabase
+        .from('categories')
+        .select('id, name, description, position')
+        .eq('shop_id', shopId)
+        .order('position', { ascending: true, nullsFirst: false })
+        .order('name');
+    if (!withPosition.error) return withPosition;
     const withDescription = await supabase
         .from('categories')
         .select('id, name, description')
@@ -76,6 +84,19 @@ export async function loadShopCatalog(
             throw new Error('Erreur lors du chargement des catégories');
         }
 
+        // Images de la page d'accueil choisies dans l'espace admin (si la colonne existe)
+        let heroProductIds: string[] = [];
+        try {
+            const { data: hero, error: heroError } = await (supabase as any)
+                .from('shops')
+                .select('hero_product_ids')
+                .eq('id', shopId)
+                .single();
+            if (!heroError && Array.isArray(hero?.hero_product_ids)) heroProductIds = hero.hero_product_ids;
+        } catch {
+            heroProductIds = [];
+        }
+
         // 3. Structurer les données du catalogue
         const catalogData = {
             shop: {
@@ -93,6 +114,7 @@ export async function loadShopCatalog(
             products: productsResult.data || [],
             categories: categoriesResult.data || [],
             faqs: faqsResult.data || [],
+            heroProductIds,
             cached_at: new Date().toISOString()
         };
 

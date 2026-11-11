@@ -96,8 +96,15 @@
 		})(),
 	];
 	$: currentSection = selectedCategory ? sections.find((sec) => sec.id === selectedCategory) : null;
-	// Photos d'accueil : les 4 dernières créations avec image
-	$: heroImages = (products as Product[]).filter((p) => p.image_url).slice(0, 4);
+	// Photos d'accueil : celles choisies dans l'espace admin, complétées par les dernières créations
+	$: heroImages = (() => {
+		const withImage = (products as Product[]).filter((p) => p.image_url);
+		const chosen = (($page.data.heroProductIds ?? []) as string[])
+			.map((id) => withImage.find((p) => p.id === id))
+			.filter(Boolean) as Product[];
+		const rest = withImage.filter((p) => !chosen.some((c) => c.id === p.id));
+		return [...chosen, ...rest].slice(0, 4);
+	})();
 
 	function categoryHref(id: string) {
 		const params = new URLSearchParams();
@@ -283,9 +290,10 @@
 								<a href={categoryHref(section.id)} class="flex-none text-sm font-medium hover:underline" style={`color: ${customizations?.button_color || '#BC90A5'};`}>Tout voir ({section.items.length}) →</a>
 							{/if}
 						</div>
-						<div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+						<!-- Téléphone : une ligne à faire glisser ; ordinateur : grille de 4 -->
+						<div class="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 md:pb-0">
 							{#each section.items.slice(0, 4) as product (product.id)}
-								<a href={productHref(product.id)} class="group block">
+								<a href={productHref(product.id)} class="group block w-[44%] flex-none snap-start md:w-auto">
 									<div class="aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
 										{#if product.image_url}
 											<img src={product.image_url} alt={product.name} loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -323,5 +331,12 @@
 	.serif {
 		font-family: 'Cormorant Garamond', Georgia, serif;
 		letter-spacing: -0.01em;
+	}
+	.no-scrollbar {
+		scrollbar-width: none;
+		-webkit-overflow-scrolling: touch;
+	}
+	.no-scrollbar::-webkit-scrollbar {
+		display: none;
 	}
 </style>

@@ -630,21 +630,6 @@
 					</Form.Field>
 				</div>
 
-				<div class="space-y-2">
-					<Form.Field {form} name="customer_instagram">
-						<Form.Control let:attrs>
-							<Form.Label>Instagram (facultatif)</Form.Label>
-							<Input
-								{...attrs}
-								id="instagram"
-								placeholder="@votre_compte"
-								disabled={isFormDisabled}
-								bind:value={$formData.customer_instagram}
-							/>
-						</Form.Control>
-						<Form.FieldErrors />
-					</Form.Field>
-				</div>
 
 				<div class="space-y-2">
 					<Form.Field {form} name="additional_information">
@@ -722,14 +707,6 @@
 							<span class="font-semibold text-neutral-700" style="font-weight: 600;">Téléphone :</span>
 							<span class="text-right text-neutral-900 sm:ml-auto" style={customStyles.textStyle}>
 								{$formData.customer_phone}
-							</span>
-						</div>
-					{/if}
-					{#if $formData.customer_instagram}
-						<div class="flex items-center justify-between gap-2">
-							<span class="font-semibold text-neutral-700" style="font-weight: 600;">Instagram :</span>
-							<span class="text-right text-neutral-900 sm:ml-auto" style={customStyles.textStyle}>
-								{$formData.customer_instagram}
 							</span>
 						</div>
 					{/if}
@@ -822,13 +799,6 @@
 					{/if}
 
 					<!-- Separator -->
-					<div class="my-2">
-						<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
-					</div>
-					<p class="text-xs italic text-muted-foreground">
-						* Le prix final vous sera confirmé dans votre devis, après étude de
-						votre demande
-					</p>
 				</div>
 			</div>
 		</div>

@@ -34,6 +34,7 @@ export const load: PageServerLoad = async ({ locals, setHeaders, parent }) => {
 			categories: catalogData.categories,
 			products: catalogData.products,
 			faqs: catalogData.faqs,
+			heroProductIds: catalogData.heroProductIds || [],
 			isShopActive: isShopVisible
 		};
 	} catch (err) {

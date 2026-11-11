@@ -13,6 +13,38 @@ import { verifyShopOwnership } from '$lib/auth';
 import { setError } from 'sveltekit-superforms';
 import { isStripeConfigured, stripeMode } from '$lib/stripe/shop-payments';
 
+/** Disposition de la boutique : catégories (dans l'ordre), articles avec image, photos d'accueil */
+async function loadLayout(supabase: any, shopId: string) {
+    const withPos = await supabase
+        .from('categories')
+        .select('id, name, position')
+        .eq('shop_id', shopId)
+        .order('position', { ascending: true, nullsFirst: false })
+        .order('name');
+    const ready = !withPos.error;
+    const cats = ready
+        ? withPos.data
+        : (await supabase.from('categories').select('id, name').eq('shop_id', shopId).order('name')).data;
+
+    const { data: products } = await supabase
+        .from('products')
+        .select('id, name, image_url')
+        .eq('shop_id', shopId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+    let heroIds: string[] = [];
+    const hero = await supabase.from('shops').select('hero_product_ids').eq('id', shopId).single();
+    if (!hero.error && Array.isArray(hero.data?.hero_product_ids)) heroIds = hero.data.hero_product_ids;
+
+    return {
+        categories: (cats || []).map((c: any) => ({ id: c.id, name: c.name })),
+        products: products || [],
+        heroIds,
+        ready: ready && !hero.error,
+    };
+}
+
 export const load: PageServerLoad = async ({ locals, parent, url }) => {
     // ✅ OPTIMISÉ : Réutiliser les permissions et shop du layout
     const { permissions, shop: layoutShop, user } = await parent();
@@ -101,6 +133,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
             })()
         }),
         permissions,
+        layout: await loadLayout(locals.supabase, permissions.shopId),
         stripe: {
             configured: isStripeConfigured(),
             mode: stripeMode(),
@@ -937,6 +970,53 @@ export const actions: Actions = {
             setError(cleanForm, 'revolut_me', 'Une erreur inattendue est survenue');
             return { form: cleanForm };
         }
+    },
+
+    // Disposition : ordre des catégories et photos de la page d'accueil
+    updateLayout: async ({ request, locals }) => {
+        const { user } = await locals.safeGetSession();
+        if (!user) return fail(401, { error: 'Non autorisé' });
+        const { data: shop } = await (locals.supabase as any)
+            .from('shops')
+            .select('id')
+            .eq('profile_id', user.id)
+            .single();
+        if (!shop) return fail(403, { error: 'Boutique introuvable' });
+
+        const formData = await request.formData();
+        let categoryOrder: string[] = [];
+        let heroIds: string[] = [];
+        try {
+            categoryOrder = JSON.parse(String(formData.get('categoryOrder') || '[]'));
+            heroIds = JSON.parse(String(formData.get('heroIds') || '[]'));
+        } catch {
+            return fail(400, { error: 'Données invalides' });
+        }
+        const uuid = /^[0-9a-f-]{36}$/i;
+        categoryOrder = categoryOrder.filter((id) => uuid.test(id)).slice(0, 200);
+        heroIds = heroIds.filter((id) => uuid.test(id)).slice(0, 4);
+
+        for (let i = 0; i < categoryOrder.length; i++) {
+            const { error: catError } = await (locals.supabase as any)
+                .from('categories')
+                .update({ position: i + 1 })
+                .eq('id', categoryOrder[i])
+                .eq('shop_id', shop.id);
+            if (catError) {
+                console.error('[updateLayout] categories:', catError);
+                return fail(500, { error: "Impossible d'enregistrer l'ordre des catégories." });
+            }
+        }
+
+        const { error: heroError } = await (locals.supabase as any)
+            .from('shops')
+            .update({ hero_product_ids: heroIds })
+            .eq('id', shop.id);
+        if (heroError) {
+            console.error('[updateLayout] hero:', heroError);
+            return fail(500, { error: "Impossible d'enregistrer les photos d'accueil." });
+        }
+        return { success: true };
     },
 
     // Paiement par carte (Stripe) : activer / désactiver
