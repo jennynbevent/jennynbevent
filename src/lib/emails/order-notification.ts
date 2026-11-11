@@ -43,7 +43,7 @@ export function OrderNotificationEmail({
     const pickupLabel = formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd);
 
     const intro = EmailParagraph(
-        `Vous avez reçu une nouvelle commande de <strong>${customerName}</strong>, payée par carte. Elle est déjà confirmée : rien à vérifier.<br /><br />À préparer pour le <strong>${pickupLabel}</strong>.`
+        `Vous avez reçu une nouvelle commande de <strong>${customerName}</strong>, payée par carte : le paiement est garanti et le client a déjà reçu sa confirmation.<br /><br />Elle vous attend dans « À traiter » : cliquez sur « J'ai reçu le paiement » pour la passer en préparation. À préparer pour le <strong>${pickupLabel}</strong>.`
     );
 
     const customerInfoRows = [

@@ -274,7 +274,7 @@
 					style="font-weight: 600; letter-spacing: -0.03em;"
 				>
 					{#if order?.status === 'to_verify'}
-						Commande enregistrée !
+						{order?.payment_provider === 'stripe' ? 'Paiement reçu, merci !' : 'Commande enregistrée !'}
 					{:else if orderType === 'product_order'}
 						Commande confirmée !
 					{:else if order?.status === 'quoted'}
@@ -295,7 +295,10 @@
 					class="text-sm leading-[180%] text-neutral-600 sm:text-base"
 					style="font-weight: 300; letter-spacing: -0.01em;"
 				>
-					{#if order?.status === 'to_verify'}
+					{#if order?.status === 'to_verify' && order?.payment_provider === 'stripe'}
+						Merci pour votre commande ! Votre paiement a bien été reçu et votre
+						confirmation vous a été envoyée par e-mail.
+					{:else if order?.status === 'to_verify'}
 						Merci pour votre commande ! Nous vérifions votre paiement et vous
 						confirmons la prise en charge par e-mail très rapidement.
 					{:else if orderType === 'product_order'}
@@ -671,7 +674,7 @@
 										class="text-sm font-normal text-right sm:ml-auto"
 										style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 400;`}
 									>
-										Paiement en cours de vérification
+										{order?.payment_provider === 'stripe' ? 'Paiement reçu' : 'Paiement en cours de vérification'}
 									</span>
 								{:else if order?.status === 'quoted'}
 									<span

@@ -372,7 +372,7 @@
 			return 'Le client a indiqué avoir effectué le paiement via Revolut. Vérifiez votre compte Revolut puis confirmez la réception du paiement.';
 		}
 		if (order.payment_provider === 'stripe') {
-			return 'Le paiement a été effectué via Stripe. La commande est automatiquement confirmée.';
+			return 'Payé par carte (Stripe) : le paiement est garanti et le client a déjà reçu sa confirmation. Cliquez sur « J\'ai reçu le paiement » pour passer la commande en préparation (aucun e-mail ne sera renvoyé au client).';
 		}
 		return 'Le client a indiqué avoir effectué le paiement. Vérifiez votre compte (PayPal, Revolut, etc.) puis confirmez la réception du paiement.';
 	}

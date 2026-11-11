@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
         // ✅ OPTIMISÉ : Charger order avec relation shops (shop déjà inclus)
         const { data: order, error: orderError } = await (locals.supabaseServiceRole as any)
             .from('orders')
-            .select('id, status, customer_name, customer_email, customer_phone, customer_instagram, pickup_date, pickup_time, pickup_date_end, chef_pickup_date, chef_pickup_time, chef_message, customization_data, product_name, product_base_price, additional_information, total_amount, paid_amount, order_ref, inspiration_photos, created_at, shops!inner(name, logo_url, instagram, tiktok, website), product_id')
+            .select('id, status, customer_name, customer_email, customer_phone, customer_instagram, pickup_date, pickup_time, pickup_date_end, chef_pickup_date, chef_pickup_time, chef_message, customization_data, product_name, product_base_price, additional_information, total_amount, paid_amount, payment_provider, order_ref, inspiration_photos, created_at, shops!inner(name, logo_url, instagram, tiktok, website), product_id')
             .eq('id', orderId)
             .single();
 

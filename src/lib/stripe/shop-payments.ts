@@ -234,7 +234,8 @@ async function finalizeProduct(admin: SupabaseClient, orderRef: string, paidAmou
 			additional_information: orderData.additional_information || null,
 			customization_data: orderData.customization_data || null,
 			inspiration_photos: orderData.inspiration_photos || [],
-			status: 'confirmed',
+			// Arrive dans « À traiter » : la boutique valide d'un clic (le client a déjà sa confirmation)
+			status: 'to_verify',
 			total_amount: orderData.total_amount,
 			paid_amount: paidAmount,
 			product_name: orderData.product_name,
@@ -304,7 +305,7 @@ async function finalizeQuote(admin: SupabaseClient, orderRef: string, paidAmount
 	// Passer le devis en « confirmé » (une seule exécution y parvient grâce au filtre sur le statut)
 	const { data: updated } = await (admin as any)
 		.from('orders')
-		.update({ status: 'confirmed', paid_amount: paidAmount, payment_provider: 'stripe' })
+		.update({ status: 'to_verify', paid_amount: paidAmount, payment_provider: 'stripe' })
 		.eq('order_ref', orderRef)
 		.eq('status', 'quoted')
 		.select('*, shops(id, name, logo_url)');

@@ -899,6 +899,11 @@ export const actions: Actions = {
 
             console.log('✅ Payment confirmed for order:', params.id);
 
+            // Paiement par carte : le client a déjà reçu sa confirmation au moment du paiement
+            if ((order as any).payment_provider === 'stripe') {
+                return { message: 'Commande passée en préparation' };
+            }
+
             // Envoyer un email de confirmation au client
             try {
                 const totalAmount = order.total_amount || 0;
