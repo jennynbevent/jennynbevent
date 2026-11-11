@@ -5,7 +5,7 @@
  * sont envoyés à Stripe au moment du paiement (rien à créer par article).
  *
  * Variables d'environnement (Vercel) :
- *   STRIPE_SECRET_KEY      (sk_test_... puis sk_live_...)
+ *   STRIPE_SECRET_KEY      (sk_test_... puis sk_live_... ou rk_live_...)
  *   STRIPE_WEBHOOK_SECRET  (whsec_...)
  */
 import Stripe from 'stripe';
@@ -36,7 +36,8 @@ export function isStripeConfigured(): boolean {
 export function stripeMode(): 'test' | 'live' | null {
 	const key = (env.STRIPE_SECRET_KEY || '').trim();
 	if (!key) return null;
-	return key.startsWith('sk_live_') ? 'live' : 'test';
+	// sk_live_… (clé secrète) ou rk_live_… (clé à accès restreint) = mode réel
+	return /^(sk|rk)_live_/.test(key) ? 'live' : 'test';
 }
 
 const cents = (amount: number) => Math.round((Number(amount) || 0) * 100);
