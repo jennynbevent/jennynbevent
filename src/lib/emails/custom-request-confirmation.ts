@@ -27,10 +27,10 @@ export function CustomRequestConfirmationEmail({
         shopColor,
     });
 
-    const title = EmailTitle('Demande envoyée');
+    const title = EmailTitle('Demande bien reçue');
 
     const intro = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Votre demande personnalisée a été transmise à <strong>${shopName}</strong> avec succès. Le pâtissier vous enverra un devis personnalisé très prochainement.`
+        `Bonjour ${customerName},<br /><br />Merci pour votre demande ! Elle a bien été transmise à <strong>${shopName}</strong>. Nous l’étudions avec attention et vous enverrons un devis personnalisé très prochainement.`
     );
 
     const ctaSection = `
@@ -49,10 +49,10 @@ export function CustomRequestConfirmationEmail({
         title: 'Prochaines étapes',
         children: `
             <ol style="margin: 0; padding-left: 20px; list-style: decimal; color: ${EMAIL_COLORS.neutral[700]};">
-                <li style="margin-bottom: 8px;">Le pâtissier étudie votre demande</li>
+                <li style="margin-bottom: 8px;">Nous étudions votre demande</li>
                 <li style="margin-bottom: 8px;">Vous recevrez un devis personnalisé par email</li>
                 <li style="margin-bottom: 8px;">Vous pourrez accepter ou refuser le devis</li>
-                <li>En cas d'acceptation, vous effectuerez un acompte</li>
+                <li>Une fois le devis accepté, vous réglez votre commande et nous lançons sa préparation</li>
             </ol>
         `,
     });

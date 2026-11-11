@@ -63,7 +63,7 @@
 				style="font-weight: 400;"
 			>
 				💡 <strong>Conseil :</strong> Découvrez les produits disponibles de cette
-				boutique ou contactez directement le pâtissier.
+				boutique ou contactez directement la boutique.
 			</p>
 		</div>
 	</div>

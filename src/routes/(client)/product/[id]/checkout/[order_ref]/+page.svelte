@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Copy, Check, ArrowLeft, AlertCircle } from 'lucide-svelte';
 	import SocialMediaIcons from '$lib/components/client/social-media-icons.svelte';
+	import { hasDeposit, amountDueNow } from '$lib/utils/deposit';
 
 	export let data;
 
@@ -21,9 +22,9 @@
 		separatorColor: 'rgba(0, 0, 0, 0.3)',
 	};
 
-	// Calculer l'acompte selon le pourcentage du produit
-	$: depositPercentage = data.product?.deposit_percentage ?? 50;
-	$: depositAmount = (data.orderData.total_amount * depositPercentage) / 100;
+	// Montant à payer : le total, sauf si un acompte est activé sur l'article (1 à 99 %)
+	$: withDeposit = hasDeposit(data.product?.deposit_percentage);
+	$: depositAmount = amountDueNow(data.orderData.total_amount, data.product?.deposit_percentage);
 
 	let copySuccess = false;
 	let copyWeroSuccess = false;
@@ -475,7 +476,7 @@
 					class="text-sm leading-[180%] text-neutral-600 sm:text-base"
 					style="font-weight: 300; letter-spacing: -0.01em;"
 				>
-					Vérifiez les détails et effectuez le paiement de l'acompte
+					Vérifiez les détails puis réglez votre commande
 				</p>
 					</div>
 				</div>
@@ -644,24 +645,35 @@
 						<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
 					</div>
 					<div class="pt-4">
-						<!-- Montant total -->
-						<div class="mb-2 flex items-center justify-between gap-2">
-							<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
-								Total :
-							</span>
-							<span class="font-semibold text-neutral-900 whitespace-nowrap" style="font-weight: 600;">
-								{formatPrice(data.orderData.total_amount)}
-							</span>
-						</div>
+						{#if withDeposit}
+							<!-- Montant total -->
+							<div class="mb-2 flex items-center justify-between gap-2">
+								<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
+									Total :
+								</span>
+								<span class="font-semibold text-neutral-900 whitespace-nowrap" style="font-weight: 600;">
+									{formatPrice(data.orderData.total_amount)}
+								</span>
+							</div>
 
-						<!-- Acompte à payer -->
-						<div
-							class="flex items-center justify-between gap-2 font-semibold"
-							style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
-						>
-							<span>À payer aujourd'hui :</span>
-							<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
-						</div>
+							<!-- Acompte à payer -->
+							<div
+								class="flex items-center justify-between gap-2 font-semibold"
+								style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
+							>
+								<span>Acompte à payer aujourd'hui :</span>
+								<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
+							</div>
+						{:else}
+							<!-- Total à payer -->
+							<div
+								class="flex items-center justify-between gap-2 font-semibold"
+								style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
+							>
+								<span>Total à payer :</span>
+								<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
+							</div>
+						{/if}
 						</div>
 					</div>
 				</div>

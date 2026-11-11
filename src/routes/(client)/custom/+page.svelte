@@ -52,7 +52,7 @@
 	/>
 	<meta
 		name="keywords"
-		content="commande sur mesure, demande personnalisée, {shop.name}, pâtisserie, occasion spéciale, création"
+		content="commande sur mesure, demande personnalisée, {shop.name}, décoration événementielle, occasion spéciale, création"
 	/>
 	<meta property="og:title" content="Demande Personnalisée - {shop.name}" />
 	<meta
@@ -155,13 +155,13 @@
 							{:else}
 								<p>
 									Vous avez une idée précise en tête ? Un article pour une occasion
-									spéciale ? Nous sommes là pour créer ensemble votre dessert
-									parfait !
+									spéciale ? Nous sommes là pour créer ensemble la décoration
+									qui vous ressemble !
 								</p>
 								<p>
-									Notre pâtissier passionné prendra le temps d'écouter vos envies
-									et de vous proposer des suggestions personnalisées pour réaliser
-									l'article de vos rêves.
+									Nous prendrons le temps d'écouter vos envies et de vous proposer
+									des suggestions personnalisées pour réaliser la création de vos
+									rêves.
 								</p>
 								<p>
 									Que ce soit pour un anniversaire, un mariage, une célébration ou

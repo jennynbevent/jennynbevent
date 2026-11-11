@@ -1,5 +1,5 @@
 import { formatDateTimeForEmail } from '$lib/utils/email-formatters';
-import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable } from './components';
+import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable , amountRows } from './components';
 import { EMAIL_SPACING, EMAIL_COLORS } from './styles';
 
 interface QuotePaymentProps {
@@ -38,7 +38,7 @@ export function QuotePaymentEmail({
     const title = EmailTitle('Paiement reçu');
 
     const intro = EmailParagraph(
-        `Le client <strong>${customerName}</strong> a accepté votre devis et effectué le paiement de l'acompte.<br /><br />Vous pouvez maintenant commencer la préparation de sa commande.`
+        `Le client <strong>${customerName}</strong> a accepté votre devis et effectué son paiement.<br /><br />Vous pouvez maintenant commencer la préparation de sa commande.`
     );
 
     const customerInfo = EmailTable([
@@ -51,9 +51,7 @@ export function QuotePaymentEmail({
     ]);
 
     const financialDetails = EmailTable([
-        { label: 'Prix total', value: `<strong>${totalPrice.toFixed(2)}€</strong>` },
-        { label: 'Acompte reçu', value: `<strong>${depositAmount.toFixed(2)}€</strong>` },
-        { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
+        ...amountRows(totalPrice, depositAmount, { paid: 'Acompte reçu' }),
     ]);
 
     const ctaSection = `

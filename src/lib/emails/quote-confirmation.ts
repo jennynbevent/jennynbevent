@@ -1,5 +1,5 @@
 import { formatDateTimeForEmail } from '$lib/utils/email-formatters';
-import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable, EmailSection } from './components';
+import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable, EmailSection , amountRows, hasBalance } from './components';
 import { EMAIL_SPACING, EMAIL_COLORS } from './styles';
 
 interface QuoteConfirmationProps {
@@ -43,25 +43,17 @@ export function QuoteConfirmationEmail({
     const title = EmailTitle('Commande confirmée');
 
     const intro = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Votre commande personnalisée a été confirmée et votre acompte a été prélevé avec succès. Le pâtissier prépare votre commande pour le <strong>${formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd)}</strong>.`
+        `Bonjour ${customerName},<br /><br />Bonne nouvelle : votre commande sur mesure est confirmée et votre paiement a bien été reçu. Elle sera prête pour le <strong>${formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd)}</strong>.`
     );
 
     const details = EmailTable([
         { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
-        { label: 'Prix total', value: `<strong>${totalPrice.toFixed(2)}€</strong>` },
-        { label: 'Acompte payé', value: `<strong>${depositAmount.toFixed(2)}€</strong>` },
-        { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
+        ...amountRows(totalPrice, depositAmount),
     ]);
 
-    const important = EmailSection({
-        title: 'Important',
-        children: `
-            <ul style="margin: 0; padding-left: 20px; list-style: none;">
-                <li style="margin-bottom: 8px;">• Le solde restant sera à régler lors du retrait</li>
-                <li>• Pensez à contacter le pâtissier pour convenir du moyen de récupération</li>
-            </ul>
-        `,
-    });
+    const important = hasBalance(totalPrice, depositAmount)
+        ? EmailSection({ title: 'Reste à régler', children: 'Le solde sera à régler lors du retrait de votre commande.' })
+        : '';
 
     const ctaSection = `
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">

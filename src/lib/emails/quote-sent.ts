@@ -30,7 +30,7 @@ export function QuoteSentEmail({
     const title = EmailTitle('Votre devis est prêt');
 
     const intro = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Merci pour votre demande personnalisée. Voici votre devis détaillé pour votre commande.`
+        `Bonjour ${customerName},<br /><br />Merci pour votre demande sur mesure. Votre devis personnalisé est prêt : vous pouvez le consulter et le valider en un clic depuis le lien ci-dessous.`
     );
 
     const ctaSection = `
@@ -38,7 +38,7 @@ export function QuoteSentEmail({
             <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Retrouvez tous les détails de votre devis</p>
             ${EmailButton({
         href: orderUrl,
-        text: 'Voir le détail du devis',
+        text: 'Consulter mon devis',
         variant: 'primary',
         shopColor,
     })}

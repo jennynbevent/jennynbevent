@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hasDeposit, amountDueNow } from '$lib/utils/deposit';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import * as Form from '$lib/components/ui/form';
@@ -876,6 +877,7 @@
 					<div class="my-2">
 						<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
 					</div>
+					{#if hasDeposit(product?.deposit_percentage)}
 					<div class="flex items-center justify-between gap-2">
 						<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
 							Total :
@@ -887,12 +889,13 @@
 							{formatPrice(totalPrice)}
 						</span>
 					</div>
+					{/if}
 					<div
 						class="flex items-center justify-between gap-2 font-semibold"
 						style={`color: ${customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 					>
-						<span>À payer aujourd'hui :</span>
-						<span class="text-right whitespace-nowrap">{formatPrice((totalPrice * (product?.deposit_percentage ?? 50)) / 100)}</span>
+						<span>{hasDeposit(product?.deposit_percentage) ? "Acompte à payer aujourd'hui :" : 'Total à payer :'}</span>
+						<span class="text-right whitespace-nowrap">{formatPrice(amountDueNow(totalPrice, product?.deposit_percentage))}</span>
 					</div>
 				</div>
 			</div>

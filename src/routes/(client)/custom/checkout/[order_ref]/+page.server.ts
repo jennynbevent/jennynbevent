@@ -84,7 +84,8 @@ export const actions: Actions = {
 			}
 
 			const totalAmount = order.total_amount;
-			const paidAmount = totalAmount / 2;
+			// Paiement du montant total (plus d'acompte sur les devis)
+			const paidAmount = totalAmount;
 			const remainingAmount = totalAmount - paidAmount;
 			const orderStatus = 'to_verify';
 

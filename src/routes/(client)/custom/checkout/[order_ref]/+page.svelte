@@ -18,8 +18,8 @@
 		separatorColor: 'rgba(0, 0, 0, 0.3)',
 	};
 
-	// Calculer l'acompte (50% du total)
-	$: depositAmount = data.order.total_amount / 2;
+	// Paiement du montant total (plus d'acompte sur les devis)
+	$: depositAmount = Number(data.order.total_amount) || 0;
 
 	let copySuccess = false;
 	let confirmationForm: HTMLFormElement | null = null;
@@ -250,7 +250,7 @@
 							class="text-sm leading-[180%] text-neutral-600 sm:text-base"
 							style="font-weight: 300; letter-spacing: -0.01em;"
 						>
-							Effectuez le paiement de l'acompte pour confirmer votre commande
+							Réglez le montant de votre commande pour la confirmer
 						</p>
 					</div>
 				</div>
@@ -343,7 +343,7 @@
 						</div>
 						<div class="flex items-center justify-between gap-2">
 							<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
-								Date proposée par le pâtissier :
+								Date proposée par la boutique :
 							</span>
 							<span
 								class="text-sm text-right sm:ml-auto whitespace-nowrap"
@@ -369,12 +369,12 @@
 						</div>
 					{/if}
 
-					<!-- Message du pâtissier -->
+					<!-- Message de la boutique -->
 					{#if data.order.chef_message}
 						<div class="rounded-lg bg-neutral-50 p-3">
 							<div class="mb-1">
 								<span class="break-words text-xs font-semibold uppercase tracking-wide text-neutral-500" style="font-weight: 600;">
-									Message du pâtissier
+									Message de la boutique
 								</span>
 							</div>
 							<p class="text-sm text-neutral-600" style="font-weight: 400;">
@@ -422,22 +422,12 @@
 						<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
 					</div>
 					<div class="pt-4">
-						<!-- Montant total -->
-						<div class="mb-2 flex items-center justify-between gap-2">
-							<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
-								Total :
-							</span>
-							<span class="font-semibold text-neutral-900 whitespace-nowrap" style="font-weight: 600;">
-								{formatPrice(data.order.total_amount)}
-							</span>
-						</div>
-
-						<!-- Acompte à payer -->
+						<!-- Montant total à payer -->
 						<div
 							class="flex items-center justify-between gap-2 font-semibold"
 							style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 						>
-							<span>À payer aujourd'hui :</span>
+							<span>Total à payer :</span>
 							<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
 						</div>
 					</div>

@@ -56,7 +56,7 @@ export const productBaseSchema = z.object({
             required_error: 'Le pourcentage d\'acompte est requis',
             invalid_type_error: 'Le pourcentage d\'acompte doit être un nombre'
         }).int().min(0, 'Le pourcentage doit être entre 0 et 100').max(100, 'Le pourcentage doit être entre 0 et 100')
-    ).default(50),
+    ).default(100),
     booking_type: z.enum(['pickup', 'reservation']).default('pickup'),
     // Affiche le choix du mode de remise et l'ajout du QR code sur la page du produit
     show_delivery_options: z.boolean().default(false),

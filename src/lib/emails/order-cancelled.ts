@@ -34,7 +34,7 @@ export function OrderCancelledEmail({
     const title = EmailTitle('Commande annulée');
 
     const intro = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Votre commande a été annulée par le pâtissier. Nous vous remercions de votre compréhension.`
+        `Bonjour ${customerName},<br /><br />Nous sommes au regret de vous informer que votre commande a dû être annulée. Nous vous prions de nous excuser pour ce désagrément et vous remercions de votre compréhension.`
     );
 
     const refundSection = willRefund ? `
@@ -46,17 +46,17 @@ export function OrderCancelledEmail({
 
     const chefMessageSection = chefMessage ? `
         <div style="margin: ${EMAIL_SPACING.lg} 0; padding: ${EMAIL_SPACING.lg}; border-radius: ${EMAIL_SPACING.md}; background-color: ${EMAIL_COLORS.neutral[50]};">
-            <h3 style="margin: 0 0 ${EMAIL_SPACING.sm} 0; color: ${EMAIL_COLORS.neutral[900]}; font-size: 16px; font-weight: 600;">Message du pâtissier</h3>
+            <h3 style="margin: 0 0 ${EMAIL_SPACING.sm} 0; color: ${EMAIL_COLORS.neutral[900]}; font-size: 16px; font-weight: 600;">Message de la boutique</h3>
             <p style="margin: 0; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px; white-space: pre-wrap; line-height: 160%;">${chefMessage.replace(/\n/g, '<br>')}</p>
         </div>
     ` : '';
 
     const ctaSection = `
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
-            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Découvrez nos autres produits disponibles</p>
+            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Découvrez nos autres créations</p>
             ${EmailButton({
                 href: orderUrl,
-                text: 'Voir le catalogue',
+                text: 'Voir la boutique',
                 variant: 'primary',
                 shopColor,
             })}
@@ -65,7 +65,7 @@ export function OrderCancelledEmail({
 
     const contactSection = willRefund ? EmailSection({
         title: 'Contact',
-        children: 'Si vous avez des questions concernant le remboursement, n\'hésitez pas à contacter le pâtissier.',
+        children: 'Pour toute question concernant votre remboursement, répondez simplement à cet e-mail.',
     }) : '';
 
     const footer = EmailFooter({

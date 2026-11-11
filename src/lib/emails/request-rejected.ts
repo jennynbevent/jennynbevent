@@ -32,12 +32,12 @@ export function RequestRejectedEmail({
     const title = EmailTitle('Demande refusée');
 
     const intro = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Malheureusement, nous ne pouvons pas honorer votre demande pour cette date.`
+        `Bonjour ${customerName},<br /><br />Merci pour l’intérêt que vous portez à notre boutique. Malheureusement, nous ne sommes pas en mesure de donner suite à votre demande pour cette date.`
     );
 
     const reasonSection = reason ? `
         <div style="margin: ${EMAIL_SPACING.lg} 0; padding: ${EMAIL_SPACING.lg}; border-radius: ${EMAIL_SPACING.md}; background-color: ${EMAIL_COLORS.neutral[50]};">
-            <h3 style="margin: 0 0 ${EMAIL_SPACING.sm} 0; color: ${EMAIL_COLORS.neutral[900]}; font-size: 16px; font-weight: 600;">Raisons du refus</h3>
+            <h3 style="margin: 0 0 ${EMAIL_SPACING.sm} 0; color: ${EMAIL_COLORS.neutral[900]}; font-size: 16px; font-weight: 600;">Précisions</h3>
             <p style="margin: 0; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px; line-height: 160%;">${reason}</p>
         </div>
     ` : '';
@@ -47,7 +47,7 @@ export function RequestRejectedEmail({
             <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Découvrez nos articles disponibles ou proposez une autre date</p>
             ${EmailButton({
         href: catalogUrl,
-        text: 'Voir le catalogue',
+        text: 'Voir la boutique',
         variant: 'primary',
         shopColor,
     })}

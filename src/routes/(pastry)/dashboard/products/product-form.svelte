@@ -93,6 +93,16 @@
 		optimisticCategories = [...categories];
 	}
 
+	// Acompte : désactivé par défaut (le client paie le total)
+	let depositEnabled = false;
+	if (!isEditing) {
+		$formData.deposit_percentage = 100;
+	}
+	function toggleDeposit(enabled: boolean) {
+		depositEnabled = enabled;
+		$formData.deposit_percentage = enabled ? 30 : 100;
+	}
+
 	// Initialiser avec les données existantes si en mode édition
 	$: if (initialData && isEditing) {
 		$formData.name = initialData.name || '';
@@ -100,7 +110,8 @@
 		$formData.base_price = initialData.base_price || 0;
 		$formData.category_id = initialData.category_id || '';
 		$formData.min_days_notice = initialData.min_days_notice || 0;
-		$formData.deposit_percentage = initialData.deposit_percentage ?? 50;
+		$formData.deposit_percentage = initialData.deposit_percentage ?? 100;
+		depositEnabled = (initialData.deposit_percentage ?? 100) > 0 && (initialData.deposit_percentage ?? 100) < 100;
 		$formData.booking_type = initialData.booking_type || 'pickup';
 		$formData.min_reservation_days = initialData.min_reservation_days ?? 1;
 		$formData.show_delivery_options = !!initialData.show_delivery_options;
@@ -716,24 +727,41 @@
 					</p>
 				</Form.Field>
 
-				<Form.Field {form} name="deposit_percentage">
-					<Form.Control let:attrs>
-						<Form.Label>Pourcentage d'acompte (%)</Form.Label>
-						<Input
-							{...attrs}
-							bind:value={$formData.deposit_percentage}
-							type="number"
-							min="0"
-							max="100"
-							placeholder="50"
-							inputmode="numeric"
-						/>
-					</Form.Control>
-					<Form.FieldErrors />
-					<p class="mt-1 text-sm text-muted-foreground">
-						Pourcentage d'acompte demandé pour cet article (par défaut: 50%)
-					</p>
-				</Form.Field>
+				<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-3 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+					<input
+						type="checkbox"
+						checked={depositEnabled}
+						on:change={(e) => toggleDeposit(e.currentTarget.checked)}
+						class="mt-0.5 h-4 w-4"
+					/>
+					<span>
+						<span class="block text-sm font-medium">Demander un acompte pour cet article</span>
+						<span class="block text-sm text-muted-foreground">Décoché (recommandé) : le client paie le montant total à la commande.</span>
+					</span>
+				</label>
+
+				{#if depositEnabled}
+					<Form.Field {form} name="deposit_percentage">
+						<Form.Control let:attrs>
+							<Form.Label>Pourcentage d'acompte (%)</Form.Label>
+							<Input
+								{...attrs}
+								bind:value={$formData.deposit_percentage}
+								type="number"
+								min="1"
+								max="99"
+								placeholder="30"
+								inputmode="numeric"
+							/>
+						</Form.Control>
+						<Form.FieldErrors />
+						<p class="mt-1 text-sm text-muted-foreground">
+							Le client paie ce pourcentage à la commande, puis le reste au retrait.
+						</p>
+					</Form.Field>
+				{:else}
+					<input type="hidden" name="deposit_percentage" value="100" />
+				{/if}
 			</form>
 		</CardContent>
 	</Card>

@@ -114,7 +114,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
                 base_price: product.base_price,
                 category_id: product.category_id || '',
                 min_days_notice: product.min_days_notice,
-                deposit_percentage: product.deposit_percentage ?? 50,
+                deposit_percentage: product.deposit_percentage ?? 100,
                 booking_type: (product as any).booking_type || 'pickup',
                 min_reservation_days: (product as any).min_reservation_days ?? 1,
                 show_delivery_options: !!(product as any).show_delivery_options,
@@ -406,7 +406,7 @@ export const actions: Actions = {
                 base_price,
                 category_id: (finalCategoryId && String(finalCategoryId).trim()) ? finalCategoryId : null,
                 min_days_notice: min_days_notice ?? 0,
-                deposit_percentage: deposit_percentage ?? 50,
+                deposit_percentage: deposit_percentage ?? 100,
                 booking_type: booking_type || 'pickup',
                 min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0,
                 show_delivery_options: booking_type === 'reservation' ? false : !!show_delivery_options

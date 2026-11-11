@@ -8,6 +8,9 @@ import { makeQuoteFormSchema, rejectOrderFormSchema, personalNoteFormSchema } fr
 import { EmailService } from '$lib/services/email-service';
 import { ErrorLogger } from '$lib/services/error-logging';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
+import { amountDueNow } from '$lib/utils/deposit';
+import { buildOrderEmailExtras } from '$lib/emails/order-extras';
+import { isOwnPrintFileUrl } from '$lib/cloudinary';
 
 
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
@@ -218,7 +221,7 @@ export const actions: Actions = {
             // Récupérer les informations du produit et de la boutique
             const { data: product, error: productError } = await (locals.supabaseServiceRole as any)
                 .from('products')
-                .select('base_price, deposit_percentage, shops(slug, logo_url, name, profile_id)')
+                .select('base_price, deposit_percentage, image_url, shops(slug, logo_url, name, profile_id)')
                 .eq('id', orderData.product_id)
                 .single();
 
@@ -240,8 +243,8 @@ export const actions: Actions = {
 
             // Calculer les montants
             const totalAmount = orderData.total_amount;
-            const depositPercentage = product.deposit_percentage ?? 50; // Par défaut 50% si non défini
-            const paidAmount = (totalAmount * depositPercentage) / 100;
+            // Total payé, sauf si un acompte est activé sur l'article
+            const paidAmount = amountDueNow(totalAmount, product.deposit_percentage);
             const remainingAmount = totalAmount - paidAmount;
 
             // Créer l'order avec statut "confirmed" (validé manuellement par le pâtissier)
@@ -328,6 +331,7 @@ export const actions: Actions = {
                     orderUrl: `${PUBLIC_SITE_URL}/order/${order.id}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     shopColor,
+                    extras: buildOrderEmailExtras(orderData, product.image_url),
                 });
             } catch (emailError) {
                 console.error('❌ [Validate Pending Order] Email error:', emailError);
@@ -881,13 +885,24 @@ export const actions: Actions = {
             // Envoyer un email de confirmation au client
             try {
                 const totalAmount = order.total_amount || 0;
-                const paidAmount = order.paid_amount || totalAmount / 2;
+                const paidAmount = order.paid_amount ?? totalAmount;
                 const remainingAmount = totalAmount - paidAmount;
+
+                // Image de l'article pour l'e-mail
+                let productImage: string | null = null;
+                if (order.product_id) {
+                    const { data: p } = await (locals.supabaseServiceRole as any)
+                        .from('products')
+                        .select('image_url')
+                        .eq('id', order.product_id)
+                        .maybeSingle();
+                    productImage = p?.image_url || null;
+                }
 
                 // Récupérer la couleur de la boutique pour l'email
                 const shopColor = await getShopColorFromShopId(
                     locals.supabaseServiceRole,
-                    order.shops.id
+                    shopId
                 );
 
                 await EmailService.sendOrderConfirmation({
@@ -906,6 +921,7 @@ export const actions: Actions = {
                     orderUrl: `${PUBLIC_SITE_URL}/order/${order.id}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     shopColor,
+                    extras: buildOrderEmailExtras(order, productImage),
                 });
 
                 console.log('✅ Confirmation email sent to client');
@@ -948,6 +964,8 @@ export const actions: Actions = {
 
             const formData = await request.formData();
             shopId = formData.get('shopId') as string;
+            const printFileUrl = ((formData.get('printFileUrl') as string) || '').trim();
+            const printFileName = ((formData.get('printFileName') as string) || '').trim();
 
             if (!shopId) {
                 return fail(400, { error: 'Données de boutique manquantes' });
@@ -967,6 +985,11 @@ export const actions: Actions = {
                 return fail(403, { error: 'Accès non autorisé à cette boutique' });
             }
 
+            // Fichier PDF à imprimer (facultatif), joint à l'e-mail « commande prête »
+            if (printFileUrl && !isOwnPrintFileUrl(printFileUrl, shopId)) {
+                return fail(400, { error: 'Fichier à imprimer invalide' });
+            }
+
             // Récupérer les données de la commande et de la boutique avant la mise à jour
             const { data: orderData, error: orderFetchError } = await locals.supabase
                 .from('orders')
@@ -976,8 +999,12 @@ export const actions: Actions = {
                     product_name,
                     pickup_date,
                     pickup_time,
+                    pickup_date_end,
                     total_amount,
                     paid_amount,
+                    product_id,
+                    customization_data,
+                    inspiration_photos,
                     shops!inner(slug, name, logo_url)
                 `)
                 .eq('id', params.id)
@@ -1023,11 +1050,31 @@ export const actions: Actions = {
             try {
                 const shop = orderData.shops as any;
                 const totalAmount = orderData.total_amount || 0;
-                const paidAmount = orderData.paid_amount || 0;
+                const paidAmount = orderData.paid_amount ?? totalAmount;
                 const remainingAmount = totalAmount - paidAmount;
 
                 // Récupérer la couleur de la boutique
                 const shopColor = await getShopColorFromShopId(locals.supabaseServiceRole, shopId);
+
+                // Image de l'article + QR code + pièce jointe
+                let productImage: string | null = null;
+                if ((orderData as any).product_id) {
+                    const { data: p } = await (locals.supabaseServiceRole as any)
+                        .from('products')
+                        .select('image_url')
+                        .eq('id', (orderData as any).product_id)
+                        .maybeSingle();
+                    productImage = p?.image_url || null;
+                }
+                const extras = buildOrderEmailExtras(orderData as any, productImage);
+                if (printFileUrl) {
+                    const safeName = (printFileName || 'fichier-a-imprimer.pdf')
+                        .replace(/[^\w.\-À-ÿ ]+/g, '')
+                        .slice(0, 80) || 'fichier-a-imprimer.pdf';
+                    extras.attachments = [
+                        { filename: safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`, path: printFileUrl },
+                    ];
+                }
 
                 await EmailService.sendOrderReady({
                     customerEmail: orderData.customer_email,
@@ -1045,6 +1092,7 @@ export const actions: Actions = {
                     orderUrl: `${PUBLIC_SITE_URL}/order/${params.id}`,
                     date: new Date().toLocaleDateString('fr-FR'),
                     shopColor,
+                    extras,
                 });
             } catch (emailError) {
                 // Ne pas faire échouer l'action si l'email échoue

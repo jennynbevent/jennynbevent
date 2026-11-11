@@ -35,7 +35,7 @@
 	/>
 	<meta
 		name="keywords"
-		content="politiques de ventes, conditions générales, {shop.name}, pâtisserie, retour, livraison, paiement"
+		content="politiques de ventes, conditions générales, {shop.name}, retour, livraison, paiement"
 	/>
 	<meta property="og:title" content="Politiques de ventes - {shop.name}" />
 	<meta

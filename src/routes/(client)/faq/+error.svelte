@@ -62,7 +62,7 @@
 				class="text-sm text-neutral-600"
 				style="font-weight: 400;"
 			>
-				💡 <strong>Conseil :</strong> Contactez directement le pâtissier pour toute
+				💡 <strong>Conseil :</strong> Contactez directement la boutique pour toute
 				question sur ses créations.
 			</p>
 		</div>

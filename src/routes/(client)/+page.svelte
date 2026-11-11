@@ -117,14 +117,14 @@
 	$: hasCustomOrders = shop?.is_custom_accepted || false;
 	$: seoTitle = shop?.name
 		? `${shop.name}`
-		: 'Boutique de pâtisserie';
+		: 'Boutique de créations personnalisées';
 	$: seoDescription = shop?.bio
 		? `${shop.bio} Commandez vos articles personnalisés en ligne. ${productCount > 0 ? `${productCount} créations disponibles. ` : ''}${hasCustomOrders ? 'Demandes sur mesure acceptées. ' : ''}Livraison et retrait disponibles.`
 		: shop?.name
-			? `Découvrez ${shop.name}, votre cake designer et pâtissier. Commandez vos articles personnalisés en ligne${productCount > 0 ? ` parmi ${productCount} créations disponibles` : ''}. ${hasCustomOrders ? 'Demandes sur mesure acceptées. ' : ''}Livraison et retrait disponibles.`
+			? `Découvrez ${shop.name}, créations personnalisées pour vos événements. Commandez vos articles personnalisés en ligne${productCount > 0 ? ` parmi ${productCount} créations disponibles` : ''}. ${hasCustomOrders ? 'Demandes sur mesure acceptées. ' : ''}Livraison et retrait disponibles.`
 			: 'Commandez vos articles personnalisés en ligne. Livraison et retrait disponibles.';
-	$: seoKeywords = `cake designer, pâtissier, ${shop?.name || ''}, articles personnalisés, commande en ligne, pâtisserie, articles sur mesure${hasCustomOrders ? ', demande personnalisée' : ''}, livraison`;
-	$: ogImageUrl = shop?.logo_url || `${$page.url.origin}/og-image.png`;
+	$: seoKeywords = `${shop?.name || ''}, décoration événementielle, panneau de bienvenue, QR code mariage, articles personnalisés, commande en ligne, articles sur mesure${hasCustomOrders ? ', demande personnalisée' : ''}, livraison`;
+	$: ogImageUrl = `${$page.url.origin}/og-jnb.png`;
 </script>
 
 <svelte:head>

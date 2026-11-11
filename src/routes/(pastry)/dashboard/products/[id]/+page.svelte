@@ -51,7 +51,7 @@
 			base_price: product?.base_price,
 			category_id: product?.category_id,
 			min_days_notice: product?.min_days_notice,
-			deposit_percentage: product?.deposit_percentage ?? 50,
+			deposit_percentage: product?.deposit_percentage ?? 100,
 			booking_type: product?.booking_type ?? 'pickup',
 			min_reservation_days: product?.min_reservation_days ?? 1,
 			image_url: product?.image_url,

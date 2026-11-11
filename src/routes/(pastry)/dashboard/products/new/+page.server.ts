@@ -144,7 +144,7 @@ export const actions: Actions = {
                     shop_id: shopId,
                     min_days_notice: min_days_notice ?? 0,
                     cake_type: null,
-                    deposit_percentage: deposit_percentage ?? 50,
+                    deposit_percentage: deposit_percentage ?? 100,
                     booking_type: booking_type || 'pickup',
                     min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0,
                     show_delivery_options: booking_type === 'reservation' ? false : !!show_delivery_options

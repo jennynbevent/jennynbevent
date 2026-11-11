@@ -826,8 +826,8 @@
 						<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
 					</div>
 					<p class="text-xs italic text-muted-foreground">
-						* Le prix final sera confirmé par le pâtissier après étude de votre
-						demande
+						* Le prix final vous sera confirmé dans votre devis, après étude de
+						votre demande
 					</p>
 				</div>
 			</div>

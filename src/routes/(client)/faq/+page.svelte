@@ -37,7 +37,7 @@
 	/>
 	<meta
 		name="keywords"
-		content="FAQ, questions fréquentes, {shop.name}, pâtisserie, services, informations"
+		content="FAQ, questions fréquentes, {shop.name}, services, informations"
 	/>
 	<meta property="og:title" content="FAQ - {shop.name}" />
 	<meta

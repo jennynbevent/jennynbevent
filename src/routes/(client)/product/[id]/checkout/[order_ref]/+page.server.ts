@@ -4,6 +4,8 @@ import { EmailService } from '$lib/services/email-service';
 import { ErrorLogger } from '$lib/services/error-logging';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
 import { PUBLIC_SITE_URL } from '$env/static/public';
+import { amountDueNow } from '$lib/utils/deposit';
+import { buildOrderEmailExtras } from '$lib/emails/order-extras';
 
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
 	const { order_ref } = params;
@@ -114,7 +116,7 @@ export const actions: Actions = {
 
 			const { data: product, error: productError } = await (locals.supabaseServiceRole as any)
 				.from('products')
-				.select('base_price, deposit_percentage, shops(logo_url, name, profile_id)')
+				.select('base_price, deposit_percentage, image_url, shops(logo_url, name, profile_id)')
 				.eq('id', finalProductId)
 				.single();
 
@@ -138,8 +140,9 @@ export const actions: Actions = {
 			}
 
 			const totalAmount = orderData.total_amount;
-			const depositPercentage = product.deposit_percentage ?? 50;
-			const paidAmount = (totalAmount * depositPercentage) / 100;
+			// Total à payer, sauf si un acompte est activé sur l'article
+			const paidAmount = amountDueNow(totalAmount, product.deposit_percentage);
+			const emailExtras = buildOrderEmailExtras(orderData, product.image_url);
 			const remainingAmount = totalAmount - paidAmount;
 
 			const { data: order, error: orderError } = await (locals.supabaseServiceRole as any)
@@ -204,7 +207,8 @@ export const actions: Actions = {
 					orderUrl: `${PUBLIC_SITE_URL}/order/${order.id}`,
 					orderRef: order_ref,
 					date: new Date().toLocaleDateString('fr-FR'),
-					shopColor
+					shopColor,
+					extras: emailExtras
 				});
 				if (pastryEmail) {
 					await EmailService.sendOrderPendingVerificationPastry({
@@ -222,7 +226,8 @@ export const actions: Actions = {
 						orderId: order.id,
 						orderRef: order_ref,
 						dashboardUrl: `${PUBLIC_SITE_URL}/dashboard/orders/${order.id}`,
-						date: new Date().toLocaleDateString('fr-FR')
+						date: new Date().toLocaleDateString('fr-FR'),
+						extras: emailExtras
 					});
 				}
 			} catch (emailError) {

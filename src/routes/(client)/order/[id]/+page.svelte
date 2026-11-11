@@ -23,6 +23,8 @@
 	} from 'lucide-svelte';
 	import SocialMediaIcons from '$lib/components/client/social-media-icons.svelte';
 	import type { PageData } from './$types';
+	import { hasRemaining } from '$lib/utils/deposit';
+	import { getDeliveryMode, getCustomerQrCode, PICKUP_ADDRESS, PICKUP_MAPS_URL } from '$lib/utils/delivery';
 
 	export let data: PageData;
 
@@ -53,11 +55,15 @@
 	$: customerInstagram = order ? (order as any).customer_instagram : null;
 	$: productBasePrice = order ? (order as any).product_base_price : null;
 	$: totalAmount = order ? (order as any).total_amount : null;
-	// Calculer le pourcentage d'acompte (depuis le produit pour les commandes produit, 50% par défaut pour les commandes personnalisées)
-	$: depositPercentage = orderType === 'product_order' && data.product?.deposit_percentage 
-		? data.product.deposit_percentage 
-		: 50;
-	$: depositAmount = totalAmount ? (totalAmount * depositPercentage) / 100 : 0;
+	// Montant payé (total par défaut ; acompte seulement si activé sur l'article)
+	$: paidAmount = order ? (order as any).paid_amount : null;
+	$: withRemaining = hasRemaining(totalAmount, paidAmount);
+	$: depositAmount = withRemaining ? Number(paidAmount) : Number(totalAmount) || 0;
+	$: remainingAmount = withRemaining ? (Number(totalAmount) || 0) - Number(paidAmount) : 0;
+	// Mode de remise, QR code du client et image de l'article
+	$: deliveryMode = getDeliveryMode(order ? (order as any).customization_data : null);
+	$: qrCodeUrl = getCustomerQrCode(order ? (order as any).customization_data : null, order ? (order as any).inspiration_photos : null);
+	$: productImage = data.product?.image_url || null;
 
 	// États pour les dialogues de confirmation
 	let showErrorDialog = false;
@@ -290,12 +296,12 @@
 					style="font-weight: 300; letter-spacing: -0.01em;"
 				>
 					{#if order?.status === 'to_verify'}
-						Le pâtissier va vérifier votre paiement et commencer la préparation de
-						votre commande.
+						Merci pour votre commande ! Nous vérifions votre paiement et vous
+						confirmons la prise en charge par e-mail très rapidement.
 					{:else if orderType === 'product_order'}
-						Votre commande a été confirmée et votre acompte de 50% a été prélevé.
+						Votre paiement a bien été reçu et votre commande est en préparation.
 					{:else if order?.status === 'quoted'}
-						Le pâtissier vous a envoyé un devis pour votre demande.
+						Votre devis est prêt : consultez-le ci-dessous.
 					{:else if order?.status === 'confirmed'}
 						Votre commande a été confirmée.
 					{:else if order?.status === 'ready'}
@@ -305,7 +311,7 @@
 					{:else if order?.status === 'refused'}
 						Vous avez refusé ce devis. La commande a été annulée.
 					{:else}
-						Votre demande personnalisée a été envoyée au pâtissier.
+						Votre demande sur mesure a bien été transmise à la boutique.
 					{/if}
 				</p>
 			</div>
@@ -440,7 +446,7 @@
 								{/if}
 							</span>
 						</div>
-						<!-- Date proposée par le pâtissier -->
+						<!-- Date proposée par la boutique -->
 						<div class="flex items-center justify-between gap-2">
 							<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
 								{order?.status === 'quoted'
@@ -518,8 +524,59 @@
 						{/each}
 					{/if}
 
-					<!-- Photos d'inspiration -->
-					{#if order?.inspiration_photos && order.inspiration_photos.length > 0}
+					<!-- Article commandé et QR code du client -->
+					{#if qrCodeUrl || (productImage && orderType === 'product_order')}
+						<div class="grid grid-cols-2 gap-3">
+							{#if productImage && orderType === 'product_order'}
+								<div class="rounded-lg bg-neutral-50 p-3">
+									<div class="mb-2">
+										<span class="text-xs font-semibold uppercase tracking-wide text-neutral-500" style="font-weight: 600;">
+											Votre article
+										</span>
+									</div>
+									<img src={productImage} alt={productName || 'Article'} class="aspect-square w-full rounded-lg border border-border object-cover" />
+								</div>
+							{/if}
+							{#if qrCodeUrl}
+								<div class="rounded-lg bg-neutral-50 p-3">
+									<div class="mb-2">
+										<span class="text-xs font-semibold uppercase tracking-wide text-neutral-500" style="font-weight: 600;">
+											Votre QR code
+										</span>
+									</div>
+									<img src={qrCodeUrl} alt="QR code" class="aspect-square w-full rounded-lg border border-border bg-white object-contain p-1" />
+								</div>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- Adresse de retrait / envoi par e-mail -->
+					{#if deliveryMode === 'retrait'}
+						<div class="rounded-lg bg-neutral-50 p-3">
+							<div class="mb-1">
+								<span class="text-xs font-semibold uppercase tracking-wide text-neutral-500" style="font-weight: 600;">
+									Adresse de retrait
+								</span>
+							</div>
+							<a href={PICKUP_MAPS_URL} target="_blank" rel="noopener" class="text-sm text-neutral-900 underline underline-offset-2">
+								{PICKUP_ADDRESS}
+							</a>
+						</div>
+					{:else if deliveryMode === 'email'}
+						<div class="rounded-lg bg-neutral-50 p-3">
+							<div class="mb-1">
+								<span class="text-xs font-semibold uppercase tracking-wide text-neutral-500" style="font-weight: 600;">
+									Envoi par e-mail
+								</span>
+							</div>
+							<p class="text-sm text-neutral-900">
+								Votre fichier à imprimer vous sera envoyé à {order?.customer_email} sous 48 h maximum.
+							</p>
+						</div>
+					{/if}
+
+					<!-- Photos d'inspiration (demandes sur mesure) -->
+					{#if !qrCodeUrl && order?.inspiration_photos && order.inspiration_photos.length > 0}
 						<div class="rounded-lg bg-neutral-50 p-3">
 							<div class="mb-2">
 								<span class="break-words text-xs font-semibold uppercase tracking-wide text-neutral-500" style="font-weight: 600;">
@@ -552,12 +609,12 @@
 						</div>
 					{/if}
 
-					<!-- Message du pâtissier -->
+					<!-- Message de la boutique -->
 					{#if chefMessage}
 						<div class="rounded-lg bg-neutral-50 p-3">
 							<div class="mb-1">
 								<span class="break-words text-xs font-semibold uppercase tracking-wide text-neutral-500" style="font-weight: 600;">
-									Message du pâtissier
+									Message de la boutique
 								</span>
 							</div>
 							<p class="text-sm text-neutral-600" style="font-weight: 400;">
@@ -572,24 +629,37 @@
 					</div>
 					<div class="pt-4">
 						{#if orderType === 'product_order'}
-							<!-- Montant total -->
-							<div class="mb-2 flex items-center justify-between gap-2">
-								<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
-									Total :
-								</span>
-								<span class="font-semibold text-neutral-900 whitespace-nowrap" style="font-weight: 600;">
-									{formatPrice(totalAmount)}
-								</span>
-							</div>
-
-							<!-- Acompte payé -->
-							<div
-								class="flex items-center justify-between gap-2 font-semibold"
-								style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
-							>
-								<span>Payé aujourd'hui :</span>
-								<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
-							</div>
+							{#if withRemaining}
+								<!-- Montant total -->
+								<div class="mb-2 flex items-center justify-between gap-2">
+									<span class="text-sm font-semibold text-neutral-700" style="font-weight: 600;">
+										Total :
+									</span>
+									<span class="font-semibold text-neutral-900 whitespace-nowrap" style="font-weight: 600;">
+										{formatPrice(totalAmount)}
+									</span>
+								</div>
+								<div
+									class="mb-2 flex items-center justify-between gap-2 font-semibold"
+									style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
+								>
+									<span>Acompte réglé :</span>
+									<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
+								</div>
+								<div class="flex items-center justify-between gap-2 text-sm text-neutral-600">
+									<span>Reste à régler :</span>
+									<span class="whitespace-nowrap">{formatPrice(remainingAmount)}</span>
+								</div>
+							{:else}
+								<!-- Total payé -->
+								<div
+									class="flex items-center justify-between gap-2 font-semibold"
+									style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
+								>
+									<span>Total :</span>
+									<span class="whitespace-nowrap">{formatPrice(totalAmount)}</span>
+								</div>
+							{/if}
 						{:else}
 							<!-- Pour les demandes custom -->
 							<div class="mb-2 flex items-center justify-between gap-2">
@@ -666,8 +736,8 @@
 										class="flex items-center justify-between gap-2 font-semibold"
 										style={`color: ${data.customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 									>
-										<span>À payer aujourd'hui :</span>
-										<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
+										<span>Total à payer :</span>
+										<span class="whitespace-nowrap">{formatPrice(totalAmount)}</span>
 									</div>
 								{:else if order?.status === 'to_verify' || order?.status === 'confirmed' || order?.status === 'ready' || order?.status === 'completed'}
 									<!-- Acompte -->
@@ -675,7 +745,7 @@
 										class="flex items-center justify-between gap-2 font-semibold"
 										style={`color: ${order?.status === 'to_verify' ? (data.customizations?.button_color || '#BC90A5') : '#10b981'}; font-weight: 600;`}
 									>
-										<span>Acompte :</span>
+										<span>{withRemaining ? 'Acompte réglé :' : 'Montant réglé :'}</span>
 										<span class="whitespace-nowrap">{formatPrice(depositAmount)}</span>
 									</div>
 								{:else}
@@ -704,8 +774,8 @@
 							Vous recevrez un email de confirmation avec tous les détails de
 							votre commande.
 						{:else}
-							Vous recevrez un email de confirmation et le pâtissier vous
-							contactera pour établir un devis.
+							Vous recevrez un e-mail de confirmation, puis votre devis
+							personnalisé très prochainement.
 						{/if}
 					</p>
 				</div>

@@ -332,3 +332,27 @@ export async function uploadMarketingImage(filePath: string, fileName: string, f
 	}
 }
 
+
+/**
+ * Signature pour envoyer un fichier PDF à imprimer directement depuis le navigateur
+ * (fichier « raw », sans passer par le serveur, pour accepter les gros fichiers).
+ */
+export function signPrintFileUpload(shopId: string) {
+	const timestamp = Math.round(Date.now() / 1000);
+	const folder = `print-files/${shopId}`;
+	const signature = cloudinary.utils.api_sign_request({ timestamp, folder }, CLOUDINARY_API_SECRET);
+	return {
+		timestamp,
+		folder,
+		signature,
+		apiKey: CLOUDINARY_API_KEY,
+		cloudName: CLOUDINARY_CLOUD_NAME,
+		uploadUrl: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
+	};
+}
+
+/** Vérifie qu'une adresse correspond bien à un fichier à imprimer de la boutique */
+export function isOwnPrintFileUrl(url: string, shopId: string): boolean {
+	return url.startsWith(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/raw/upload/`) &&
+		url.includes(`/print-files/${shopId}/`);
+}

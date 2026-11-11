@@ -47,6 +47,66 @@
 	$: isReservationProduct = product?.booking_type === 'reservation';
 
 	// État du formulaire pour les actions
+	// Fichier PDF à imprimer joint à l'e-mail « commande prête »
+	let printFile: { url: string; name: string } | null = null;
+	let printUploading = false;
+	let printProgress = 0;
+	let printError = '';
+	const PRINT_MAX_BYTES = 10 * 1024 * 1024;
+
+	async function onPrintFileSelected(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		printError = '';
+		if (!file) return;
+		if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+			printError = 'Merci de choisir un fichier PDF.';
+			return;
+		}
+		if (file.size > PRINT_MAX_BYTES) {
+			printError = 'Fichier trop lourd (10 Mo maximum).';
+			return;
+		}
+		printUploading = true;
+		printProgress = 0;
+		try {
+			const signRes = await fetch('/api/sign-print-upload', { method: 'POST' });
+			if (!signRes.ok) throw new Error('signature');
+			const sign = await signRes.json();
+			const body = new FormData();
+			body.append('file', file);
+			body.append('api_key', sign.apiKey);
+			body.append('timestamp', String(sign.timestamp));
+			body.append('signature', sign.signature);
+			body.append('folder', sign.folder);
+			const url: string = await new Promise((resolve, reject) => {
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST', sign.uploadUrl);
+				xhr.upload.onprogress = (e) => {
+					if (e.lengthComputable) printProgress = Math.round((e.loaded / e.total) * 100);
+				};
+				xhr.onload = () => {
+					try {
+						const res = JSON.parse(xhr.responseText);
+						if (xhr.status >= 200 && xhr.status < 300 && res.secure_url) resolve(res.secure_url);
+						else reject(new Error(res?.error?.message || 'upload'));
+					} catch (e) {
+						reject(e);
+					}
+				};
+				xhr.onerror = () => reject(new Error('network'));
+				xhr.send(body);
+			});
+			printFile = { url, name: file.name };
+		} catch (e) {
+			console.error('Print file upload failed:', e);
+			printError = "L'envoi du fichier a échoué. Réessayez.";
+		} finally {
+			printUploading = false;
+		}
+	}
+
 	let showQuoteForm = false;
 	let showRejectForm = false;
 
@@ -1014,9 +1074,46 @@
 						>
 							<!-- ✅ OPTIMISÉ : Passer shopId pour éviter getUser + requête shop -->
 							<input type="hidden" name="shopId" value={shop.id} />
-							<Button type="submit" class="h-10 w-full gap-2">
+							<input type="hidden" name="printFileUrl" value={printFile?.url || ''} />
+							<input type="hidden" name="printFileName" value={printFile?.name || ''} />
+
+							<!-- Fichier à imprimer (PDF) joint à l'e-mail « commande prête » -->
+							<div class="mb-3 rounded-lg border border-dashed border-[#D9C3CC] bg-[#FBF6F8] p-3">
+								<p class="text-sm font-medium text-[#3A2F33]">Fichier à imprimer (PDF)</p>
+								<p class="mb-2 text-xs text-[#7A6A70]">
+									Facultatif : il sera joint à l'e-mail « Votre commande est prête » envoyé au client.
+								</p>
+								{#if printFile}
+									<div class="flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-sm">
+										<span class="truncate">📎 {printFile.name}</span>
+										<button type="button" class="shrink-0 text-xs text-[#7A4F60] underline" on:click={() => (printFile = null)}>
+											Retirer
+										</button>
+									</div>
+								{:else}
+									<label class="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-white px-3 py-2 text-sm text-[#7A4F60] shadow-sm hover:bg-[#F3E6EA]">
+										{#if printUploading}
+											Envoi du fichier… {printProgress}%
+										{:else}
+											Choisir un PDF
+										{/if}
+										<input
+											type="file"
+											accept="application/pdf,.pdf"
+											class="hidden"
+											disabled={printUploading}
+											on:change={onPrintFileSelected}
+										/>
+									</label>
+								{/if}
+								{#if printError}
+									<p class="mt-2 text-xs text-red-600">{printError}</p>
+								{/if}
+							</div>
+
+							<Button type="submit" class="h-10 w-full gap-2" disabled={printUploading}>
 								<PackageCheck class="h-4 w-4" />
-								Marquer comme prête
+								{printFile ? 'Marquer comme prête et envoyer le PDF' : 'Marquer comme prête'}
 							</Button>
 						</form>
 					{:else if order.status === 'ready'}

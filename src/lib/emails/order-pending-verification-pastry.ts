@@ -1,5 +1,6 @@
 import { formatDateTimeForEmail } from '$lib/utils/email-formatters';
-import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable } from './components';
+import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable, EmailOrderVisuals, amountRows, euros } from './components';
+import type { OrderEmailExtras } from './order-extras';
 import { EMAIL_SPACING, EMAIL_COLORS, EMAIL_TYPOGRAPHY } from './styles';
 
 interface OrderPendingVerificationPastryProps {
@@ -17,6 +18,7 @@ interface OrderPendingVerificationPastryProps {
     orderRef: string;
     dashboardUrl: string;
     date: string;
+    extras?: OrderEmailExtras;
 }
 
 export function OrderPendingVerificationPastryEmail({
@@ -34,6 +36,7 @@ export function OrderPendingVerificationPastryEmail({
     orderRef,
     dashboardUrl,
     date,
+    extras,
 }: OrderPendingVerificationPastryProps) {
     const header = EmailHeader({
         logoUrl: undefined,
@@ -44,15 +47,15 @@ export function OrderPendingVerificationPastryEmail({
     const title = EmailTitle('Nouvelle commande - Action requise');
 
     const intro = EmailParagraph(
-        `Vous avez reçu une nouvelle commande de <strong>${customerName}</strong>.<br /><br /><strong>Veuillez vérifier le paiement sur PayPal avant de commencer la préparation.</strong>`
+        `Vous avez reçu une nouvelle commande de <strong>${customerName}</strong>.<br /><br /><strong>Vérifiez la réception du paiement avant de commencer la préparation.</strong>`
     );
 
     const warning = `
         <div style="margin: ${EMAIL_SPACING.lg} 0; padding: ${EMAIL_SPACING.lg}; border-radius: ${EMAIL_SPACING.md}; border-left: 3px solid ${EMAIL_COLORS.accent.primary}; background-color: ${EMAIL_COLORS.accent.light50};">
-            <h3 style="margin: 0 0 ${EMAIL_SPACING.md} 0; color: ${EMAIL_COLORS.neutral[900]}; font-size: 16px; font-weight: 600;">Vérification du paiement PayPal</h3>
+            <h3 style="margin: 0 0 ${EMAIL_SPACING.md} 0; color: ${EMAIL_COLORS.neutral[900]}; font-size: 16px; font-weight: 600;">Vérification du paiement</h3>
             <ol style="margin: 0; padding-left: 20px; list-style: decimal; color: ${EMAIL_COLORS.neutral[700]};">
-                <li style="margin-bottom: ${EMAIL_SPACING.sm};">Connectez-vous à votre compte PayPal</li>
-                <li style="margin-bottom: ${EMAIL_SPACING.sm};">Recherchez un paiement de <strong>${paidAmount.toFixed(2)}€</strong> avec la référence : <code style="font-family: monospace; background-color: white; padding: 4px 8px; border-radius: 4px; font-size: 13px;">${orderRef}</code></li>
+                <li style="margin-bottom: ${EMAIL_SPACING.sm};">Ouvrez votre compte de paiement (PayPal, Revolut ou Wero)</li>
+                <li style="margin-bottom: ${EMAIL_SPACING.sm};">Recherchez un paiement de <strong>${euros(paidAmount)}</strong> avec la référence : <code style="font-family: monospace; background-color: white; padding: 4px 8px; border-radius: 4px; font-size: 13px;">${orderRef}</code></li>
                 <li>Une fois vérifié, validez la commande sur votre dashboard Jennynbevent</li>
             </ol>
         </div>
@@ -70,14 +73,13 @@ export function OrderPendingVerificationPastryEmail({
     const orderDetails = EmailTable([
         { label: 'Article', value: productName },
         { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
-        { label: 'Prix total', value: `<strong>${totalAmount.toFixed(2)}€</strong>` },
-        { label: 'Acompte à vérifier', value: `<strong>${paidAmount.toFixed(2)}€</strong>` },
-        { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
+        ...(extras?.deliveryMode ? [{ label: 'Remise', value: extras.deliveryMode === 'email' ? 'Par e-mail (fichier à imprimer, sous 48 h)' : 'Retrait à Andrésy' }] : []),
+        ...amountRows(totalAmount, paidAmount, { total: 'Total', paid: 'Acompte à vérifier' }),
     ]);
 
     const ctaSection = `
         <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
-            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Une fois le paiement vérifié sur PayPal, validez-le sur votre dashboard</p>
+            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Une fois le paiement vérifié, validez-le sur votre tableau de bord</p>
             ${EmailButton({
         href: dashboardUrl,
         text: 'Valider le paiement',
@@ -105,6 +107,7 @@ export function OrderPendingVerificationPastryEmail({
             ${title}
             ${intro}
             ${warning}
+            ${EmailOrderVisuals(extras, productName)}
             ${customerInfo}
             ${orderDetails}
             ${ctaSection}

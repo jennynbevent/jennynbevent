@@ -104,7 +104,7 @@
 	/>
 	<meta
 		name="keywords"
-		content="article, pâtisserie, {product.name}, {shop.name}, commande en ligne, personnalisation"
+		content="article, {product.name}, {shop.name}, commande en ligne, personnalisation"
 	/>
 	<meta property="og:title" content="{product.name} - {shop.name}" />
 	<meta
@@ -306,7 +306,7 @@
 								Temps de préparation minimum : {product.min_days_notice || 0} jours
 							{/if}
 						</p>
-						{#if product.deposit_percentage !== undefined && product.deposit_percentage !== null}
+						{#if product.deposit_percentage > 0 && product.deposit_percentage < 100}
 							<p
 								class="text-xs italic leading-relaxed text-neutral-500 sm:text-sm"
 								style="font-weight: 400; letter-spacing: -0.01em;"

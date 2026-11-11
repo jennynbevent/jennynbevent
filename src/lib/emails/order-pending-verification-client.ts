@@ -1,6 +1,20 @@
 import { formatDateTimeForEmail } from '$lib/utils/email-formatters';
-import { EmailContainer, EmailHeader, EmailFooter, EmailTitle, EmailParagraph, EmailButton, EmailTable, EmailSection } from './components';
-import { EMAIL_SPACING, EMAIL_COLORS, EMAIL_TYPOGRAPHY } from './styles';
+import {
+    EmailContainer,
+    EmailHeader,
+    EmailFooter,
+    EmailTitle,
+    EmailParagraph,
+    EmailButton,
+    EmailTable,
+    EmailNotice,
+    EmailOrderVisuals,
+    EmailDeliveryNotice,
+    EmailSignature,
+    amountRows,
+} from './components';
+import { EMAIL_SPACING } from './styles';
+import type { OrderEmailExtras } from './order-extras';
 
 interface OrderPendingVerificationClientProps {
     customerName: string;
@@ -18,8 +32,10 @@ interface OrderPendingVerificationClientProps {
     orderRef: string;
     date: string;
     shopColor?: string | null;
+    extras?: OrderEmailExtras;
 }
 
+/** E-mail client : commande enregistrée, paiement en cours de vérification */
 export function OrderPendingVerificationClientEmail({
     customerName,
     shopName,
@@ -30,77 +46,57 @@ export function OrderPendingVerificationClientEmail({
     pickupDateEnd,
     totalAmount,
     paidAmount,
-    remainingAmount,
     orderId,
     orderUrl,
     orderRef,
     date,
     shopColor,
+    extras,
 }: OrderPendingVerificationClientProps) {
-    const header = EmailHeader({
-        logoUrl: shopLogo,
-        logoAlt: shopName,
-        type: 'customer',
-        shopColor,
-    });
+    const header = EmailHeader({ logoUrl: shopLogo, logoAlt: shopName, type: 'customer', shopColor });
+    const isEmail = extras?.deliveryMode === 'email';
 
-    const title = EmailTitle('Commande enregistrée');
+    const title = EmailTitle('Merci pour votre commande !');
 
     const intro = EmailParagraph(
-        `Bonjour ${customerName},<br /><br />Votre commande a bien été envoyée au pâtissier <strong>${shopName}</strong>. Vous recevrez un email de confirmation dès que le paiement aura été vérifié et que la préparation aura commencé.`
+        `Bonjour ${customerName},<br /><br />Nous avons bien reçu votre commande chez <strong>${shopName}</strong> et nous vous en remercions. Nous vérifions votre paiement et vous confirmons sa prise en charge par e-mail dans les plus brefs délais.`
     );
 
-    const warning = `
-        <div style="margin: ${EMAIL_SPACING.lg} 0; padding: ${EMAIL_SPACING.lg}; border-radius: ${EMAIL_SPACING.md}; border-left: 3px solid ${EMAIL_COLORS.accent.primary}; background-color: ${EMAIL_COLORS.accent.light50};">
-            <h3 style="margin: 0 0 ${EMAIL_SPACING.sm} 0; color: ${EMAIL_COLORS.neutral[900]}; font-size: 16px; font-weight: 600;">En attente de vérification</h3>
-            <p style="margin: 0; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Le pâtissier va vérifier la réception de votre paiement sur PayPal (référence : <strong>${orderRef}</strong>) et vous confirmera le début de préparation.</p>
-        </div>
-    `;
+    const payment = EmailNotice(
+        'Paiement en cours de vérification',
+        `Votre référence de commande est <strong>${orderRef}</strong>. Si ce n’est pas déjà fait, indiquez-la dans le message de votre paiement : elle nous permet de l’identifier rapidement.`,
+        shopColor
+    );
 
     const details = EmailTable([
         { label: 'Article', value: productName },
-        { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
-        { label: 'Prix total', value: `<strong>${totalAmount.toFixed(2)}€</strong>` },
-        { label: 'Acompte déclaré', value: `<strong>${paidAmount.toFixed(2)}€</strong>` },
-        { label: 'Solde restant', value: `<strong>${remainingAmount.toFixed(2)}€</strong>` },
+        isEmail
+            ? { label: 'Envoi prévu', value: `par e-mail, au plus tard le ${formatDateTimeForEmail(pickupDate, null)}` }
+            : { label: pickupDateEnd ? 'Réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
+        ...amountRows(totalAmount, paidAmount),
     ]);
 
-    const ctaSection = `
-        <div style="text-align: center; margin: ${EMAIL_SPACING['2xl']} 0;">
-            <p style="margin-bottom: ${EMAIL_SPACING.md}; color: ${EMAIL_COLORS.neutral[700]}; font-size: 14px;">Retrouvez tous les détails de votre commande</p>
-            ${EmailButton({
-        href: orderUrl,
-        text: 'Voir le récapitulatif',
-        variant: 'primary',
-        shopColor,
-    })}
+    const cta = `
+        <div style="text-align: center; margin: ${EMAIL_SPACING.xl} 0;">
+            ${EmailButton({ href: orderUrl, text: 'Suivre ma commande', variant: 'primary', shopColor })}
         </div>
     `;
 
-    const footer = EmailFooter({
-        orderId,
-        date,
-        showOrderId: true,
-        showRequestId: false,
-    });
-
-    // Ajouter orderRef au footer
-    const footerWithRef = footer.replace(
-        '</div>',
-        `<p style="color: ${EMAIL_COLORS.neutral[600]}; font-size: ${EMAIL_TYPOGRAPHY.fontSize.sm}; margin: ${EMAIL_SPACING.xs} 0;"><strong style="font-weight: ${EMAIL_TYPOGRAPHY.fontWeight.medium};">Référence de paiement :</strong> ${orderRef}</p></div>`
-    );
+    const footer = EmailFooter({ orderId, date, showOrderId: true, showRequestId: false });
 
     return EmailContainer(
         `
             ${header}
             ${title}
             ${intro}
-            ${warning}
+            ${payment}
+            ${EmailOrderVisuals(extras, productName)}
             ${details}
-            ${ctaSection}
-            ${footerWithRef}
+            ${EmailDeliveryNotice(extras, 'pending', shopColor)}
+            ${cta}
+            ${EmailSignature(shopName)}
+            ${footer}
         `,
         shopColor
     );
 }
-

@@ -36,6 +36,7 @@ import { ContactNotificationEmail } from '$lib/emails/contact-notification';
 import { PaymentFailedNotificationEmail } from '$lib/emails/payment-failed-notification';
 import { CriticalErrorNotificationEmail } from '$lib/emails/critical-error-notification';
 import { MarketingCampaignEmail } from '$lib/emails/marketing-campaign';
+import type { OrderEmailExtras } from '$lib/emails/order-extras';
 
 export class EmailService {
     /**
@@ -57,6 +58,7 @@ export class EmailService {
         orderUrl,
         date,
         shopColor,
+        extras,
     }: {
         customerEmail: string;
         customerName: string;
@@ -73,6 +75,7 @@ export class EmailService {
         orderUrl: string;
         date: string;
         shopColor?: string | null;
+        extras?: OrderEmailExtras;
     }) {
         const resend = getResend();
         if (!resend) return { success: false };
@@ -80,7 +83,7 @@ export class EmailService {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [customerEmail],
-                subject: `Commande confirmée - ${productName}`,
+                subject: `Votre commande est confirmée – ${productName}`,
                 html: OrderConfirmationEmail({
                     customerName,
                     shopName,
@@ -96,6 +99,7 @@ export class EmailService {
                     orderUrl,
                     date,
                     shopColor,
+                    extras,
                 })
             });
 
@@ -130,6 +134,7 @@ export class EmailService {
         orderUrl,
         date,
         shopColor,
+        extras,
     }: {
         customerEmail: string;
         customerName: string;
@@ -146,6 +151,7 @@ export class EmailService {
         orderUrl: string;
         date: string;
         shopColor?: string | null;
+        extras?: OrderEmailExtras;
     }) {
         const resend = getResend();
         if (!resend) return { success: false };
@@ -153,6 +159,7 @@ export class EmailService {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [customerEmail],
+                ...(extras?.attachments?.length ? { attachments: extras.attachments } : {}),
                 subject: `Votre commande est prête ! - ${productName}`,
                 html: OrderReadyEmail({
                     customerName,
@@ -169,6 +176,7 @@ export class EmailService {
                     orderUrl,
                     date,
                     shopColor,
+                    extras,
                 })
             });
 
@@ -204,6 +212,7 @@ export class EmailService {
         orderRef,
         date,
         shopColor,
+        extras,
     }: {
         customerEmail: string;
         customerName: string;
@@ -221,6 +230,7 @@ export class EmailService {
         orderRef: string;
         date: string;
         shopColor?: string | null;
+        extras?: OrderEmailExtras;
     }) {
         const resend = getResend();
         if (!resend) return { success: false };
@@ -228,7 +238,7 @@ export class EmailService {
             const { data, error } = await resend.emails.send({
                 from: 'Jennynbevent <contact@jennynbevent.com>',
                 to: [customerEmail],
-                subject: `Commande enregistrée - ${productName}`,
+                subject: `Merci pour votre commande – ${productName}`,
                 html: OrderPendingVerificationClientEmail({
                     customerName,
                     shopName,
@@ -245,6 +255,7 @@ export class EmailService {
                     orderRef,
                     date,
                     shopColor,
+                    extras,
                 })
             });
 
@@ -279,6 +290,7 @@ export class EmailService {
         orderRef,
         dashboardUrl,
         date,
+        extras,
     }: {
         pastryEmail: string;
         customerName: string;
@@ -295,6 +307,7 @@ export class EmailService {
         orderRef: string;
         dashboardUrl: string;
         date: string;
+        extras?: OrderEmailExtras;
     }) {
         const resend = getResend();
         if (!resend) return { success: false };
@@ -318,6 +331,7 @@ export class EmailService {
                     orderRef,
                     dashboardUrl,
                     date,
+                    extras,
                 })
             });
 
