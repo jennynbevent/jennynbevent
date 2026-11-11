@@ -1205,8 +1205,8 @@
 						</p>
 					{/if}
 
-					<!-- Bouton de suppression (masqué pour les commandes payées avec Stripe) -->
-					{#if order.payment_provider !== 'stripe'}
+					<!-- Bouton de suppression (toutes les commandes, y compris payées par carte) -->
+					{#if true}
 					<div class="border-t pt-4">
 						{#if confirmingDeleteOrder}
 							<!-- Mode confirmation -->
@@ -1214,6 +1214,11 @@
 								<p class="text-center text-sm text-muted-foreground">
 									Êtes-vous sûr de vouloir supprimer définitivement cette commande ? Cette action est irréversible.
 								</p>
+								{#if order.payment_provider === 'stripe'}
+									<p class="text-center text-xs text-muted-foreground">
+										Payée par carte : la suppression ne rembourse pas le client. Pour un remboursement, passez par Stripe (Transactions → le paiement → Rembourser).
+									</p>
+								{/if}
 								<div class="flex gap-2">
 									<form
 										method="POST"

@@ -1418,12 +1418,8 @@ export const actions: Actions = {
                 return fail(404, { error: 'Commande non trouvée' });
             }
 
-            // Vérifier que la commande n'a pas été payée avec Stripe
-            if (order.stripe_payment_intent_id || order.stripe_session_id) {
-                return fail(400, {
-                    error: 'Impossible de supprimer une commande payée avec Stripe'
-                });
-            }
+            // Les commandes payées par carte peuvent aussi être supprimées (ex. commandes de test).
+            // La suppression ne rembourse pas : le remboursement se fait dans Stripe.
 
             // Supprimer la commande
             // Utiliser supabaseServiceRole pour contourner les RLS (comme pour d'autres opérations sensibles)
