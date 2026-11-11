@@ -30,6 +30,7 @@
 		PackageCheck,
 		StickyNote,
 		Trash2,
+		FileText,
 	} from 'lucide-svelte';
 
 	// Données de la page
@@ -43,6 +44,7 @@
 		rejectOrderForm,
 		personalNoteForm,
 		isPending,
+		printFile: sentPrintFile,
 	} = $page.data);
 	$: isReservationProduct = product?.booking_type === 'reservation';
 
@@ -611,6 +613,42 @@
 					</div>
 				</CardContent>
 			</Card>
+
+			<!-- PDF envoyé au client -->
+			{#if sentPrintFile}
+				<Card>
+					<CardHeader>
+						<CardTitle class="flex items-center gap-2">
+							<FileText class="h-4 w-4" />
+							Fichier envoyé au client
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p class="truncate text-sm font-medium">📎 {sentPrintFile.name}</p>
+						{#if sentPrintFile.sentAt}
+							<p class="mt-1 text-xs text-muted-foreground">
+								Envoyé le {new Date(sentPrintFile.sentAt).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}
+							</p>
+						{/if}
+						<div class="mt-3 flex flex-wrap gap-2">
+							<a
+								href="/dashboard/orders/{order.id}/fichier"
+								target="_blank"
+								rel="noopener"
+								class="inline-flex items-center gap-2 rounded-md bg-[#7A4F60] px-3 py-2 text-sm text-white hover:bg-[#6a4252]"
+							>
+								Voir le PDF
+							</a>
+							<a
+								href="/dashboard/orders/{order.id}/fichier?telecharger=1"
+								class="inline-flex items-center gap-2 rounded-md border border-[#EADDE1] px-3 py-2 text-sm text-[#7A4F60] hover:bg-[#FBF6F8]"
+							>
+								Télécharger
+							</a>
+						</div>
+					</CardContent>
+				</Card>
+			{/if}
 
 			<!-- Notes personnelles -->
 			<Card>

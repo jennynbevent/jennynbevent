@@ -142,6 +142,22 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
         // Récupérer le montant payé depuis la DB
         const paidAmount = order.paid_amount;
 
+        // PDF envoyé au client (si la colonne existe et qu'un fichier a été envoyé)
+        let printFile: { name: string; sentAt: string | null } | null = null;
+        try {
+            const { data: pf } = await (locals.supabase as any)
+                .from('orders')
+                .select('print_file_url, print_file_name, print_file_sent_at')
+                .eq('id', params.id)
+                .eq('shop_id', permissions.shopId)
+                .maybeSingle();
+            if (pf?.print_file_url) {
+                printFile = { name: pf.print_file_name || 'fichier.pdf', sentAt: pf.print_file_sent_at || null };
+            }
+        } catch {
+            printFile = null;
+        }
+
         // Initialiser les formulaires Superforms
         const makeQuoteForm = await superValidate(zod(makeQuoteFormSchema));
         const rejectOrderForm = await superValidate(zod(rejectOrderFormSchema));
@@ -163,7 +179,8 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             makeQuoteForm,
             rejectOrderForm,
             personalNoteForm,
-            isPending: false
+            isPending: false,
+            printFile
         };
     } catch (err) {
         throw err;
@@ -1056,6 +1073,20 @@ export const actions: Actions = {
                     step: 'update_order_status',
                 });
                 return fail(500, { error: 'Erreur lors de la mise à jour de la commande' });
+            }
+
+            // Garder une trace du PDF envoyé (sans bloquer si la colonne n'existe pas encore)
+            if (printFileUrl && printFileContent) {
+                const { error: pfError } = await (locals.supabase as any)
+                    .from('orders')
+                    .update({
+                        print_file_url: printFileUrl,
+                        print_file_name: printFileName || 'fichier-a-imprimer.pdf',
+                        print_file_sent_at: new Date().toISOString(),
+                    })
+                    .eq('id', params.id)
+                    .eq('shop_id', shopId);
+                if (pfError) console.error('[makeOrderReady] print file not saved:', pfError);
             }
 
             // Envoyer l'email au client
