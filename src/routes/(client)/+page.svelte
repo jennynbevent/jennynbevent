@@ -107,7 +107,9 @@
 		const out: { href: string; label: string; image: string }[] = [];
 		for (const t of home.tiles ?? []) {
 			const sec = secs.find((x) => x.id === t.category_id);
-			if (!sec || used.has(sec.id)) continue;
+			if (!sec) continue;
+			// Une même catégorie peut revenir si chaque image a sa propre photo
+			if (!t.image_url && used.has(sec.id)) continue;
 			const prod = withImage.find((p) => p.id === t.product_id) ?? sec.items.find((p) => p.image_url);
 			const image = t.image_url || prod?.image_url;
 			if (image) {

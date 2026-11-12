@@ -19,6 +19,7 @@
 	let tiles: HomeTile[] = [0, 1, 2].map((i) => h.tiles?.[i] ?? { category_id: null, product_id: null });
 
 	let saving = false;
+	let unsaved = false;
 	let message = '';
 	let errorMessage = '';
 
@@ -37,6 +38,7 @@
 	function setCategory(i: number, id: string) {
 		tiles[i] = { ...tiles[i], category_id: id || null };
 		tiles = tiles;
+		unsaved = true;
 	}
 
 	// Photo envoyée depuis l'ordinateur
@@ -61,6 +63,7 @@
 			if (!res.ok || !data.url) throw new Error(data.error || 'Erreur');
 			tiles[i] = { ...tiles[i], product_id: null, image_url: data.url };
 			tiles = tiles;
+			unsaved = true;
 		} catch (e) {
 			uploadError[i] = e instanceof Error ? e.message : "L'envoi a échoué.";
 		} finally {
@@ -93,7 +96,13 @@
 			errorMessage = '';
 			return async ({ result }) => {
 				saving = false;
-				if (result.type === 'success') message = 'Page d’accueil enregistrée ✓';
+				if (result.type === 'success') {
+					const sent = tiles.filter((t) => t.image_url).length;
+					const saved = Number(result.data?.savedImages ?? sent);
+					if (saved < sent) errorMessage = "Certaines photos n'ont pas pu être enregistrées. Renvoyez-les avec « Changer la photo » puis enregistrez à nouveau.";
+					else message = 'Page d’accueil enregistrée ✓ — visible sur le site tout de suite.';
+					unsaved = false;
+				}
 				else if (result.type === 'failure') errorMessage = String(result.data?.error || 'Erreur');
 				else errorMessage = 'Une erreur est survenue.';
 				await invalidateAll();
@@ -185,6 +194,12 @@
 				</div>
 			{/each}
 		</div>
+
+		{#if unsaved}
+			<p class="-mt-4 mb-8 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+				Pensez à cliquer sur <strong>« Enregistrer la page d’accueil »</strong> tout en bas pour que ces changements apparaissent sur le site.
+			</p>
+		{/if}
 
 		<!-- Ordre des catégories -->
 		<h3 class="mb-2 font-medium">Ordre des catégories (menu et page d'accueil)</h3>

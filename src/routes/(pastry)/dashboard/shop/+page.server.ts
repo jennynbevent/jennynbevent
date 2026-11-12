@@ -1019,7 +1019,7 @@ export const actions: Actions = {
             console.error('[updateLayout] hero:', heroError);
             return fail(500, { error: "Impossible d'enregistrer la page d'accueil." });
         }
-        return { success: true };
+        return { success: true, savedImages: home.tiles.filter((t) => t.image_url).length };
     },
 
     // Paiement par carte (Stripe) : activer / désactiver

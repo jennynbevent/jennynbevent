@@ -395,7 +395,8 @@ export async function uploadHomeImage(file: File, shopId: string) {
 		cloudinary.uploader
 			.upload_stream(
 				{
-					folder: `home/${shopId}`,
+					// Chemin complet dans l'identifiant : fonctionne quel que soit le mode de dossiers Cloudinary
+					public_id: `home/${shopId}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
 					resource_type: 'image',
 					overwrite: false,
 					transformation: [{ width: 1800, height: 1800, crop: 'limit', quality: 'auto:good', fetch_format: 'auto' }]
@@ -412,6 +413,7 @@ export async function uploadHomeImage(file: File, shopId: string) {
 }
 
 /** Vérifie qu'une adresse est bien une photo d'accueil de la boutique */
-export function isOwnHomeImageUrl(url: string, shopId: string): boolean {
-	return url.startsWith(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/`) && url.includes(`/home/${shopId}/`);
+export function isOwnHomeImageUrl(url: string, _shopId: string): boolean {
+	// Photo hébergée sur le compte Cloudinary de la boutique (l'envoi est réservé à l'administratrice)
+	return url.startsWith(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/`);
 }
