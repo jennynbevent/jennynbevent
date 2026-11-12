@@ -11,7 +11,7 @@ export type HomeSettings = {
 export const HOME_DEFAULTS: HomeSettings = {
 	banner: 'Retrait à Andrésy · Livraison bientôt de retour · Fichiers par e-mail sous 48 h',
 	kicker: 'Créations personnalisées',
-	title: 'Les détails qui rendent votre événement unique',
+	title: 'Les détails qui font toute la différence',
 	subtitle: 'Panneaux de bienvenue, papeterie, faire-part, tasses, stickers… et bien plus encore.',
 	tiles: [],
 };
