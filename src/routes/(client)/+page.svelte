@@ -307,10 +307,9 @@
 			<!-- ACCUEIL -->
 			<section class="mx-auto w-full max-w-4xl px-5 pt-10 text-center md:pt-16">
 				{#if home.kicker}<p class="serif text-[17px] italic md:text-xl" style="color: #9A7C88;">{home.kicker}</p>{/if}
-				<!-- Toujours 2 lignes : la taille s'adapte à la largeur de l'écran -->
-				<h1 class="serif mt-1.5 font-normal leading-[1.05]" style="white-space: pre; font-size: min(62px, calc((100vw - 48px) / 11.4));">{home.title}</h1>
+				<h1 class="serif mt-1.5 text-[38px] font-normal leading-[1.05] md:text-[62px]">{home.title}</h1>
 				<div class="mx-auto my-6 h-px w-[60px]" style="background-color: {customizations?.button_color || '#BC90A5'};"></div>
-				{#if home.subtitle}<p class="leading-relaxed text-neutral-600" style="white-space: nowrap; font-size: min(16px, calc((100vw - 48px) / 38));">{home.subtitle}</p>{/if}
+				{#if home.subtitle}<p class="whitespace-pre-line text-[15px] leading-relaxed text-neutral-600 md:text-base">{home.subtitle}</p>{/if}
 			</section>
 
 			{#if universTiles.length}
