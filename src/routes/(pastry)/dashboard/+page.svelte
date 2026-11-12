@@ -15,6 +15,7 @@
 		ChevronRight,
 	} from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
+	import PushNotifications from '$lib/components/push-notifications.svelte';
 	// Données de la page
 	$: ({ shop, metrics, permissions, user, plans, currentPlan, hasLifetimePlan } = $page.data);
 	
@@ -199,6 +200,9 @@
 			</button>
 		{/if}
 	</div>
+
+	<!-- Notifications des nouvelles commandes -->
+	<PushNotifications />
 
 	<!-- Période -->
 	<div class="flex flex-wrap gap-1">

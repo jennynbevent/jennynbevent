@@ -37,6 +37,7 @@ import { PaymentFailedNotificationEmail } from '$lib/emails/payment-failed-notif
 import { CriticalErrorNotificationEmail } from '$lib/emails/critical-error-notification';
 import { MarketingCampaignEmail } from '$lib/emails/marketing-campaign';
 import type { OrderEmailExtras } from '$lib/emails/order-extras';
+import { sendPushToAll, euros, pathOf } from '$lib/push';
 
 export class EmailService {
     /**
@@ -309,6 +310,13 @@ export class EmailService {
         date: string;
         extras?: OrderEmailExtras;
     }) {
+        // Notification sur l'appli de l'espace boutique (iPad…)
+        await sendPushToAll({
+            title: '🛍️ Nouvelle commande',
+            body: [productName, euros(totalAmount), customerName].filter(Boolean).join(' · '),
+            url: pathOf(dashboardUrl),
+            tag: 'order-' + orderId,
+        });
         const resend = getResend();
         if (!resend) return { success: false };
         try {
@@ -381,6 +389,13 @@ export class EmailService {
         dashboardUrl: string;
         date: string;
     }) {
+        // Notification sur l'appli de l'espace boutique (iPad…)
+        await sendPushToAll({
+            title: '💳 Nouvelle commande payée par carte',
+            body: [productName, euros(totalAmount), customerName].filter(Boolean).join(' · '),
+            url: pathOf(dashboardUrl),
+            tag: 'order-' + orderId,
+        });
         const resend = getResend();
         if (!resend) return { success: false };
         try {
@@ -721,6 +736,13 @@ export class EmailService {
         dashboardUrl: string;
         date: string;
     }) {
+        // Notification sur l'appli de l'espace boutique (iPad…)
+        await sendPushToAll({
+            title: '✏️ Nouvelle demande sur mesure',
+            body: [customerName, pickupDate ? 'pour le ' + pickupDate : ''].filter(Boolean).join(' · '),
+            url: pathOf(dashboardUrl),
+            tag: 'request-' + requestId,
+        });
         const resend = getResend();
         if (!resend) return { success: false };
         try {
