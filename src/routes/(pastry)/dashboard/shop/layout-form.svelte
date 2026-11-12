@@ -22,10 +22,9 @@
 	let message = '';
 	let errorMessage = '';
 
-	$: withImage = (layout.products ?? []).filter((p) => p.image_url);
 	$: homeJson = JSON.stringify({ banner, kicker, title, subtitle, tiles });
 
-	const slotNames = ['Grande image (à gauche)', 'Petite image (en haut à droite)', 'Petite image (en bas à droite)'];
+	const slotNames = ['Grande image (à gauche)', 'Petite image (en haut)', 'Petite image (en bas)'];
 
 	function move(i: number, dir: -1 | 1) {
 		const j = i + dir;
@@ -35,17 +34,8 @@
 		order = copy;
 	}
 
-	function photosFor(categoryId: string | null) {
-		const inCat = withImage.filter((p) => p.category_id === categoryId);
-		return inCat.length ? inCat : withImage;
-	}
-
 	function setCategory(i: number, id: string) {
-		tiles[i] = { category_id: id || null, product_id: null, image_url: tiles[i]?.image_url ?? null };
-		tiles = tiles;
-	}
-	function setPhoto(i: number, id: string) {
-		tiles[i] = { ...tiles[i], product_id: id, image_url: null };
+		tiles[i] = { ...tiles[i], category_id: id || null };
 		tiles = tiles;
 	}
 
@@ -79,7 +69,7 @@
 	}
 </script>
 
-<div class="mt-6 rounded-xl border bg-card p-6 shadow-sm">
+<div class="mt-6 min-w-0 rounded-xl border bg-card p-6 shadow-sm">
 	<div class="mb-6 flex items-center gap-3">
 		<LayoutGrid class="h-6 w-6 text-primary" />
 		<div>
@@ -139,56 +129,59 @@
 		<!-- Nos univers -->
 		<h3 class="mb-1 font-medium">Les 3 images « Nos univers »</h3>
 		<p class="mb-4 text-sm text-muted-foreground">
-			Pour chaque emplacement, choisissez une catégorie puis une photo de la boutique ou une photo de votre ordinateur. Sans choix, les premières catégories s'affichent avec leur première photo.
+			Pour chaque image : choisissez la catégorie (son nom s'affiche sur l'image et mène vers elle), puis ajoutez votre photo depuis votre ordinateur.
 		</p>
-		<div class="mb-8 grid gap-5">
+		<div class="mb-8 grid gap-4 md:grid-cols-3">
 			{#each tiles as tile, i}
-				<div class="rounded-lg border bg-white p-4">
-					<div class="mb-3 flex flex-wrap items-center gap-3">
-						<span class="flex h-6 w-6 items-center justify-center rounded-full bg-[#F3E6EA] text-xs text-[#7A4F60]">{i + 1}</span>
+				<div class="min-w-0 rounded-lg border bg-white p-4">
+					<div class="mb-3 flex items-center gap-2">
+						<span class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#F3E6EA] text-xs text-[#7A4F60]">{i + 1}</span>
 						<span class="text-sm font-medium">{slotNames[i]}</span>
-						<select
-							class="ml-auto h-9 rounded-md border px-2 text-sm"
-							value={tile.category_id ?? ''}
-							on:change={(e) => setCategory(i, e.currentTarget.value)}
-						>
-							<option value="">Automatique</option>
-							{#each order as cat (cat.id)}
-								<option value={cat.id}>{cat.name}</option>
-							{/each}
-						</select>
 					</div>
-					{#if tile.category_id}
-						<div class="flex gap-2 overflow-x-auto pb-1">
-							<!-- Photo depuis l'ordinateur -->
-							{#if tile.image_url}
-								<div class="relative h-20 w-20 flex-none overflow-hidden rounded-md border-2 border-[#7A4F60]" title="Votre photo">
-									<img src={tile.image_url} alt="Votre photo" class="h-full w-full object-cover" />
-									<button type="button" class="absolute right-0.5 top-0.5 rounded-full bg-white/90 px-1.5 text-xs" on:click={() => { tiles[i] = { ...tiles[i], image_url: null }; tiles = tiles; }} title="Retirer">✕</button>
-								</div>
+
+					<label class="mb-1 block text-xs text-muted-foreground" for="univers-cat-{i}">Catégorie</label>
+					<select
+						id="univers-cat-{i}"
+						class="mb-3 h-10 w-full rounded-md border px-2 text-sm"
+						value={tile.category_id ?? ''}
+						on:change={(e) => setCategory(i, e.currentTarget.value)}
+					>
+						<option value="">— Choisir —</option>
+						{#each order as cat (cat.id)}
+							<option value={cat.id}>{cat.name}</option>
+						{/each}
+					</select>
+
+					<span class="mb-1 block text-xs text-muted-foreground">Photo</span>
+					{#if tile.image_url}
+						<div class="relative aspect-[4/3] w-full overflow-hidden rounded-md border">
+							<img src={tile.image_url} alt="Photo choisie" class="h-full w-full object-cover" />
+							{#if tile.category_id}
+								<span class="absolute inset-x-0 bottom-3 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-white underline underline-offset-4 drop-shadow">
+									{order.find((c) => c.id === tile.category_id)?.name ?? ''}
+								</span>
 							{/if}
-							<label class="flex h-20 w-20 flex-none cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-[#D9C3CC] bg-[#FBF6F8] text-center text-[11px] leading-tight text-[#7A4F60] hover:bg-[#F3E6EA]">
-								{#if uploading === i}
-									Envoi…
-								{:else}
-									<span class="text-lg leading-none">+</span>Depuis mon ordinateur
-								{/if}
+						</div>
+						<div class="mt-2 flex gap-3 text-xs">
+							<label class="cursor-pointer text-[#7A4F60] underline">
+								{uploading === i ? 'Envoi…' : 'Changer la photo'}
 								<input type="file" accept="image/*" class="hidden" disabled={uploading !== null} on:change={(e) => onUpload(i, e)} />
 							</label>
-							{#each photosFor(tile.category_id) as p (p.id)}
-								<button
-									type="button"
-									on:click={() => setPhoto(i, p.id)}
-									class="h-20 w-20 flex-none overflow-hidden rounded-md border-2 {!tile.image_url && tile.product_id === p.id ? 'border-[#7A4F60]' : 'border-transparent hover:border-[#D9C3CC]'}"
-									title={p.name}
-								>
-									<img src={p.image_url} alt={p.name} class="h-full w-full object-cover" />
-								</button>
-							{/each}
+							<button type="button" class="text-muted-foreground underline" on:click={() => { tiles[i] = { ...tiles[i], image_url: null, product_id: null }; tiles = tiles; }}>Retirer</button>
 						</div>
-						{#if uploadError[i]}<p class="mt-1 text-xs text-red-600">{uploadError[i]}</p>{/if}
-						{#if !tile.product_id && !tile.image_url}<p class="mt-1 text-xs text-muted-foreground">Aucune photo choisie : la première de la catégorie sera utilisée.</p>{/if}
+					{:else}
+						<label class="flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-[#D9C3CC] bg-[#FBF6F8] text-center text-sm text-[#7A4F60] hover:bg-[#F3E6EA]">
+							{#if uploading === i}
+								Envoi de la photo…
+							{:else}
+								<span class="text-2xl leading-none">+</span>
+								Ajouter une photo<br /><span class="text-xs opacity-80">depuis mon ordinateur</span>
+							{/if}
+							<input type="file" accept="image/*" class="hidden" disabled={uploading !== null} on:change={(e) => onUpload(i, e)} />
+						</label>
 					{/if}
+					{#if uploadError[i]}<p class="mt-1 text-xs text-red-600">{uploadError[i]}</p>{/if}
+					{#if tile.image_url && !tile.category_id}<p class="mt-1 text-xs text-amber-700">Choisissez une catégorie pour que l'image s'affiche.</p>{/if}
 				</div>
 			{/each}
 		</div>
