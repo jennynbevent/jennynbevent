@@ -1011,15 +1011,25 @@ export const actions: Actions = {
             }
         }
 
-        const { error: heroError } = await (locals.supabase as any)
+        // Boutique vérifiée ci-dessus : écriture avec le compte serveur, puis relecture pour être sûr
+        const { data: savedRows, error: heroError } = await (locals.supabaseServiceRole as any)
             .from('shops')
             .update({ home_settings: home })
-            .eq('id', shop.id);
+            .eq('id', shop.id)
+            .select('home_settings');
         if (heroError) {
             console.error('[updateLayout] hero:', heroError);
-            return fail(500, { error: "Impossible d'enregistrer la page d'accueil." });
+            const missing = /home_settings|column/i.test(String(heroError.message || ''));
+            return fail(500, {
+                error: missing
+                    ? "Il manque la colonne « home_settings » dans Supabase : exécutez la commande SQL reçue, puis réessayez."
+                    : "Impossible d'enregistrer la page d'accueil : " + String(heroError.message || 'erreur inconnue'),
+            });
         }
-        return { success: true, savedImages: home.tiles.filter((t) => t.image_url).length };
+        if (!savedRows || savedRows.length === 0) {
+            return fail(500, { error: "La page d'accueil n'a pas été enregistrée (aucune ligne modifiée)." });
+        }
+        return { success: true };
     },
 
     // Paiement par carte (Stripe) : activer / désactiver

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import { ArrowUp, ArrowDown, LayoutGrid } from 'lucide-svelte';
 	import { HOME_DEFAULTS, type HomeSettings, type HomeTile } from '$lib/utils/home-settings';
 
@@ -16,16 +15,32 @@
 	let kicker = h.kicker;
 	let title = h.title;
 	let subtitle = h.subtitle;
-	let tiles: HomeTile[] = [0, 1, 2].map((i) => h.tiles?.[i] ?? { category_id: null, product_id: null });
+	// Les 3 images « Nos univers » : articles cliqués dans l'ordre (1 = grande image)
+	let picks: string[] = (h.tiles ?? []).map((t) => t.product_id).filter((x): x is string => !!x).slice(0, 3);
 
 	let saving = false;
-	let unsaved = false;
 	let message = '';
 	let errorMessage = '';
 
+	$: withImage = (layout.products ?? []).filter((p) => p.image_url);
+	$: tiles = picks.filter((id) => withImage.some((p) => p.id === id)).map((id) => ({
+		category_id: withImage.find((p) => p.id === id)?.category_id ?? null,
+		product_id: id,
+		image_url: null,
+	})) as HomeTile[];
 	$: homeJson = JSON.stringify({ banner, kicker, title, subtitle, tiles });
+	$: groups = [
+		...order.map((c) => ({ name: c.name, items: withImage.filter((p) => p.category_id === c.id) })),
+		{ name: 'Sans catégorie', items: withImage.filter((p) => !p.category_id || !order.some((c) => c.id === p.category_id)) },
+	].filter((g) => g.items.length);
+	const catName = (id: string | null) => order.find((c) => c.id === id)?.name ?? '';
+	const prodOf = (id: string) => withImage.find((p) => p.id === id);
 
-	const slotNames = ['Grande image (à gauche)', 'Petite image (en haut)', 'Petite image (en bas)'];
+	function togglePick(id: string) {
+		if (picks.includes(id)) picks = picks.filter((x) => x !== id);
+		else if (picks.length < 3) picks = [...picks, id];
+	}
+
 
 	function move(i: number, dir: -1 | 1) {
 		const j = i + dir;
@@ -35,41 +50,6 @@
 		order = copy;
 	}
 
-	function setCategory(i: number, id: string) {
-		tiles[i] = { ...tiles[i], category_id: id || null };
-		tiles = tiles;
-		unsaved = true;
-	}
-
-	// Photo envoyée depuis l'ordinateur
-	let uploading: number | null = null;
-	let uploadError = ['', '', ''];
-	async function onUpload(i: number, event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-		input.value = '';
-		uploadError[i] = '';
-		if (!file) return;
-		if (file.size > 10 * 1024 * 1024) {
-			uploadError[i] = 'Image trop lourde (10 Mo maximum).';
-			return;
-		}
-		uploading = i;
-		try {
-			const body = new FormData();
-			body.append('file', file);
-			const res = await fetch('/api/upload-home-image', { method: 'POST', body });
-			const data = await res.json();
-			if (!res.ok || !data.url) throw new Error(data.error || 'Erreur');
-			tiles[i] = { ...tiles[i], product_id: null, image_url: data.url };
-			tiles = tiles;
-			unsaved = true;
-		} catch (e) {
-			uploadError[i] = e instanceof Error ? e.message : "L'envoi a échoué.";
-		} finally {
-			uploading = null;
-		}
-	}
 </script>
 
 <div class="mt-6 min-w-0 rounded-xl border bg-card p-6 shadow-sm">
@@ -82,9 +62,13 @@
 	</div>
 
 	{#if !layout.ready}
-		<p class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-			Pour activer cette option, exécutez d'abord la petite commande SQL dans Supabase (voir les instructions reçues).
-		</p>
+		<div class="mb-6 rounded-lg border-2 border-red-300 bg-red-50 p-4 text-sm text-red-800">
+			<p class="font-semibold">⚠️ Ce bloc ne peut pas encore enregistrer : il manque un réglage dans Supabase.</p>
+			<p class="mt-1">Dans Supabase → SQL Editor, collez cette commande puis cliquez sur « Run » :</p>
+			<pre class="mt-2 overflow-x-auto rounded bg-white p-2 text-xs text-neutral-800">ALTER TABLE public.shops ADD COLUMN IF NOT EXISTS home_settings jsonb;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS position integer;</pre>
+			<p class="mt-1">Rechargez ensuite cette page.</p>
+		</div>
 	{/if}
 
 	<form
@@ -96,16 +80,10 @@
 			errorMessage = '';
 			return async ({ result }) => {
 				saving = false;
-				if (result.type === 'success') {
-					const sent = tiles.filter((t) => t.image_url).length;
-					const saved = Number(result.data?.savedImages ?? sent);
-					if (saved < sent) errorMessage = "Certaines photos n'ont pas pu être enregistrées. Renvoyez-les avec « Changer la photo » puis enregistrez à nouveau.";
-					else message = 'Page d’accueil enregistrée ✓ — visible sur le site tout de suite.';
-					unsaved = false;
-				}
+				if (result.type === 'success') message = 'Page d’accueil enregistrée ✓ — visible sur le site tout de suite.';
 				else if (result.type === 'failure') errorMessage = String(result.data?.error || 'Erreur');
 				else errorMessage = 'Une erreur est survenue.';
-				await invalidateAll();
+				// Pas de rechargement après succès : le message de confirmation reste visible
 			};
 		}}
 	>
@@ -138,67 +116,64 @@
 		<!-- Nos univers -->
 		<h3 class="mb-1 font-medium">Les 3 images « Nos univers »</h3>
 		<p class="mb-4 text-sm text-muted-foreground">
-			Pour chaque image : choisissez la catégorie (son nom s'affiche sur l'image et mène vers elle), puis ajoutez votre photo depuis votre ordinateur.
+			Cliquez sur 3 articles, dans l'ordre : <strong>1</strong> = grande image à gauche, <strong>2</strong> = petite en haut, <strong>3</strong> = petite en bas.
+			Le nom de leur catégorie s'affiche sur l'image. Cliquez à nouveau sur un article pour le retirer.
 		</p>
-		<div class="mb-8 grid gap-4 md:grid-cols-3">
-			{#each tiles as tile, i}
-				<div class="min-w-0 rounded-lg border bg-white p-4">
-					<div class="mb-3 flex items-center gap-2">
-						<span class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#F3E6EA] text-xs text-[#7A4F60]">{i + 1}</span>
-						<span class="text-sm font-medium">{slotNames[i]}</span>
+
+		<!-- Aperçu -->
+		<div class="mb-5 flex flex-wrap items-center gap-4 rounded-lg border bg-[#FBF6F8] p-4">
+			<div class="grid h-32 w-56 flex-none grid-cols-[1.4fr_1fr] grid-rows-2 gap-1.5">
+				{#each [0, 1, 2] as i}
+					{@const p = picks[i] ? prodOf(picks[i]) : null}
+					<div class="relative overflow-hidden rounded bg-white {i === 0 ? 'row-span-2' : ''} {p ? '' : 'border border-dashed border-[#D9C3CC]'}">
+						{#if p}
+							<img src={p.image_url} alt="" class="h-full w-full object-cover" />
+							<span class="absolute inset-x-0 bottom-1 text-center text-[8px] font-semibold uppercase tracking-wider text-white drop-shadow">{catName(p.category_id)}</span>
+						{/if}
+						<span class="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#7A4F60] text-[9px] font-semibold text-white">{i + 1}</span>
 					</div>
-
-					<label class="mb-1 block text-xs text-muted-foreground" for="univers-cat-{i}">Catégorie</label>
-					<select
-						id="univers-cat-{i}"
-						class="mb-3 h-10 w-full rounded-md border px-2 text-sm"
-						value={tile.category_id ?? ''}
-						on:change={(e) => setCategory(i, e.currentTarget.value)}
-					>
-						<option value="">— Choisir —</option>
-						{#each order as cat (cat.id)}
-							<option value={cat.id}>{cat.name}</option>
-						{/each}
-					</select>
-
-					<span class="mb-1 block text-xs text-muted-foreground">Photo</span>
-					{#if tile.image_url}
-						<div class="relative aspect-[4/3] w-full overflow-hidden rounded-md border">
-							<img src={tile.image_url} alt="Photo choisie" class="h-full w-full object-cover" />
-							{#if tile.category_id}
-								<span class="absolute inset-x-0 bottom-3 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-white underline underline-offset-4 drop-shadow">
-									{order.find((c) => c.id === tile.category_id)?.name ?? ''}
-								</span>
-							{/if}
-						</div>
-						<div class="mt-2 flex gap-3 text-xs">
-							<label class="cursor-pointer text-[#7A4F60] underline">
-								{uploading === i ? 'Envoi…' : 'Changer la photo'}
-								<input type="file" accept="image/*" class="hidden" disabled={uploading !== null} on:change={(e) => onUpload(i, e)} />
-							</label>
-							<button type="button" class="text-muted-foreground underline" on:click={() => { tiles[i] = { ...tiles[i], image_url: null, product_id: null }; tiles = tiles; }}>Retirer</button>
-						</div>
-					{:else}
-						<label class="flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-[#D9C3CC] bg-[#FBF6F8] text-center text-sm text-[#7A4F60] hover:bg-[#F3E6EA]">
-							{#if uploading === i}
-								Envoi de la photo…
-							{:else}
-								<span class="text-2xl leading-none">+</span>
-								Ajouter une photo<br /><span class="text-xs opacity-80">depuis mon ordinateur</span>
-							{/if}
-							<input type="file" accept="image/*" class="hidden" disabled={uploading !== null} on:change={(e) => onUpload(i, e)} />
-						</label>
-					{/if}
-					{#if uploadError[i]}<p class="mt-1 text-xs text-red-600">{uploadError[i]}</p>{/if}
-					{#if tile.image_url && !tile.category_id}<p class="mt-1 text-xs text-amber-700">Choisissez une catégorie pour que l'image s'affiche.</p>{/if}
-				</div>
-			{/each}
+				{/each}
+			</div>
+			<div class="text-sm">
+				<p class="font-medium text-[#7A4F60]">Aperçu sur le site ({picks.length}/3)</p>
+				{#if picks.length < 3}
+					<p class="text-muted-foreground">Encore {3 - picks.length} à choisir. Sans choix, le site prend une photo de vos premières catégories.</p>
+				{:else}
+					<p class="text-muted-foreground">C'est complet. Pensez à enregistrer en bas.</p>
+				{/if}
+				{#if picks.length}
+					<button type="button" class="mt-1 text-xs underline text-muted-foreground" on:click={() => (picks = [])}>Tout désélectionner</button>
+				{/if}
+			</div>
 		</div>
 
-		{#if unsaved}
-			<p class="-mt-4 mb-8 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-				Pensez à cliquer sur <strong>« Enregistrer la page d’accueil »</strong> tout en bas pour que ces changements apparaissent sur le site.
-			</p>
+		{#if withImage.length === 0}
+			<p class="mb-8 text-sm text-muted-foreground">Ajoutez d'abord des articles avec une photo.</p>
+		{:else}
+			<div class="mb-8 space-y-4">
+				{#each groups as g}
+					<div>
+						<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-[#7A4F60]">{g.name}</p>
+						<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+							{#each g.items as p (p.id)}
+								{@const pos = picks.indexOf(p.id)}
+								<button
+									type="button"
+									on:click={() => togglePick(p.id)}
+									class="relative overflow-hidden rounded-lg border-2 text-left transition {pos >= 0 ? 'border-[#7A4F60]' : 'border-transparent hover:border-[#D9C3CC]'} {pos < 0 && picks.length >= 3 ? 'opacity-50' : ''}"
+									title={p.name}
+								>
+									<img src={p.image_url} alt={p.name} class="aspect-square w-full object-cover" />
+									{#if pos >= 0}
+										<span class="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#7A4F60] text-xs font-semibold text-white">{pos + 1}</span>
+									{/if}
+									<span class="block truncate bg-white px-1.5 py-1 text-[11px]">{p.name}</span>
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/each}
+			</div>
 		{/if}
 
 		<!-- Ordre des catégories -->
