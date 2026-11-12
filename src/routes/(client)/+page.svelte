@@ -99,7 +99,8 @@
 	];
 	$: currentSection = selectedCategory ? sections.find((sec) => sec.id === selectedCategory) : null;
 	// Réglages de la page d'accueil (textes + 3 images « Nos univers »)
-	$: home = ($page.data.homeSettings ?? HOME_DEFAULTS) as HomeSettings;
+	// Textes et images d'accueil fixés dans le code (HOME_DEFAULTS) ; images = 1re photo des 3 premières catégories
+	const home: HomeSettings = HOME_DEFAULTS;
 	$: universTiles = (() => {
 		const withImage = (products as Product[]).filter((p) => p.image_url);
 		const secs = sections.filter((sec) => sec.id !== 'autres');

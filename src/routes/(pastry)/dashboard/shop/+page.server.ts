@@ -12,10 +12,8 @@ import { uploadShopLogo, uploadBackgroundImage, deleteImage, extractPublicIdFrom
 import { verifyShopOwnership } from '$lib/auth';
 import { setError } from 'sveltekit-superforms';
 import { isStripeConfigured, stripeMode } from '$lib/stripe/shop-payments';
-import { readHomeSettings } from '$lib/utils/home-settings';
-import { isOwnHomeImageUrl } from '$lib/cloudinary';
 
-/** Disposition de la boutique : catégories (dans l'ordre), articles avec image, photos d'accueil */
+/** Ordre des catégories de la boutique */
 async function loadLayout(supabase: any, shopId: string) {
     const withPos = await supabase
         .from('categories')
@@ -28,20 +26,9 @@ async function loadLayout(supabase: any, shopId: string) {
         ? withPos.data
         : (await supabase.from('categories').select('id, name').eq('shop_id', shopId).order('name')).data;
 
-    const { data: products } = await supabase
-        .from('products')
-        .select('id, name, image_url, category_id')
-        .eq('shop_id', shopId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-    const hs = await supabase.from('shops').select('home_settings').eq('id', shopId).single();
-
     return {
         categories: (cats || []).map((c: any) => ({ id: c.id, name: c.name })),
-        products: products || [],
-        home: readHomeSettings(hs.error ? null : hs.data?.home_settings),
-        ready: ready && !hs.error,
+        ready,
     };
 }
 
@@ -985,19 +972,13 @@ export const actions: Actions = {
 
         const formData = await request.formData();
         let categoryOrder: string[] = [];
-        let home;
         try {
             categoryOrder = JSON.parse(String(formData.get('categoryOrder') || '[]'));
-            home = readHomeSettings(JSON.parse(String(formData.get('home') || '{}')));
         } catch {
             return fail(400, { error: 'Données invalides' });
         }
         const uuid = /^[0-9a-f-]{36}$/i;
         categoryOrder = categoryOrder.filter((id) => uuid.test(id)).slice(0, 200);
-        home.tiles = home.tiles.map((t) => ({
-            ...t,
-            image_url: t.image_url && isOwnHomeImageUrl(t.image_url, shop.id) ? t.image_url : null,
-        }));
 
         for (let i = 0; i < categoryOrder.length; i++) {
             const { error: catError } = await (locals.supabase as any)
@@ -1011,24 +992,6 @@ export const actions: Actions = {
             }
         }
 
-        // Boutique vérifiée ci-dessus : écriture avec le compte serveur, puis relecture pour être sûr
-        const { data: savedRows, error: heroError } = await (locals.supabaseServiceRole as any)
-            .from('shops')
-            .update({ home_settings: home })
-            .eq('id', shop.id)
-            .select('home_settings');
-        if (heroError) {
-            console.error('[updateLayout] hero:', heroError);
-            const missing = /home_settings|column/i.test(String(heroError.message || ''));
-            return fail(500, {
-                error: missing
-                    ? "Il manque la colonne « home_settings » dans Supabase : exécutez la commande SQL reçue, puis réessayez."
-                    : "Impossible d'enregistrer la page d'accueil : " + String(heroError.message || 'erreur inconnue'),
-            });
-        }
-        if (!savedRows || savedRows.length === 0) {
-            return fail(500, { error: "La page d'accueil n'a pas été enregistrée (aucune ligne modifiée)." });
-        }
         return { success: true };
     },
 
