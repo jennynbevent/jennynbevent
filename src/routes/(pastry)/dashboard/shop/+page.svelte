@@ -14,13 +14,14 @@ import { policiesSchema } from './policies-schema';
 		CardTitle,
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Store, Palette, FileText, CreditCard } from 'lucide-svelte';
+	import { Store, Palette, FileText, CreditCard, Bell } from 'lucide-svelte';
+	import PushNotifications from '$lib/components/push-notifications.svelte';
 	import { cn } from '$lib/utils';
 	import PaymentForm from './payment-form.svelte';
 	import StripeCard from './stripe-card.svelte';
 	import LayoutForm from './layout-form.svelte';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	$: layoutState = (data as any).layout ?? { categories: [], products: [], heroIds: [], ready: false };
+	$: layoutState = (data as any).layout ?? { categories: [], products: [], home: null, ready: false };
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	$: stripeState = (data as any).stripe ?? { configured: false, mode: null, enabled: false };
 
@@ -46,13 +47,14 @@ import { policiesSchema } from './policies-schema';
 
 	let error = '';
 	let success = '';
-	let activeTab: 'info' | 'customization' | 'policies' | 'payment' = 'info';
+	let activeTab: 'info' | 'customization' | 'policies' | 'payment' | 'notifications' = 'info';
 
 	const tabs = [
 		{ id: 'info' as const, label: 'Informations', icon: Store },
 		{ id: 'customization' as const, label: 'Personnalisation', icon: Palette },
 		{ id: 'policies' as const, label: 'Politiques de ventes', icon: FileText },
-		{ id: 'payment' as const, label: 'Méthodes de paiement', icon: CreditCard }
+		{ id: 'payment' as const, label: 'Méthodes de paiement', icon: CreditCard },
+		{ id: 'notifications' as const, label: 'Notifications', icon: Bell }
 	];
 </script>
 
@@ -149,5 +151,10 @@ import { policiesSchema } from './policies-schema';
 				<PaymentForm data={data.paymentForm} />
 			</CardContent>
 		</Card>
+	{:else if activeTab === 'notifications'}
+		<PushNotifications />
+		<p class="text-sm text-muted-foreground">
+			À activer une fois sur chaque appareil (iPhone, ordinateur…). Sur iPhone / iPad, ouvrez d'abord l'espace boutique depuis son icône sur l'écran d'accueil.
+		</p>
 	{/if}
 </div>

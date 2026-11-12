@@ -9,6 +9,7 @@
 	let info = '';
 	let error = '';
 	let reg: ServiceWorkerRegistration | null = null;
+	let reason = '';
 
 	const publicKey = (env.PUBLIC_VAPID_PUBLIC_KEY || '').trim();
 
@@ -26,7 +27,15 @@
 		const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 		if (!publicKey) return (state = 'nokey');
 		if (isIOS && !standalone) return (state = 'install');
-		if (!supported) return (state = 'unsupported');
+		if (!supported) {
+			reason = [
+				!('serviceWorker' in navigator) ? 'serviceWorker absent' : '',
+				!('PushManager' in window) ? 'PushManager absent' : '',
+				!('Notification' in window) ? 'Notification absent' : '',
+				standalone ? 'appli' : 'navigateur',
+			].filter(Boolean).join(' · ');
+			return (state = 'unsupported');
+		}
 		try {
 			reg = await navigator.serviceWorker.register('/sw-dashboard.js');
 			await navigator.serviceWorker.ready;
@@ -37,6 +46,7 @@
 			if (sub) fetch('/api/push/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sub) });
 		} catch (e) {
 			console.error(e);
+			reason = 'Erreur : ' + (e instanceof Error ? e.message : String(e));
 			state = 'unsupported';
 		}
 	});
@@ -122,6 +132,7 @@
 					<p class="text-sm text-amber-700">Les clés de notification ne sont pas encore dans Vercel.</p>
 				{:else}
 					<p class="text-sm text-muted-foreground">Cet appareil ou ce navigateur ne gère pas les notifications (iPad : iPadOS 16.4 minimum).</p>
+					{#if reason}<p class="mt-1 text-xs text-muted-foreground">Détail technique : {reason}</p>{/if}
 				{/if}
 			</div>
 			<div class="flex gap-2">
