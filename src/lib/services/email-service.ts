@@ -312,7 +312,7 @@ export class EmailService {
     }) {
         // Notification sur l'appli de l'espace boutique (iPad…)
         await sendPushToAll({
-            title: '🛍️ Nouvelle commande',
+            title: '🛍️ Nouvelle commande !',
             body: [productName, euros(totalAmount), customerName].filter(Boolean).join(' · '),
             url: pathOf(dashboardUrl),
             tag: 'order-' + orderId,
@@ -391,7 +391,7 @@ export class EmailService {
     }) {
         // Notification sur l'appli de l'espace boutique (iPad…)
         await sendPushToAll({
-            title: '💳 Nouvelle commande payée par carte',
+            title: '💳 Nouvelle commande payée !',
             body: [productName, euros(totalAmount), customerName].filter(Boolean).join(' · '),
             url: pathOf(dashboardUrl),
             tag: 'order-' + orderId,
@@ -738,7 +738,7 @@ export class EmailService {
     }) {
         // Notification sur l'appli de l'espace boutique (iPad…)
         await sendPushToAll({
-            title: '✏️ Nouvelle demande sur mesure',
+            title: '✏️ Nouvelle demande sur mesure !',
             body: [customerName, pickupDate ? 'pour le ' + pickupDate : ''].filter(Boolean).join(' · '),
             url: pathOf(dashboardUrl),
             tag: 'request-' + requestId,
