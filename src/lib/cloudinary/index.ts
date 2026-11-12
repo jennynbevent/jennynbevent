@@ -387,3 +387,31 @@ export async function fetchPrintFile(url: string): Promise<Buffer> {
 	if (buf.length === 0) throw new Error('PDF vide');
 	return buf;
 }
+
+/** Photo choisie pour la page d'accueil (« Nos univers »), envoyée depuis l'ordinateur */
+export async function uploadHomeImage(file: File, shopId: string) {
+	const buffer = Buffer.from(await file.arrayBuffer());
+	const result = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+		cloudinary.uploader
+			.upload_stream(
+				{
+					folder: `home/${shopId}`,
+					resource_type: 'image',
+					overwrite: false,
+					transformation: [{ width: 1800, height: 1800, crop: 'limit', quality: 'auto:good', fetch_format: 'auto' }]
+				},
+				(error, res) => {
+					if (error) reject(error);
+					else if (res) resolve(res);
+					else reject(new Error('Upload failed'));
+				}
+			)
+			.end(buffer);
+	});
+	return { secure_url: result.secure_url, public_id: result.public_id };
+}
+
+/** Vérifie qu'une adresse est bien une photo d'accueil de la boutique */
+export function isOwnHomeImageUrl(url: string, shopId: string): boolean {
+	return url.startsWith(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/`) && url.includes(`/home/${shopId}/`);
+}

@@ -4,6 +4,8 @@
 	import { goto } from '$app/navigation';
 	import { Search, Cake, ArrowLeft, Instagram } from 'lucide-svelte';
 	import { ClientFooter } from '$lib/components';
+	import { HOME_DEFAULTS, type HomeSettings } from '$lib/utils/home-settings';
+	import { Menu, X } from 'lucide-svelte';
 
 	$: ({ shop, categories, products, faqs, isShopActive, notFound } =
 		$page.data);
@@ -96,15 +98,32 @@
 		})(),
 	];
 	$: currentSection = selectedCategory ? sections.find((sec) => sec.id === selectedCategory) : null;
-	// Photos d'accueil : celles choisies dans l'espace admin, complétées par les dernières créations
-	$: heroImages = (() => {
+	// Réglages de la page d'accueil (textes + 3 images « Nos univers »)
+	$: home = ($page.data.homeSettings ?? HOME_DEFAULTS) as HomeSettings;
+	$: universTiles = (() => {
 		const withImage = (products as Product[]).filter((p) => p.image_url);
-		const chosen = (($page.data.heroProductIds ?? []) as string[])
-			.map((id) => withImage.find((p) => p.id === id))
-			.filter(Boolean) as Product[];
-		const rest = withImage.filter((p) => !chosen.some((c) => c.id === p.id));
-		return [...chosen, ...rest].slice(0, 4);
+		const secs = sections.filter((sec) => sec.id !== 'autres');
+		const used = new Set<string>();
+		const out: { href: string; label: string; image: string }[] = [];
+		for (const t of home.tiles ?? []) {
+			const sec = secs.find((x) => x.id === t.category_id);
+			if (!sec || used.has(sec.id)) continue;
+			const prod = withImage.find((p) => p.id === t.product_id) ?? sec.items.find((p) => p.image_url);
+			const image = t.image_url || prod?.image_url;
+			if (image) {
+				out.push({ href: categoryHref(sec.id), label: sec.name, image });
+				used.add(sec.id);
+			}
+		}
+		for (const sec of secs) {
+			if (out.length >= 3) break;
+			if (used.has(sec.id)) continue;
+			const prod = sec.items.find((p) => p.image_url);
+			if (prod?.image_url) out.push({ href: categoryHref(sec.id), label: sec.name, image: prod.image_url });
+		}
+		return out.slice(0, 3);
 	})();
+	let menuOpen = false;
 
 	function categoryHref(id: string) {
 		const params = new URLSearchParams();
@@ -193,34 +212,59 @@
 		class="flex min-h-screen flex-col overflow-x-hidden"
 		style="background-color: {customStyles.background}; background-image: {customStyles.backgroundImage}; background-size: cover; background-position: center; background-repeat: no-repeat; {customStyles.textStyle}"
 	>
-		<!-- EN-TÊTE -->
-		<header class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-			<div class="flex min-w-0 items-center gap-3">
-				{#if showBackButton}
-					<button on:click={goBack} class="rounded-full bg-white/80 p-2 shadow-sm" style={customStyles.iconStyle} title="Retour">
-						<ArrowLeft class="h-5 w-5" />
-					</button>
-				{/if}
-				<a href="/" class="flex min-w-0 items-center gap-3">
-					<span class="h-11 w-11 flex-none overflow-hidden rounded-full bg-white p-1 shadow-sm">
-						<img src={shop.logo_url || '/images/logo_jennynbevent.jpg'} alt="" class="h-full w-full object-contain" />
-					</span>
-					<span class="serif truncate text-2xl font-semibold">{shop.name}</span>
-				</a>
+		<!-- BANDE DU HAUT -->
+		{#if home.banner}
+			<div class="px-3 py-2 text-center text-[10px] uppercase tracking-[0.08em] text-white sm:text-xs sm:tracking-[0.12em]" style="background-color: #7A4F60;">
+				{home.banner}
 			</div>
-			<nav class="flex flex-none items-center gap-1 text-sm sm:gap-2">
-				{#if faqs && faqs.length > 0}
-					<a href="/faq" class="hidden rounded-full px-3 py-2 hover:bg-black/5 sm:inline-block">FAQ</a>
-				{/if}
-				{#if shop.instagram}
-					<a href="https://instagram.com/{shop.instagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" class="rounded-full p-2 hover:bg-black/5" style={customStyles.iconStyle} title="Instagram">
-						<Instagram class="h-5 w-5" />
-					</a>
-				{/if}
-				{#if contactHref}
-					<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="rounded-full px-4 py-2 font-medium" style={customStyles.buttonStyle}>Contact</a>
-				{/if}
+		{/if}
+
+		<!-- EN-TÊTE : logo centré + menu des catégories -->
+		<header class="relative border-b" style="border-color: rgba(0,0,0,0.08);">
+			{#if showBackButton}
+				<button on:click={goBack} class="absolute left-4 top-4 z-10 rounded-full bg-white/80 p-2 shadow-sm" style={customStyles.iconStyle} title="Retour">
+					<ArrowLeft class="h-5 w-5" />
+				</button>
+			{:else}
+				<button
+					type="button"
+					class="absolute left-3 top-[42px] z-10 rounded-full p-2 md:hidden"
+					on:click={() => (menuOpen = !menuOpen)}
+					aria-label="Menu"
+				>
+					{#if menuOpen}<X class="h-6 w-6" />{:else}<Menu class="h-6 w-6" />{/if}
+				</button>
+			{/if}
+			{#if shop.instagram}
+				<a href="https://instagram.com/{shop.instagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" class="absolute right-3 top-[42px] z-10 rounded-full p-2 hover:bg-black/5 md:right-6 md:top-8" style={customStyles.iconStyle} title="Instagram">
+					<Instagram class="h-5 w-5" />
+				</a>
+			{/if}
+			<a href={showBackButton ? '/?from=app' : '/'} class="flex flex-col items-center pb-4 pt-4 md:pb-0 md:pt-6">
+				<span class="h-12 w-12 overflow-hidden rounded-full bg-white p-1 shadow-sm md:h-[70px] md:w-[70px]">
+					<img src={shop.logo_url || '/images/logo_jennynbevent.jpg'} alt="" class="h-full w-full object-contain" />
+				</span>
+				<span class="serif mt-1.5 text-[22px] uppercase tracking-[0.18em] md:text-[30px]">{shop.name}</span>
+			</a>
+			<nav class="hidden flex-wrap justify-center gap-x-10 gap-y-2 px-6 py-5 text-[13px] tracking-[0.06em] md:flex">
+				{#each sections as sec (sec.id)}
+					<a href={categoryHref(sec.id)} class="hover:underline hover:underline-offset-4">{sec.name}</a>
+				{/each}
+				{#if shop.is_custom_accepted}<a href="/custom" class="hover:underline hover:underline-offset-4">Sur mesure</a>{/if}
+				{#if faqs && faqs.length > 0}<a href="/faq" class="hover:underline hover:underline-offset-4">FAQ</a>{/if}
 			</nav>
+			{#if menuOpen}
+				<nav class="flex flex-col border-t px-6 py-3 text-[15px] md:hidden" style="border-color: rgba(0,0,0,0.08);">
+					{#each sections as sec (sec.id)}
+						<a href={categoryHref(sec.id)} on:click={() => (menuOpen = false)} class="py-2.5">{sec.name}</a>
+					{/each}
+					{#if shop.is_custom_accepted}<a href="/custom" class="py-2.5">Sur mesure</a>{/if}
+					{#if faqs && faqs.length > 0}<a href="/faq" class="py-2.5">FAQ</a>{/if}
+					{#if contactHref}
+						<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="py-2.5">Contact</a>
+					{/if}
+				</nav>
+			{/if}
 		</header>
 
 		{#if !isShopActive}
@@ -254,31 +298,29 @@
 			</main>
 		{:else}
 			<!-- ACCUEIL -->
-			<section class="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 pb-10 pt-6 sm:px-6 md:grid-cols-2 md:pt-10">
-				<div>
-					<h1 class="serif text-4xl font-semibold leading-[1.1] sm:text-5xl">{shop.name}</h1>
-					{#if shop.bio}
-						<p class="mt-4 max-w-xl whitespace-pre-wrap text-[15px] leading-relaxed text-neutral-600 sm:text-base">{shop.bio}</p>
-					{/if}
-					<div class="mt-6 flex flex-wrap gap-3">
-						<a href="#creations" class="rounded-full px-6 py-3 text-sm font-medium shadow-sm" style={customStyles.buttonStyle}>Voir les créations</a>
-						{#if contactHref}
-							<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="rounded-full border px-6 py-3 text-sm font-medium" style={`border-color: ${customizations?.button_color || '#BC90A5'}; color: ${customizations?.button_color || '#BC90A5'};`}>Contact</a>
-						{/if}
-					</div>
-				</div>
-				{#if heroImages.length}
-					<div class="grid grid-cols-2 gap-3">
-						{#each heroImages as img, i (img.id)}
-							<a href={productHref(img.id)} class="block self-start overflow-hidden rounded-xl bg-white shadow-sm {i % 2 ? 'mt-6' : ''}">
-								<img src={img.image_url} alt={img.name} class="aspect-[4/5] w-full object-cover" />
+			<section class="mx-auto w-full max-w-4xl px-5 pt-10 text-center md:pt-16">
+				{#if home.kicker}<p class="serif text-[17px] italic md:text-xl" style="color: #9A7C88;">{home.kicker}</p>{/if}
+				<h1 class="serif mt-1.5 text-[38px] font-normal leading-[1.05] md:text-[62px]">{home.title}</h1>
+				<div class="mx-auto my-6 h-px w-[60px]" style="background-color: {customizations?.button_color || '#BC90A5'};"></div>
+				{#if home.subtitle}<p class="whitespace-pre-line text-[15px] leading-relaxed text-neutral-600 md:text-base">{home.subtitle}</p>{/if}
+			</section>
+
+			{#if universTiles.length}
+				<section class="mx-auto w-full max-w-6xl px-4 sm:px-6">
+					<p class="mb-5 mt-10 text-center text-[13px] font-semibold tracking-[0.22em] md:mb-6 md:mt-14" style="color: #7A4F60;">NOS UNIVERS</p>
+					<div class="univers grid gap-3 md:gap-[18px]" data-count={universTiles.length}>
+						{#each universTiles as tile, i}
+							<a href={tile.href} class="group relative block overflow-hidden {i === 0 ? 'big' : ''}">
+								<img src={tile.image} alt={tile.label} class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+								<span class="pointer-events-none absolute inset-0" style="background: linear-gradient(transparent 55%, rgba(30,18,24,0.55));"></span>
+								<span class="absolute inset-x-0 bottom-6 text-center text-[13px] font-semibold uppercase tracking-[0.16em] text-white underline underline-offset-[5px] {i === 0 ? 'md:text-[15px]' : ''}">{tile.label}</span>
 							</a>
 						{/each}
 					</div>
-				{/if}
-			</section>
+				</section>
+			{/if}
 
-			<main id="creations" class="mx-auto w-full max-w-6xl flex-1 scroll-mt-4 px-4 pb-10 sm:px-6">
+			<main id="creations" class="mx-auto mt-10 w-full max-w-6xl flex-1 scroll-mt-4 px-4 pb-10 sm:px-6">
 				{#each sections as section (section.id)}
 					<section class="border-t py-8" style="border-color: rgba(0,0,0,0.08);">
 						<div class="flex items-end justify-between gap-4">
@@ -331,6 +373,32 @@
 	.serif {
 		font-family: 'Cormorant Garamond', Georgia, serif;
 		letter-spacing: -0.01em;
+	}
+	.univers {
+		grid-template-columns: 1fr;
+		grid-template-rows: 380px;
+		grid-auto-rows: 200px;
+	}
+	@media (min-width: 768px) {
+		.univers {
+			grid-template-columns: 1.4fr 1fr;
+			grid-template-rows: 260px 260px;
+		}
+		.univers :global(.big) {
+			grid-row: span 2;
+		}
+		.univers[data-count='1'] {
+			grid-template-columns: 1fr;
+			grid-template-rows: 460px;
+		}
+		.univers[data-count='2'] {
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: 460px;
+		}
+		.univers[data-count='1'] :global(.big),
+		.univers[data-count='2'] :global(.big) {
+			grid-row: span 1;
+		}
 	}
 	.no-scrollbar {
 		scrollbar-width: none;

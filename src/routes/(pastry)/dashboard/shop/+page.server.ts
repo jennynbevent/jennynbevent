@@ -12,6 +12,8 @@ import { uploadShopLogo, uploadBackgroundImage, deleteImage, extractPublicIdFrom
 import { verifyShopOwnership } from '$lib/auth';
 import { setError } from 'sveltekit-superforms';
 import { isStripeConfigured, stripeMode } from '$lib/stripe/shop-payments';
+import { readHomeSettings } from '$lib/utils/home-settings';
+import { isOwnHomeImageUrl } from '$lib/cloudinary';
 
 /** Disposition de la boutique : catégories (dans l'ordre), articles avec image, photos d'accueil */
 async function loadLayout(supabase: any, shopId: string) {
@@ -28,20 +30,18 @@ async function loadLayout(supabase: any, shopId: string) {
 
     const { data: products } = await supabase
         .from('products')
-        .select('id, name, image_url')
+        .select('id, name, image_url, category_id')
         .eq('shop_id', shopId)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-    let heroIds: string[] = [];
-    const hero = await supabase.from('shops').select('hero_product_ids').eq('id', shopId).single();
-    if (!hero.error && Array.isArray(hero.data?.hero_product_ids)) heroIds = hero.data.hero_product_ids;
+    const hs = await supabase.from('shops').select('home_settings').eq('id', shopId).single();
 
     return {
         categories: (cats || []).map((c: any) => ({ id: c.id, name: c.name })),
         products: products || [],
-        heroIds,
-        ready: ready && !hero.error,
+        home: readHomeSettings(hs.error ? null : hs.data?.home_settings),
+        ready: ready && !hs.error,
     };
 }
 
@@ -985,16 +985,19 @@ export const actions: Actions = {
 
         const formData = await request.formData();
         let categoryOrder: string[] = [];
-        let heroIds: string[] = [];
+        let home;
         try {
             categoryOrder = JSON.parse(String(formData.get('categoryOrder') || '[]'));
-            heroIds = JSON.parse(String(formData.get('heroIds') || '[]'));
+            home = readHomeSettings(JSON.parse(String(formData.get('home') || '{}')));
         } catch {
             return fail(400, { error: 'Données invalides' });
         }
         const uuid = /^[0-9a-f-]{36}$/i;
         categoryOrder = categoryOrder.filter((id) => uuid.test(id)).slice(0, 200);
-        heroIds = heroIds.filter((id) => uuid.test(id)).slice(0, 4);
+        home.tiles = home.tiles.map((t) => ({
+            ...t,
+            image_url: t.image_url && isOwnHomeImageUrl(t.image_url, shop.id) ? t.image_url : null,
+        }));
 
         for (let i = 0; i < categoryOrder.length; i++) {
             const { error: catError } = await (locals.supabase as any)
@@ -1010,11 +1013,11 @@ export const actions: Actions = {
 
         const { error: heroError } = await (locals.supabase as any)
             .from('shops')
-            .update({ hero_product_ids: heroIds })
+            .update({ home_settings: home })
             .eq('id', shop.id);
         if (heroError) {
             console.error('[updateLayout] hero:', heroError);
-            return fail(500, { error: "Impossible d'enregistrer les photos d'accueil." });
+            return fail(500, { error: "Impossible d'enregistrer la page d'accueil." });
         }
         return { success: true };
     },
