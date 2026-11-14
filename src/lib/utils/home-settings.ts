@@ -9,7 +9,7 @@ export type HomeSettings = {
 };
 
 export const HOME_DEFAULTS: HomeSettings = {
-	banner: 'Retrait à Andrésy · Livraison bientôt de retour · Fichiers par e-mail sous 48 h',
+	banner: 'Retrait à Andrésy · Livraison · Fichiers par e-mail sous 48 h',
 	kicker: 'Créations personnalisées',
 	title: 'Les détails qui rendent votre événement unique',
 	subtitle: 'Panneaux de bienvenue, papeterie, faire-part, tasses, stickers… et bien plus encore.',

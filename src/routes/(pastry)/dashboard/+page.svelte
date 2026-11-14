@@ -8,7 +8,7 @@
 		Euro,
 		Plus,
 		Calendar,
-		FileText,
+		MessageCircle,
 		Copy,
 		Check,
 		BellRing,
@@ -151,8 +151,8 @@
 		goto('/dashboard/availability');
 	}
 
-	function goToCustomForm() {
-		goto('/dashboard/custom-form');
+	function goToMessages() {
+		goto('/dashboard/messages');
 	}
 
 	// Fonction pour copier l'URL du shop
@@ -285,11 +285,11 @@
 		</button>
 		<button
 			type="button"
-			on:click={goToCustomForm}
+			on:click={goToMessages}
 			class="flex items-center gap-3 rounded-2xl border border-[#EADDE1] bg-white p-3 text-left text-sm transition-colors hover:border-[#BC90A5]"
 		>
-			<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F3E6EA] text-[#7A4F60]"><FileText class="h-5 w-5" /></span>
-			Formulaire
+			<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F3E6EA] text-[#7A4F60]"><MessageCircle class="h-5 w-5" /></span>
+			Messages
 		</button>
 	</div>
 

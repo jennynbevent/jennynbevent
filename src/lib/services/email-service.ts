@@ -38,6 +38,7 @@ import { CriticalErrorNotificationEmail } from '$lib/emails/critical-error-notif
 import { MarketingCampaignEmail } from '$lib/emails/marketing-campaign';
 import type { OrderEmailExtras } from '$lib/emails/order-extras';
 import { sendPushToAll, euros, pathOf } from '$lib/push';
+import { ContactMessageNotificationEmail, ContactMessageCopyEmail, ContactReplyEmail } from '$lib/emails/contact-message';
 
 export class EmailService {
     /**
@@ -886,6 +887,81 @@ export class EmailService {
             console.error('Erreur EmailService.sendOrderCancelled:', error);
             throw error;
         }
+    }
+
+    /**
+     * Page Contact : nouveau message → e-mail + notification pour toi
+     * (« Répondre » dans la messagerie répond directement au client)
+     */
+    static async sendContactMessageNotification(p: {
+        to: string;
+        name: string;
+        email: string;
+        phone?: string | null;
+        message: string;
+        photos: string[];
+        dashboardUrl: string;
+    }) {
+        await sendPushToAll({
+            title: '💬 Nouveau message',
+            body: `${p.name} · « ${p.message.replace(/\s+/g, ' ').slice(0, 80)}${p.message.length > 80 ? '…' : ''} »`,
+            url: pathOf(p.dashboardUrl),
+            tag: 'message-' + p.dashboardUrl.split('/').pop(),
+        });
+        const resend = getResend();
+        if (!resend) return { success: false };
+        const { data, error } = await resend.emails.send({
+            from: 'Jnb Event <contact@jennynbevent.com>',
+            to: p.to,
+            replyTo: p.email,
+            subject: `💬 Nouveau message de ${p.name}`,
+            html: ContactMessageNotificationEmail(p),
+        });
+        if (error) console.error('[EmailService] message contact (toi):', error);
+        return { success: !error, messageId: data?.id };
+    }
+
+    /** Page Contact : copie du message pour le client */
+    static async sendContactMessageCopy(p: {
+        to: string;
+        name: string;
+        message: string;
+        shopName: string;
+        shopLogo?: string | null;
+    }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
+        const { data, error } = await resend.emails.send({
+            from: `${p.shopName} <contact@jennynbevent.com>`,
+            to: p.to,
+            replyTo: 'contact@jennynbevent.com',
+            subject: 'Nous avons bien reçu votre message',
+            html: ContactMessageCopyEmail(p),
+        });
+        if (error) console.error('[EmailService] copie message contact:', error);
+        return { success: !error, messageId: data?.id };
+    }
+
+    /** Ta réponse à un message, écrite depuis l'espace boutique */
+    static async sendContactReply(p: {
+        to: string;
+        name: string;
+        reply: string;
+        originalMessage: string;
+        shopName: string;
+        shopLogo?: string | null;
+    }) {
+        const resend = getResend();
+        if (!resend) return { success: false, error: "L'envoi d'e-mails n'est pas configuré." };
+        const { data, error } = await resend.emails.send({
+            from: `${p.shopName} <contact@jennynbevent.com>`,
+            to: p.to,
+            replyTo: 'contact@jennynbevent.com',
+            subject: `Re : votre message à ${p.shopName}`,
+            html: ContactReplyEmail(p),
+        });
+        if (error) console.error('[EmailService] réponse message contact:', error);
+        return { success: !error, messageId: data?.id, error: error?.message };
     }
 
     /**

@@ -333,25 +333,6 @@
 					Tout ({statusCounts.all})
 				</Button>
 
-				<!-- Filtres par statut -->
-				<Button
-					variant={selectedStatus === 'pending' ? 'default' : 'outline'}
-					size="sm"
-					on:click={() => (selectedStatus = 'pending')}
-					class="whitespace-nowrap"
-				>
-					Devis à faire* ({statusCounts.pending})
-				</Button>
-
-				<Button
-					variant={selectedStatus === 'quoted' ? 'default' : 'outline'}
-					size="sm"
-					on:click={() => (selectedStatus = 'quoted')}
-					class="whitespace-nowrap"
-				>
-					Devis envoyés* ({statusCounts.quoted})
-				</Button>
-
 				<Button
 					variant={selectedStatus === 'to_verify' ? 'default' : 'outline'}
 					size="sm"
@@ -388,15 +369,6 @@
 					Terminées ({statusCounts.completed})
 				</Button>
 
-				<Button
-					variant={selectedStatus === 'refused' ? 'default' : 'outline'}
-					size="sm"
-					on:click={() => (selectedStatus = 'refused')}
-					class="whitespace-nowrap"
-				>
-					Refusées* ({statusCounts.refused})
-				</Button>
-
 				<!-- Bouton "Non finalisée" à la fin avec style discret -->
 				<Button
 					variant={selectedStatus === 'non_finalisee' ? 'secondary' : 'ghost'}
@@ -409,18 +381,7 @@
 			</div>
 		</div>
 
-		<!-- Légende pour les étoiles -->
-		<div class="text-xs text-muted-foreground">
-			<span class="font-medium">*</span> Ces statuts concernent uniquement les
-			<button
-				on:click={() => goto('/dashboard/custom-form')}
-				class="font-medium text-gray-600 underline transition-colors hover:text-gray-800"
-				title="Configurer le formulaire de commandes personnalisées"
-			>
-				commandes personnalisées
-			</button>
 		</div>
-	</div>
 
 	<!-- Liste des commandes groupées par date -->
 	<div class="space-y-8">

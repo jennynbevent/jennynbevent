@@ -7,8 +7,10 @@ import { isAllowedAdminEmail } from '$lib/auth/admin-access';
  * Only ensures the user is logged in and has a shop (redirect to onboarding otherwise).
  */
 export const load: LayoutServerLoad = async ({
-	locals: { safeGetSession, supabase },
+	locals: { safeGetSession, supabase, supabaseServiceRole },
+	depends,
 }) => {
+	depends('app:messages');
 	const { session, user } = await safeGetSession();
 	if (!session || !user) {
 		redirect(303, '/login');
@@ -48,10 +50,24 @@ export const load: LayoutServerLoad = async ({
 		needsSubscription: false,
 	};
 
+	// Nombre de messages non lus (page Contact)
+	let unreadMessages = 0;
+	try {
+		const { count } = await (supabaseServiceRole as any)
+			.from('shop_messages')
+			.select('id', { count: 'exact', head: true })
+			.eq('shop_id', shop.id)
+			.is('read_at', null);
+		unreadMessages = count ?? 0;
+	} catch {
+		unreadMessages = 0;
+	}
+
 	return {
 		user,
 		shop,
 		permissions,
+		unreadMessages,
 		orderLimitStats: null,
 	};
 };

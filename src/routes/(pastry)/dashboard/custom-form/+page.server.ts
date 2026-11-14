@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad, Actions } from './$types';
@@ -7,6 +7,8 @@ import { STRIPE_PRICES } from '$lib/config/server';
 import { toggleCustomRequestsFormSchema, updateCustomFormFormSchema } from './schema';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
+    // « Formulaire » est remplacé par « Messages »
+    redirect(303, '/dashboard/messages');
     // ✅ OPTIMISÉ : Réutiliser les permissions du layout
     const { permissions, user } = await parent();
 

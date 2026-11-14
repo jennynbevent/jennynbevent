@@ -74,13 +74,9 @@
 		}
 	}
 
-	function goToCustomRequest() {
-		goto('/custom');
-	}
-
-	// Lien « Contact » : formulaire sur mesure s'il est activé, sinon Instagram
+	// Lien « Contact » : page Contact si elle est activée, sinon Instagram
 	$: contactHref = shop?.is_custom_accepted
-		? '/custom'
+		? '/contact'
 		: shop?.instagram
 			? `https://instagram.com/${shop.instagram.replace('@', '')}`
 			: null;
@@ -257,7 +253,7 @@
 				{#each sections as sec (sec.id)}
 					<a href={categoryHref(sec.id)} class="hover:underline hover:underline-offset-4">{sec.name}</a>
 				{/each}
-				{#if shop.is_custom_accepted}<a href="/custom" class="hover:underline hover:underline-offset-4">Sur mesure</a>{/if}
+				{#if contactHref}<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="hover:underline hover:underline-offset-4">Contact</a>{/if}
 				{#if faqs && faqs.length > 0}<a href="/faq" class="hover:underline hover:underline-offset-4">FAQ</a>{/if}
 			</nav>
 			{#if menuOpen}
@@ -265,7 +261,6 @@
 					{#each sections as sec (sec.id)}
 						<a href={categoryHref(sec.id)} on:click={() => (menuOpen = false)} class="py-2.5">{sec.name}</a>
 					{/each}
-					{#if shop.is_custom_accepted}<a href="/custom" class="py-2.5">Sur mesure</a>{/if}
 					{#if faqs && faqs.length > 0}<a href="/faq" class="py-2.5">FAQ</a>{/if}
 					{#if contactHref}
 						<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="py-2.5">Contact</a>
@@ -365,7 +360,7 @@
 						<h2 class="serif text-3xl font-semibold">Une idée sur mesure ?</h2>
 						<p class="mx-auto mt-2 max-w-md text-neutral-600">Panneau photo, création personnalisée… Racontez-nous votre événement, on vous répond rapidement.</p>
 						<a href={contactHref} target={contactExternal ? '_blank' : undefined} rel={contactExternal ? 'noopener noreferrer' : undefined} class="mt-5 inline-block rounded-full px-7 py-3 text-sm font-medium shadow-sm" style={customStyles.buttonStyle}>
-							{shop.is_custom_accepted ? 'Demander un devis' : 'Me contacter'}
+							Me contacter
 						</a>
 					</section>
 				{/if}

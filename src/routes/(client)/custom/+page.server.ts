@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { message, superValidate, setError } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad, Actions } from './$types';
@@ -8,6 +8,8 @@ import { PUBLIC_SITE_URL } from '$env/static/public';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
+	// Les demandes sur mesure sont remplacées par la page Contact
+	redirect(301, '/contact');
 	try {
 		const { shopId } = await parent();
 		if (!shopId) throw error(404, 'Boutique non trouvée');

@@ -4,7 +4,7 @@
 import Home from '~icons/lucide/home';
 import ShoppingCart from '~icons/lucide/shopping-cart';
 import Package from '~icons/lucide/package';
-import FileText from '~icons/lucide/file-text';
+import MessageCircle from '~icons/lucide/message-circle';
 import Calendar from '~icons/lucide/calendar';
 import Store from '~icons/lucide/store';
 import HelpCircle from '~icons/lucide/help-circle';
@@ -23,7 +23,7 @@ import LogOut from '~icons/lucide/log-out';
 		{ href: '/dashboard', label: 'Tableau de bord', icon: Home, exact: true },
 		{ href: '/dashboard/orders', label: 'Commandes', icon: ShoppingCart, exact: false },
 		{ href: '/dashboard/products', label: 'Articles', icon: Package, exact: false },
-		{ href: '/dashboard/custom-form', label: 'Formulaire', icon: FileText, exact: false },
+		{ href: '/dashboard/messages', label: 'Messages', icon: MessageCircle, exact: false },
 		{ href: '/dashboard/availability', label: 'Disponibilités', icon: Calendar, exact: false },
 		{ href: '/dashboard/shop', label: 'Ma boutique', icon: Store, exact: false },
 		{ href: '/dashboard/faq', label: 'Aide', icon: HelpCircle, exact: false },
@@ -86,6 +86,7 @@ import LogOut from '~icons/lucide/log-out';
 				>
 					<svelte:component this={item.icon} class="h-[18px] w-[18px]" />
 					{item.label}
+					{#if item.href === '/dashboard/messages' && data.unreadMessages > 0}<span class="ml-auto rounded-full bg-white px-1.5 text-[11px] font-semibold leading-[18px] text-[#7A4F60]">{data.unreadMessages}</span>{/if}
 				</NavLink>
 			{/each}
 		</nav>
@@ -135,6 +136,7 @@ import LogOut from '~icons/lucide/log-out';
 							>
 								<svelte:component this={item.icon} class="h-5 w-5" />
 								{item.label}
+								{#if item.href === '/dashboard/messages' && data.unreadMessages > 0}<span class="ml-auto rounded-full bg-white px-1.5 text-[11px] font-semibold leading-[18px] text-[#7A4F60]">{data.unreadMessages}</span>{/if}
 							</a>
 						{/each}
 						<form method="POST" action="/logout" class="mt-2 border-t border-white/15 pt-3">
