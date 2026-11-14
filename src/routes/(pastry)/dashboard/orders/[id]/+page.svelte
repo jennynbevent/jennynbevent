@@ -48,6 +48,29 @@
 	} = $page.data);
 	$: cart = $page.data.cart as { ref: string; total: number; items: Array<{ id: string; name: string; price: number; status: string; mode: string }> } | null;
 	$: isReservationProduct = product?.booking_type === 'reservation';
+	$: shipping = $page.data.shipping as {
+		relay: { id: string; name: string; address: string; zip: string; city: string; country: string };
+		fee: number;
+		parcel: string;
+		tracking: string | null;
+		trackingUrl: string | null;
+		shippedAt: string | null;
+		items: string[];
+	} | null;
+	let trackingInput = '';
+	let shipSubmitting = false;
+	let shipError = '';
+	let copied = '';
+	async function copy(label: string, text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = label;
+			setTimeout(() => (copied = ''), 1500);
+		} catch {
+			copied = '';
+		}
+	}
+	const modeLabel = (m: string) => (m === 'email' ? '✉️ Par e-mail' : m === 'relais' ? '📦 Point Relais' : '📍 Retrait');
 
 	// État du formulaire pour les actions
 	// Fichier PDF à imprimer joint à l'e-mail « commande prête »
@@ -269,7 +292,8 @@
 	}
 
 	// Fonction pour obtenir le texte du statut
-	function getStatusText(status: string): string {
+	function getStatusText(status: string, relais = false): string {
+		if (status === 'ready' && relais) return 'Expédiée';
 		switch (status) {
 			case 'non_finalisee':
 				return 'Non finalisée';
@@ -421,7 +445,7 @@
 						this={getStatusIcon(order.status)}
 						class="mr-2 h-4 w-4"
 					/>
-					{getStatusText(order.status)}
+					{getStatusText(order.status, !!shipping)}
 				</Badge>
 			</div>
 		</div>
@@ -448,16 +472,47 @@
 				{#each cart.items as it}
 					<li class="flex items-center justify-between gap-3">
 						{#if it.id === order.id}
-							<span><b>{it.name}</b> <span class="text-muted-foreground">(cette commande)</span> · {it.mode === 'email' ? '✉️ Par e-mail' : '📍 Retrait'}</span>
+							<span><b>{it.name}</b> <span class="text-muted-foreground">(cette commande)</span> · {modeLabel(it.mode)}</span>
 						{:else}
-							<a href="/dashboard/orders/{it.id}" class="underline-offset-2 hover:underline">{it.name} · {it.mode === 'email' ? '✉️ Par e-mail' : '📍 Retrait'}</a>
+							<a href="/dashboard/orders/{it.id}" class="underline-offset-2 hover:underline">{it.name} · {modeLabel(it.mode)}</a>
 						{/if}
-						<span class="shrink-0 text-muted-foreground">{getStatusText(it.status)}</span>
+						<span class="shrink-0 text-muted-foreground">{getStatusText(it.status, it.mode === 'relais')}</span>
 					</li>
 				{/each}
 			</ul>
 			{#if order.status === 'to_verify'}
 				<p class="mt-2 text-xs text-muted-foreground">« J'ai reçu le paiement » valide tous les articles du panier d'un coup.</p>
+			{/if}
+		</div>
+	{/if}
+
+	{#if shipping}
+		{@const r = shipping.relay}
+		<div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
+			<div class="flex flex-wrap items-center justify-between gap-2">
+				<p class="font-semibold text-amber-900">📦 Expédition en Point Relais</p>
+				<span class="rounded-full bg-white px-3 py-1 text-xs font-medium text-amber-900">{shipping.parcel} · livraison payée {shipping.fee > 0 ? formatPrice(shipping.fee) : 'offerte'}</span>
+			</div>
+			{#if shipping.items.length > 1}
+				<p class="mt-1 text-sm text-amber-900/80">Un seul colis pour : {shipping.items.join(', ')}</p>
+			{/if}
+			<div class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+				{#each [['Destinataire', order.customer_name], ['Téléphone', order.customer_phone || '—'], ['E-mail', order.customer_email], ['Point Relais', `${r.name} (n° ${r.id})`], ['Adresse', r.address], ['Ville', `${r.zip} ${r.city}`]] as [label, value]}
+					<div class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+						<span class="min-w-0"><span class="block text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span><span class="block truncate font-medium">{value}</span></span>
+						{#if value && value !== '—'}
+							<button type="button" class="shrink-0 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" on:click={() => copy(label, label === 'Point Relais' ? r.id : String(value))}>{copied === label ? 'Copié ✓' : 'Copier'}</button>
+						{/if}
+					</div>
+				{/each}
+			</div>
+			{#if shipping.tracking}
+				<p class="mt-3 text-sm">
+					✅ Envoyé{shipping.shippedAt ? ` le ${new Date(shipping.shippedAt).toLocaleDateString('fr-FR')}` : ''} · Suivi <b>{shipping.tracking}</b>
+					{#if shipping.trackingUrl}· <a href={shipping.trackingUrl} target="_blank" rel="noopener" class="underline">Suivre le colis</a>{/if}
+				</p>
+			{:else}
+				<p class="mt-3 text-xs text-amber-900/80">Crée l'étiquette sur ton espace Mondial Relay Pro avec ces infos, puis colle le n° de suivi en bas de la page (« Colis envoyé »). Aide détaillée : Ma boutique → Aide.</p>
 			{/if}
 		</div>
 	{/if}
@@ -527,7 +582,7 @@
 						</div>
 						<div>
 							<Label class="text-sm font-medium text-muted-foreground"
-								>{order.pickup_date_end ? (isReservationProduct ? 'Information de location' : 'Information de réservation') : (isReservationProduct ? 'Date de location' : 'Date de récupération')}</Label
+								>{order.pickup_date_end ? (isReservationProduct ? 'Information de location' : 'Information de réservation') : (isReservationProduct ? 'Date de location' : shipping ? 'Envoi prévu le' : 'Date de récupération')}</Label
 							>
 							<p class="text-sm">
 								{#if order.pickup_date_end}
@@ -1125,6 +1180,45 @@
 								/>
 							{/if}
 						</div>
+					{:else if order.status === 'confirmed' && shipping}
+						<!-- Point Relais : colis déposé -->
+						<form
+							method="POST"
+							action="?/markShipped"
+							class="space-y-3"
+							use:enhance={() => {
+								shipSubmitting = true;
+								shipError = '';
+								return async ({ result }) => {
+									shipSubmitting = false;
+									if (result.type === 'success') {
+										if (result.data?.emailError) {
+											shipError = String(result.data.emailError);
+											return;
+										}
+										goto('/dashboard/orders');
+									} else if (result.type === 'failure') {
+										shipError = String(result.data?.error || 'Une erreur est survenue. Réessayez.');
+									} else if (result.type === 'error') {
+										shipError = 'Une erreur est survenue. Réessayez.';
+									}
+								};
+							}}
+						>
+							<input type="hidden" name="shopId" value={shop.id} />
+							<label class="block">
+								<span class="mb-1 block text-sm font-medium">Numéro de suivi Mondial Relay</span>
+								<Input name="tracking" bind:value={trackingInput} placeholder="ex. 12345678" autocomplete="off" />
+							</label>
+							<Button type="submit" class="h-10 w-full gap-2" disabled={shipSubmitting || trackingInput.trim().length < 6}>
+								<Package class="h-4 w-4" />
+								{shipSubmitting ? 'Envoi en cours…' : 'Colis envoyé'}
+							</Button>
+							<p class="text-xs text-muted-foreground">Le client reçoit l'e-mail « Votre colis est en route » avec le lien de suivi.{shipping.items.length > 1 ? ' Tous les articles du colis passent en « Expédiée ».' : ''}</p>
+							{#if shipError}
+								<p class="rounded-md bg-red-50 p-2 text-sm text-red-700">{shipError}</p>
+							{/if}
+						</form>
 					{:else if order.status === 'confirmed'}
 						<!-- Actions pour les commandes confirmées -->
 						<form

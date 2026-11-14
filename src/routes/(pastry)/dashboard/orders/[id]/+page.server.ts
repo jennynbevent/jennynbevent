@@ -1,5 +1,6 @@
 import { getDeliveryMode } from '$lib/utils/delivery';
 import { optionLines } from '$lib/cart/options';
+import { trackingUrl, parcelLabel, type RelayPoint } from '$lib/delivery/settings';
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { getUserPermissions, verifyShopOwnership } from '$lib/auth';
@@ -181,7 +182,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
                     name: o.product_name,
                     price: Number(o.total_amount) || 0,
                     status: o.status,
-                    mode: getDeliveryMode(o.customization_data) === 'email' ? 'email' : 'print',
+                    mode: (() => { const m = getDeliveryMode(o.customization_data); return m === 'email' ? 'email' : m === 'relais' ? 'relais' : 'print'; })(),
                 }));
                 if (items.length > 1) {
                     cart = { ref: refRow.cart_ref, items, total: Math.round(items.reduce((t: number, i: any) => t + i.price, 0) * 100) / 100 };
@@ -189,6 +190,49 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             }
         } catch {
             cart = null;
+        }
+
+        // Livraison en Point Relais : infos du colis
+        let shipping: {
+            relay: RelayPoint;
+            fee: number;
+            parcel: string;
+            tracking: string | null;
+            trackingUrl: string | null;
+            shippedAt: string | null;
+            items: string[];
+        } | null = null;
+        try {
+            const { data: sh } = await (locals.supabaseServiceRole as any)
+                .from('orders')
+                .select('shipping_relay, shipping_fee, parcel_size, tracking_number, shipped_at, cart_ref, product_name')
+                .eq('id', params.id)
+                .eq('shop_id', permissions.shopId)
+                .maybeSingle();
+            if (sh?.shipping_relay) {
+                let parcelRows = [sh];
+                if (sh.cart_ref) {
+                    const { data: rows } = await (locals.supabaseServiceRole as any)
+                        .from('orders')
+                        .select('shipping_relay, shipping_fee, product_name')
+                        .eq('cart_ref', sh.cart_ref)
+                        .eq('shop_id', permissions.shopId)
+                        .not('shipping_relay', 'is', null)
+                        .order('created_at', { ascending: true });
+                    if (rows?.length) parcelRows = rows;
+                }
+                shipping = {
+                    relay: sh.shipping_relay,
+                    fee: parcelRows.reduce((t: number, r: any) => t + (Number(r.shipping_fee) || 0), 0),
+                    parcel: parcelLabel(sh.parcel_size),
+                    tracking: sh.tracking_number || null,
+                    trackingUrl: trackingUrl(sh.tracking_number, sh.shipping_relay?.zip),
+                    shippedAt: sh.shipped_at || null,
+                    items: parcelRows.map((r: any) => r.product_name),
+                };
+            }
+        } catch {
+            shipping = null;
         }
 
         // Initialiser les formulaires Superforms
@@ -214,7 +258,8 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             personalNoteForm,
             isPending: false,
             printFile,
-            cart
+            cart,
+            shipping
         };
     } catch (err) {
         throw err;
@@ -949,7 +994,7 @@ export const actions: Actions = {
                 try {
                     const { data: all } = await (locals.supabaseServiceRole as any)
                         .from('orders')
-                        .select('id, product_id, product_name, total_amount, customization_data, inspiration_photos, pickup_date, pickup_time, created_at')
+                        .select('id, product_id, product_name, total_amount, customization_data, inspiration_photos, pickup_date, pickup_time, created_at, shipping_relay, shipping_fee')
                         .eq('cart_ref', cartRef)
                         .eq('shop_id', shopId)
                         .order('created_at', { ascending: true });
@@ -966,6 +1011,8 @@ export const actions: Actions = {
                         lines: optionLines(o.customization_data || {}),
                     }));
                     const printRow = (all || []).find((o: any) => getDeliveryMode(o.customization_data) !== 'email');
+                    const relay = printRow?.shipping_relay || null;
+                    const fee = (all || []).reduce((t: number, o: any) => t + (Number(o.shipping_fee) || 0), 0);
                     const shopColor = await getShopColorFromShopId(locals.supabaseServiceRole, shopId);
                     await EmailService.sendCartCustomer(order.customer_email, {
                         stage: 'confirmed',
@@ -974,10 +1021,12 @@ export const actions: Actions = {
                         shopLogo: order.shops.logo_url,
                         shopColor,
                         items,
-                        total: Math.round(items.reduce((t: number, i: any) => t + i.price, 0) * 100) / 100,
+                        total: Math.round((items.reduce((t: number, i: any) => t + i.price, 0) + fee) * 100) / 100,
                         cartRef,
-                        pickupDate: printRow?.pickup_date || null,
-                        pickupTime: printRow?.pickup_time || null,
+                        pickupDate: relay ? null : printRow?.pickup_date || null,
+                        pickupTime: relay ? null : printRow?.pickup_time || null,
+                        relay,
+                        shippingFee: fee,
                         url: `${PUBLIC_SITE_URL}/panier/merci/${all?.[0]?.id || order.id}`,
                     });
                 } catch (e) {
@@ -1263,6 +1312,81 @@ export const actions: Actions = {
     },
 
     // Marquer une commande comme terminée
+    // Point Relais : colis déposé → « Expédiée » + e-mail avec le n° de suivi
+    markShipped: async ({ request, params, locals }) => {
+        const formData = await request.formData();
+        const shopId = String(formData.get('shopId') || '');
+        const tracking = String(formData.get('tracking') || '').replace(/\s+/g, '').toUpperCase();
+        const { session } = await locals.safeGetSession();
+        const userId = session?.user.id;
+        if (!userId || !shopId) return fail(401, { error: 'Non autorisé' });
+        if (!(await verifyShopOwnership(userId, shopId, locals.supabase))) {
+            return fail(403, { error: 'Accès non autorisé à cette boutique' });
+        }
+        if (!/^[0-9A-Z-]{6,40}$/.test(tracking)) {
+            return fail(400, { error: 'Numéro de suivi invalide (copie-le depuis ton étiquette Mondial Relay).' });
+        }
+
+        const admin = locals.supabaseServiceRole as any;
+        const { data: order } = await admin
+            .from('orders')
+            .select('id, status, cart_ref, order_ref, customer_name, customer_email, shipping_relay, product_name')
+            .eq('id', params.id)
+            .eq('shop_id', shopId)
+            .maybeSingle();
+        if (!order?.shipping_relay) return fail(400, { error: 'Cette commande n’est pas une livraison en Point Relais.' });
+        if (order.status !== 'confirmed') return fail(400, { error: 'La commande doit être « En cours » pour être expédiée.' });
+
+        // Tous les articles du même colis (même panier, Point Relais, en cours)
+        let ids = [order.id];
+        let names = [order.product_name];
+        if (order.cart_ref) {
+            const { data: rows } = await admin
+                .from('orders')
+                .select('id, product_name')
+                .eq('cart_ref', order.cart_ref)
+                .eq('shop_id', shopId)
+                .eq('status', 'confirmed')
+                .not('shipping_relay', 'is', null);
+            if (rows?.length) {
+                ids = rows.map((r: any) => r.id);
+                names = rows.map((r: any) => r.product_name);
+            }
+        }
+        const { error: upErr } = await admin
+            .from('orders')
+            .update({ status: 'ready', tracking_number: tracking, shipped_at: new Date().toISOString() })
+            .in('id', ids)
+            .eq('shop_id', shopId);
+        if (upErr) {
+            await ErrorLogger.logCritical(upErr, { orderId: params.id, shopId }, { action: 'markShipped' });
+            return fail(500, { error: 'Erreur lors de la mise à jour de la commande' });
+        }
+
+        let emailError: string | null = null;
+        try {
+            const { data: shop } = await admin.from('shops').select('name, logo_url').eq('id', shopId).single();
+            const shopColor = await getShopColorFromShopId(admin, shopId);
+            const res = await EmailService.sendParcelShipped(order.customer_email, {
+                customerName: order.customer_name,
+                shopName: shop?.name || 'Jnb Event',
+                shopLogo: shop?.logo_url || null,
+                shopColor,
+                items: names,
+                relay: order.shipping_relay,
+                tracking,
+                trackingUrl: trackingUrl(tracking, order.shipping_relay?.zip),
+                orderRef: order.cart_ref || order.order_ref,
+                url: `${PUBLIC_SITE_URL}/panier/merci/${order.id}`,
+            });
+            if (!res.success) emailError = "La commande est bien « Expédiée », mais l'e-mail au client n'a pas pu partir.";
+        } catch (e) {
+            console.error('[markShipped] e-mail:', e);
+            emailError = "La commande est bien « Expédiée », mais l'e-mail au client n'a pas pu partir.";
+        }
+        return { success: true, emailError };
+    },
+
     makeOrderCompleted: async ({ request, params, locals }) => {
         try {
             // ✅ OPTIMISÉ : Récupérer shopId depuis formData

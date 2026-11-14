@@ -7,7 +7,7 @@ export const PICKUP_MAPS_URL =
 	'https://www.google.com/maps/search/?api=1&query=' +
 	encodeURIComponent("5 Grand Rue de l'Hautil 78570 Andrésy");
 
-export type DeliveryMode = 'retrait' | 'email' | null;
+export type DeliveryMode = 'retrait' | 'email' | 'relais' | null;
 
 function readValue(v: unknown): string {
 	if (v === null || v === undefined) return '';
@@ -24,6 +24,7 @@ export function getDeliveryMode(customizationData: unknown): DeliveryMode {
 	if (!customizationData || typeof customizationData !== 'object') return null;
 	const raw = readValue((customizationData as Record<string, unknown>)['Mode de remise']);
 	if (!raw) return null;
+	if (/relais/i.test(raw)) return 'relais';
 	if (/mail/i.test(raw)) return 'email';
 	if (/retrait/i.test(raw)) return 'retrait';
 	return null;

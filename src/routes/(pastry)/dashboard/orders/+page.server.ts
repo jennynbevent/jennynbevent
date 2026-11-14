@@ -146,6 +146,21 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
             console.error('[orders] cart_ref:', e);
         }
 
+        // Livraison en Point Relais
+        try {
+            const { data: relaisRows, error: relaisErr } = await (locals.supabaseServiceRole as any)
+                .from('orders')
+                .select('id')
+                .eq('shop_id', shop.id)
+                .not('shipping_relay', 'is', null);
+            if (!relaisErr && relaisRows?.length) {
+                const relaisIds = new Set(relaisRows.map((r: any) => r.id));
+                for (const o of normalOrders as any[]) if (relaisIds.has(o.id)) o.is_relais = true;
+            }
+        } catch (e) {
+            console.error('[orders] point relais:', e);
+        }
+
         // Grouper les commandes normales par date (pour l'affichage "Tout")
         const groupedOrders = groupOrdersByDate(normalOrders);
 

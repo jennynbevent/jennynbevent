@@ -12,6 +12,7 @@ import { uploadShopLogo, uploadBackgroundImage, deleteImage, extractPublicIdFrom
 import { verifyShopOwnership } from '$lib/auth';
 import { setError } from 'sveltekit-superforms';
 import { isStripeConfigured, stripeMode } from '$lib/stripe/shop-payments';
+import { readDeliverySettings } from '$lib/delivery/settings';
 
 /** Ordre des catégories de la boutique */
 async function loadLayout(supabase: any, shopId: string) {
@@ -121,6 +122,14 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
         }),
         permissions,
         layout: await loadLayout(locals.supabase, permissions.shopId),
+        delivery: await (async () => {
+            const { data: d, error: dErr } = await (locals.supabase as any)
+                .from('shops')
+                .select('delivery_settings')
+                .eq('id', permissions.shopId)
+                .single();
+            return { settings: readDeliverySettings(dErr ? null : d?.delivery_settings), ready: !dErr };
+        })(),
         stripe: {
             configured: isStripeConfigured(),
             mode: stripeMode(),
@@ -993,6 +1002,41 @@ export const actions: Actions = {
         }
 
         return { success: true };
+    },
+
+    // Livraison en Point Relais : réglages
+    updateDelivery: async ({ request, locals }) => {
+        const { user } = await locals.safeGetSession();
+        if (!user) return fail(401, { error: 'Non autorisé' });
+        const { data: shop } = await (locals.supabase as any)
+            .from('shops')
+            .select('id')
+            .eq('profile_id', user.id)
+            .single();
+        if (!shop) return fail(403, { error: 'Boutique introuvable' });
+
+        const fd = await request.formData();
+        const freeOn = fd.get('freeOn') === 'on';
+        const settings = readDeliverySettings({
+            enabled: fd.get('enabled') === 'on',
+            prices: { small: fd.get('small'), medium: fd.get('medium'), large: fd.get('large') },
+            freeFrom: freeOn ? fd.get('freeFrom') : null,
+            brand: String(fd.get('brand') || ''),
+            prepDays: fd.get('prepDays'),
+        });
+        if (settings.brand && !/^[A-Z0-9 ]{2,10}$/.test(settings.brand)) {
+            return fail(400, { error: 'Le code enseigne Mondial Relay ne doit contenir que des lettres et des chiffres.' });
+        }
+        const { error: upErr } = await (locals.supabaseServiceRole as any)
+            .from('shops')
+            .update({ delivery_settings: settings })
+            .eq('id', shop.id)
+            .select('id');
+        if (upErr) {
+            console.error('[updateDelivery]', upErr);
+            return fail(500, { error: "Impossible d'enregistrer. La mise à jour de la base (SQL) a-t-elle bien été faite ?" });
+        }
+        return { success: true, delivery: settings };
     },
 
     // Paiement par carte (Stripe) : activer / désactiver

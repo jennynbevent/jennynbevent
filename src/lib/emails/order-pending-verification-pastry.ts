@@ -73,7 +73,7 @@ export function OrderPendingVerificationPastryEmail({
     const orderDetails = EmailTable([
         { label: 'Article', value: productName },
         { label: pickupDateEnd ? 'Information de réservation' : 'Date de retrait', value: formatDateTimeForEmail(pickupDate, pickupTime, pickupDateEnd) },
-        ...(extras?.deliveryMode ? [{ label: 'Remise', value: extras.deliveryMode === 'email' ? 'Par e-mail (fichier à imprimer, sous 48 h)' : 'Retrait à Andrésy' }] : []),
+        ...(extras?.deliveryMode ? [{ label: 'Remise', value: extras.deliveryMode === 'email' ? 'Par e-mail (fichier à imprimer, sous 48 h)' : extras.deliveryMode === 'relais' ? 'Livraison en Point Relais' : 'Retrait à Andrésy' }] : []),
         ...amountRows(totalAmount, paidAmount, { total: 'Total', paid: 'Acompte à vérifier' }),
     ]);
 

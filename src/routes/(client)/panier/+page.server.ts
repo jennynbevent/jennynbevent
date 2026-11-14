@@ -1,6 +1,21 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import type { CartData, CartLine } from '$lib/cart/server';
+import { readDeliverySettings, cartParcelSize, shippingFee, readRelay } from '$lib/delivery/settings';
+
+/** Réglages de livraison + taille de colis des articles en vente */
+async function deliveryData(locals: App.Locals, shopId: string) {
+	const admin = locals.supabaseServiceRole as any;
+	const [{ data: shopRow, error: e1 }, { data: products, error: e2 }] = await Promise.all([
+		admin.from('shops').select('delivery_settings').eq('id', shopId).single(),
+		admin.from('products').select('id, parcel_size').eq('shop_id', shopId).eq('is_active', true),
+	]);
+	const settings = readDeliverySettings(e1 ? null : shopRow?.delivery_settings);
+	if (e1 || e2) settings.enabled = false; // migration pas encore faite
+	const sizes: Record<string, string> = {};
+	for (const p of products || []) sizes[p.id] = p.parcel_size || 'medium';
+	return { settings, sizes };
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -18,7 +33,16 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 	const { shopId } = await parent();
 	const data = await shopData(locals, shopId);
 	if (!data?.shop) throw error(404, 'Boutique non trouvée');
+	const delivery = await deliveryData(locals, data.shop.id);
 	return {
+		delivery: {
+			enabled: delivery.settings.enabled,
+			prices: delivery.settings.prices,
+			freeFrom: delivery.settings.freeFrom,
+			brand: delivery.settings.brand,
+			prepDays: delivery.settings.prepDays,
+		},
+		parcelSizes: delivery.sizes,
 		shop: data.shop,
 		availabilities: data.availabilities || [],
 		unavailabilities: data.unavailabilities || [],
@@ -54,6 +78,13 @@ export const actions: Actions = {
 		const info = String(fd.get('additional_information') || '').trim().slice(0, 2000);
 		const pickupDate = String(fd.get('pickup_date') || '').trim();
 		const pickupTime = String(fd.get('pickup_time') || '').trim();
+		const wantsRelais = String(fd.get('delivery') || '') === 'relais';
+		let relay = null;
+		try {
+			relay = readRelay(JSON.parse(String(fd.get('relay') || 'null')));
+		} catch {
+			relay = null;
+		}
 
 		if (!refs.length) return fail(400, { error: 'Votre panier est vide.' });
 		if (!name) return fail(400, { error: 'Merci d’indiquer votre nom.' });
@@ -108,8 +139,23 @@ export const actions: Actions = {
 		const printLines = lines.filter((l) => l.delivery_mode === 'print');
 		let finalDate: string | null = null;
 		let finalTime: string | null = null;
+		const itemsTotal = Math.round(lines.reduce((s, l) => s + l.total_amount, 0) * 100) / 100;
+		let fee = 0;
+		let parcel: string | null = null;
+		let shipDate: string | null = null;
+		const isRelais = printLines.length > 0 && wantsRelais;
 
-		if (printLines.length) {
+		if (isRelais) {
+			const { settings, sizes } = await deliveryData(locals, shopId);
+			if (!settings.enabled) return fail(400, { error: 'La livraison en Point Relais n’est pas disponible pour le moment.' });
+			const size = cartParcelSize(printLines.map((l) => sizes[l.product_id]));
+			if (!size) return fail(400, { error: 'Un de vos articles est disponible uniquement en retrait à Andrésy.' });
+			if (!relay) return fail(400, { error: 'Merci de choisir votre Point Relais.' });
+			parcel = size;
+			fee = shippingFee(settings, size, itemsTotal);
+			const notice = Math.max(settings.prepDays, ...printLines.map((l) => l.min_days_notice || 0));
+			shipDate = addDays(todayParis(), notice);
+		} else if (printLines.length) {
 			if (!DATE_RE.test(pickupDate)) return fail(400, { error: 'Merci de choisir une date de retrait.' });
 			const notice = Math.max(0, ...printLines.map((l) => l.min_days_notice || 0));
 			if (pickupDate < addDays(todayParis(), notice)) {
@@ -152,7 +198,7 @@ export const actions: Actions = {
 			finalDate = pickupDate;
 		}
 
-		const total = Math.round(lines.reduce((s, l) => s + l.total_amount, 0) * 100) / 100;
+		const total = Math.round((itemsTotal + fee) * 100) / 100;
 		const { data: cartRef, error: refError } = await (locals.supabaseServiceRole as any).rpc('generate_order_ref');
 		if (refError || !cartRef) return fail(500, { error: 'Erreur, merci de réessayer.' });
 
@@ -167,6 +213,11 @@ export const actions: Actions = {
 			pickup_time: finalTime,
 			total_amount: total,
 			lines,
+			delivery: isRelais ? 'relais' : 'retrait',
+			relay: isRelais ? relay : null,
+			shipping_fee: fee,
+			parcel_size: parcel,
+			ship_date: shipDate,
 		};
 		const { error: insertError } = await (locals.supabaseServiceRole as any)
 			.from('pending_orders')

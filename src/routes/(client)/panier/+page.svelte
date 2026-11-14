@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
@@ -7,6 +7,7 @@
 	import { DatePicker, TimeSlotSelector } from '$lib/components';
 	import { ClientFooter } from '$lib/components';
 	import { cart, cartTotal, removeFromCart } from '$lib/cart/store';
+	import { cartParcelSize, shippingFee, missingForFree, parcelLabel, MR_TEST_BRAND, type RelayPoint } from '$lib/delivery/settings';
 
 	export let data;
 	$: ({ shop, availabilities, unavailabilities, datesWithLimitReached } = data);
@@ -20,6 +21,89 @@
 	$: printItems = items.filter((i) => i.mode === 'print');
 	$: hasPrint = printItems.length > 0;
 	$: minNotice = Math.max(0, ...printItems.map((i) => i.minDaysNotice || 0));
+
+	// Livraison en Point Relais
+	$: delivery = data.delivery;
+	$: sizes = (data.parcelSizes || {}) as Record<string, string>;
+	$: relaisOn = !!delivery?.enabled && hasPrint;
+	$: parcel = cartParcelSize(printItems.map((i) => sizes[i.productId] || 'medium'));
+	$: blockingItem = printItems.find((i) => sizes[i.productId] === 'pickup_only');
+	$: relaisPossible = relaisOn && !!parcel;
+	let mode: 'retrait' | 'relais' = 'retrait';
+	$: if (!relaisPossible && mode === 'relais') mode = 'retrait';
+	$: isRelais = mode === 'relais' && relaisPossible;
+	$: fee = relaisPossible && parcel ? shippingFee(delivery, parcel, $cartTotal) : 0;
+	$: missing = relaisPossible ? missingForFree(delivery, $cartTotal) : null;
+	$: freeProgress = delivery?.freeFrom ? Math.min(100, Math.round(($cartTotal / delivery.freeFrom) * 100)) : 0;
+	$: total = Math.round(($cartTotal + (isRelais ? fee : 0)) * 100) / 100;
+	let relay: RelayPoint | null = null;
+	let widgetError = '';
+	let widgetLoading = false;
+	let widgetReady = false;
+	let postCode = '';
+
+	function loadScript(src: string) {
+		return new Promise<void>((resolve, reject) => {
+			if (document.querySelector(`script[src="${src}"]`)) return resolve();
+			const el = document.createElement('script');
+			el.src = src;
+			el.onload = () => resolve();
+			el.onerror = () => reject(new Error(src));
+			document.head.appendChild(el);
+		});
+	}
+	function loadCss(href: string) {
+		if (document.querySelector(`link[href="${href}"]`)) return;
+		const el = document.createElement('link');
+		el.rel = 'stylesheet';
+		el.href = href;
+		document.head.appendChild(el);
+	}
+
+	async function openRelayMap() {
+		widgetError = '';
+		widgetLoading = true;
+		try {
+			loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+			await loadScript('https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js');
+			await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+			await loadScript('https://widget.mondialrelay.com/parcelshop-picker/jquery.plugin.mondialrelay.parcelshoppicker.min.js');
+			widgetReady = true;
+			await tick();
+			const $ = (window as any).jQuery;
+			$('#mr-widget').empty();
+			$('#mr-widget').MR_ParcelShopPicker({
+				Target: '#mr-target',
+				Brand: (delivery.brand || MR_TEST_BRAND).padEnd(8, ' '),
+				Country: 'FR',
+				PostCode: postCode,
+				ColLivMod: '24R',
+				NbResults: '7',
+				Responsive: true,
+				ShowResultsOnMap: true,
+				OnParcelShopSelected: (d: any) => {
+					relay = {
+						id: String(d.ID || ''),
+						name: String(d.Nom || '').trim(),
+						address: [d.Adresse1, d.Adresse2].filter((x: any) => x && String(x).trim()).join(', ').trim(),
+						zip: String(d.CP || '').trim(),
+						city: String(d.Ville || '').trim(),
+						country: String(d.Pays || 'FR').trim(),
+					};
+				},
+			});
+		} catch (e) {
+			console.error('[Point Relais] carte:', e);
+			widgetError = 'La carte des Points Relais n’a pas pu s’afficher. Vérifiez votre connexion et réessayez.';
+		} finally {
+			widgetLoading = false;
+		}
+	}
+
+	async function chooseMode(m: 'retrait' | 'relais') {
+		mode = m;
+		if (m === 'relais' && !relay && !widgetReady) await openRelayMap();
+	}
 
 	let name = '';
 	let email = '';
@@ -69,8 +153,8 @@
 		const a = availabilities.find((x: any) => x.day === day);
 		return !!(a && a.start_time && a.end_time && a.interval_time);
 	})();
-	$: canOrder =
-		items.length > 0 && name.trim() && /\S+@\S+\.\S+/.test(email) && (!hasPrint || (pickupDate && (!needsSlot || pickupTime)));
+	$: deliveryOk = !hasPrint || (isRelais ? !!relay : !!(pickupDate && (!needsSlot || pickupTime)));
+	$: canOrder = items.length > 0 && name.trim() && /\S+@\S+\.\S+/.test(email) && deliveryOk;
 </script>
 
 <svelte:head>
@@ -105,6 +189,8 @@
 				class="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_1fr]"
 				use:enhance={({ formData }) => {
 					formData.set('refs', JSON.stringify(items.map((i) => i.ref)));
+					formData.set('delivery', isRelais ? 'relais' : 'retrait');
+					formData.set('relay', isRelais && relay ? JSON.stringify(relay) : 'null');
 					sending = true;
 					errorText = '';
 					return async ({ result }) => {
@@ -122,8 +208,8 @@
 				}}
 			>
 				<input type="hidden" name="shopId" value={shop.id} />
-				<input type="hidden" name="pickup_date" value={hasPrint ? pickupDate : ''} />
-				<input type="hidden" name="pickup_time" value={hasPrint ? pickupTime : ''} />
+				<input type="hidden" name="pickup_date" value={hasPrint && !isRelais ? pickupDate : ''} />
+				<input type="hidden" name="pickup_time" value={hasPrint && !isRelais ? pickupTime : ''} />
 
 				<!-- Articles -->
 				<div class="min-w-0 space-y-3">
@@ -138,7 +224,7 @@
 								<p class="font-semibold">{item.name}</p>
 								{#each item.lines as l}<p class="truncate text-[13px] text-neutral-500">{l}</p>{/each}
 								<span class="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[12px] font-semibold {item.mode === 'email' ? 'bg-blue-50 text-blue-800' : 'bg-[#F3E6EA] text-[#7A4F60]'}">
-									{item.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : '🖨️ Imprimé'}
+									{item.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : relaisOn && sizes[item.productId] === 'pickup_only' ? '🖨️ Imprimé · retrait uniquement' : '🖨️ Imprimé'}
 								</span>
 							</div>
 							<div class="flex shrink-0 flex-col items-end gap-2">
@@ -153,10 +239,60 @@
 					{#if hasPrint}
 						<div class="mt-6 space-y-3 rounded-2xl border bg-white p-4">
 							<h2 class="text-lg font-semibold">Comment recevoir vos articles imprimés ?</h2>
-							<div class="flex items-center justify-between gap-3 rounded-xl border-2 border-[#7A4F60] bg-[#FBF6F8] px-4 py-3 text-sm">
-								<span>📍 Retrait à Andrésy (78) <span class="text-neutral-500">— vous choisissez la date</span></span>
-								<b>Gratuit</b>
-							</div>
+							{#if relaisOn}
+								<div class="grid gap-2">
+									<button type="button" on:click={() => chooseMode('retrait')} class="flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 text-left text-sm {mode === 'retrait' ? 'border-[#7A4F60] bg-[#FBF6F8]' : 'border-neutral-200 bg-white'}">
+										<span class="flex items-center gap-3">
+											<span class="grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 {mode === 'retrait' ? 'border-[#7A4F60]' : 'border-neutral-300'}">{#if mode === 'retrait'}<span class="h-2 w-2 rounded-full bg-[#7A4F60]"></span>{/if}</span>
+											<span>📍 <b>Retrait à Andrésy (78)</b><br /><span class="text-neutral-500">Vous choisissez la date</span></span>
+										</span>
+										<b>Gratuit</b>
+									</button>
+									<button type="button" disabled={!relaisPossible} on:click={() => chooseMode('relais')} class="flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 text-left text-sm disabled:opacity-60 {isRelais ? 'border-[#7A4F60] bg-[#FBF6F8]' : 'border-neutral-200 bg-white'}">
+										<span class="flex items-center gap-3">
+											<span class="grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 {isRelais ? 'border-[#7A4F60]' : 'border-neutral-300'}">{#if isRelais}<span class="h-2 w-2 rounded-full bg-[#7A4F60]"></span>{/if}</span>
+											<span>📦 <b>Livraison en Point Relais</b><br /><span class="text-neutral-500">{relaisPossible ? `Mondial Relay · 3 à 5 jours après l’envoi` : `Indisponible : « ${blockingItem?.name || 'un article'} » est en retrait uniquement`}</span></span>
+										</span>
+										{#if relaisPossible}<b class="shrink-0">{fee > 0 ? formatPrice(fee) : 'Offerte'}</b>{/if}
+									</button>
+								</div>
+								{#if relaisPossible && missing !== null}
+									<div class="rounded-xl bg-[#FBF6F8] px-4 py-3 text-[13px]">
+										{#if missing > 0}
+											<p>Plus que <b>{formatPrice(missing)}</b> pour la livraison offerte 🎁</p>
+										{:else}
+											<p><b>Livraison offerte</b> 🎉</p>
+										{/if}
+										<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-[#ecd8e0]"><div class="h-full rounded-full bg-[#BC90A5] transition-all" style="width: {freeProgress}%"></div></div>
+									</div>
+								{/if}
+							{:else}
+								<div class="flex items-center justify-between gap-3 rounded-xl border-2 border-[#7A4F60] bg-[#FBF6F8] px-4 py-3 text-sm">
+									<span>📍 Retrait à Andrésy (78) <span class="text-neutral-500">— vous choisissez la date</span></span>
+									<b>Gratuit</b>
+								</div>
+							{/if}
+
+							{#if isRelais}
+								<div class="space-y-3 pt-1">
+									{#if relay}
+										<div class="flex items-start justify-between gap-3 rounded-xl border border-[#ecd8e0] bg-white px-4 py-3 text-sm">
+											<span><span class="text-[12px] font-semibold uppercase tracking-wide text-[#7A4F60]">Votre Point Relais ✓</span><br /><b>{relay.name}</b><br />{relay.address}<br />{relay.zip} {relay.city}</span>
+										</div>
+									{:else}
+										<p class="text-sm font-medium">Choisissez votre Point Relais * <span class="font-normal text-neutral-500">(cliquez sur « Choisir » dans la liste)</span></p>
+									{/if}
+									{#if widgetLoading}<p class="text-sm text-neutral-500">Chargement de la carte…</p>{/if}
+									{#if widgetError}
+										<p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{widgetError}</p>
+										<button type="button" on:click={openRelayMap} class="text-sm underline">Réessayer</button>
+									{/if}
+									<div id="mr-widget" class="mr-widget min-w-0 overflow-hidden rounded-xl"></div>
+									<input id="mr-target" type="hidden" />
+									<p class="text-[12.5px] text-neutral-500">Taille du colis : {parcel ? parcelLabel(parcel) : ''}. Envoi sous {delivery.prepDays} jour{delivery.prepDays > 1 ? 's' : ''} environ, vous recevez le numéro de suivi par e-mail.</p>
+								</div>
+							{/if}
+							{#if !isRelais}
 							<div class="pt-2">
 								<p class="mb-2 text-sm font-medium">Date de retrait *</p>
 								<DatePicker
@@ -184,8 +320,9 @@
 							{:else if pickupDate && needsSlot}
 								<p class="rounded-xl border border-orange-200 bg-orange-50 p-3 text-center text-sm text-orange-700">⚠️ Aucun créneau disponible pour cette date</p>
 							{/if}
+							{/if}
 							{#if items.some((i) => i.mode === 'email')}
-								<p class="text-[13px] text-neutral-500">Les articles « par e-mail » arrivent dans votre boîte mail, ils ne sont pas concernés par le retrait.</p>
+								<p class="text-[13px] text-neutral-500">Les articles « par e-mail » arrivent dans votre boîte mail, ils ne sont pas concernés par {isRelais ? 'la livraison' : 'le retrait'}.</p>
 							{/if}
 						</div>
 					{/if}
@@ -218,11 +355,13 @@
 						<div class="space-y-2 rounded-2xl border bg-white p-4 text-sm">
 							<p class="text-neutral-600">Merci de bien vérifier les informations de commande car en cas d'erreur votre commande pourra être retardée.</p>
 							<div class="flex justify-between pt-1"><span>{items.length} article{items.length > 1 ? 's' : ''}</span><span>{formatPrice($cartTotal)}</span></div>
-							{#if hasPrint}
+							{#if hasPrint && isRelais}
+								<div class="flex justify-between gap-3"><span>Livraison Point Relais{relay ? ` · ${relay.city}` : ''}</span><span class="shrink-0">{fee > 0 ? formatPrice(fee) : 'Offerte'}</span></div>
+							{:else if hasPrint}
 								<div class="flex justify-between"><span>Retrait à Andrésy</span><span>{pickupDate ? new Date(pickupDate + 'T12:00:00').toLocaleDateString('fr-FR') + (pickupTime ? ' · ' + pickupTime.slice(0, 5) : '') : 'à choisir'}</span></div>
 							{/if}
 							<div class="flex justify-between border-t pt-3 font-semibold" style={`color: ${customizations?.button_color || '#BC90A5'};`}>
-								<span>Total à payer :</span><span>{formatPrice($cartTotal)}</span>
+								<span>Total à payer :</span><span>{formatPrice(total)}</span>
 							</div>
 						</div>
 						{#if errorText}<p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorText}</p>{/if}
@@ -231,7 +370,7 @@
 						</button>
 						{#if !canOrder && items.length}
 							<p class="text-center text-xs text-neutral-500">
-								{!name.trim() || !/\S+@\S+\.\S+/.test(email) ? 'Indiquez votre nom et votre e-mail.' : 'Choisissez la date et le créneau de retrait.'}
+								{!name.trim() || !/\S+@\S+\.\S+/.test(email) ? 'Indiquez votre nom et votre e-mail.' : isRelais ? 'Choisissez votre Point Relais.' : 'Choisissez la date et le créneau de retrait.'}
 							</p>
 						{/if}
 					</div>

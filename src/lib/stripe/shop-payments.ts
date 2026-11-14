@@ -126,7 +126,20 @@ export async function createCartCheckout(admin: SupabaseClient, cartRef: string,
 					...(l.image_url ? { images: [l.image_url] } : {}),
 				},
 			},
-		})),
+		})).concat(
+			cart.delivery === 'relais' && (Number(cart.shipping_fee) || 0) > 0
+				? [
+						{
+							quantity: 1,
+							price_data: {
+								currency: 'eur',
+								unit_amount: cents(Number(cart.shipping_fee)),
+								product_data: { name: `Livraison en Point Relais${cart.relay?.name ? ' – ' + cart.relay.name : ''}` },
+							},
+						},
+					]
+				: []
+		),
 		metadata: { kind: 'cart', order_ref: cartRef },
 		payment_intent_data: { description: `Commande n° ${cartRef}`, metadata: { order_ref: cartRef } },
 		success_url: `${origin}${path}?payment=success&session_id={CHECKOUT_SESSION_ID}`,

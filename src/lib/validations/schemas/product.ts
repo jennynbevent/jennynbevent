@@ -60,6 +60,8 @@ export const productBaseSchema = z.object({
     booking_type: z.enum(['pickup', 'reservation']).default('pickup'),
     // Affiche le choix du mode de remise et l'ajout du QR code sur la page du produit
     show_delivery_options: z.boolean().default(false),
+    // Taille de colis pour la livraison en Point Relais
+    parcel_size: z.enum(['small', 'medium', 'large', 'pickup_only']).default('medium'),
     min_reservation_days: z.preprocess(
         (val) => {
             if (val === '' || val === undefined) return undefined;
@@ -93,7 +95,8 @@ export const updateProductSchema = productBaseSchema.pick({
     deposit_percentage: true,
     booking_type: true,
     min_reservation_days: true,
-    show_delivery_options: true
+    show_delivery_options: true,
+    parcel_size: true
 });
 // Note: images ne sont pas dans le schéma car elles sont gérées manuellement via FormData
 

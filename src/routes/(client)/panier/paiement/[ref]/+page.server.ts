@@ -64,6 +64,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		customerName: cart.customer_name,
 		pickupDate: cart.pickup_date,
 		pickupTime: cart.pickup_time,
+		relay: cart.delivery === 'relais' ? cart.relay || null : null,
+		shippingFee: Number(cart.shipping_fee) || 0,
 		paymentLinks,
 		cancelled: url.searchParams.get('payment') === 'cancelled',
 	};

@@ -18,6 +18,7 @@
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import type { SuperValidated, Infer } from 'sveltekit-superforms';
 	import { createProductFormSchema } from './new/schema';
+	import { PARCEL_SIZES } from '$lib/delivery/settings';
 	import {
 		CustomizationFormBuilder,
 		type CustomizationField,
@@ -115,6 +116,7 @@
 		$formData.booking_type = initialData.booking_type || 'pickup';
 		$formData.min_reservation_days = initialData.min_reservation_days ?? 1;
 		$formData.show_delivery_options = !!initialData.show_delivery_options;
+		$formData.parcel_size = initialData.parcel_size || 'medium';
 		// Charger les images existantes
 		if (initialData.images && Array.isArray(initialData.images)) {
 			existingImages = initialData.images.map((img: any, index: number) => ({
@@ -682,6 +684,24 @@
 							<span class="block text-sm text-muted-foreground">Le client choisit entre le retrait à Andrésy et l'envoi par e-mail, et peut ajouter son QR code.</span>
 						</span>
 					</label>
+				{/if}
+
+				{#if $formData.booking_type !== 'reservation'}
+					<div class="space-y-2">
+						<p class="text-sm font-medium">Taille du colis (livraison en Point Relais)</p>
+						<div class="grid gap-2 sm:grid-cols-2">
+							{#each PARCEL_SIZES as size}
+								<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-2.5 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+									<input type="radio" name="parcel_size" value={size.id} bind:group={$formData.parcel_size} class="mt-1 h-4 w-4" />
+									<span>
+										<span class="block text-sm font-medium">{size.label}</span>
+										<span class="block text-xs text-muted-foreground">{size.hint}</span>
+									</span>
+								</label>
+							{/each}
+						</div>
+						<p class="text-xs text-muted-foreground">Si le panier contient plusieurs articles, c'est la plus grande taille qui compte. « Retrait uniquement » retire le Point Relais pour tout le panier.</p>
+					</div>
 				{/if}
 
 				{#if $formData.booking_type === 'reservation'}

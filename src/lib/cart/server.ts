@@ -9,6 +9,7 @@ import { ErrorLogger } from '$lib/services/error-logging';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
 import { optionLines, REMISE_EMAIL, REMISE_RETRAIT } from './options';
 import type { CartEmailLine } from '$lib/emails/cart';
+import { REMISE_RELAIS, type RelayPoint } from '$lib/delivery/settings';
 
 export type CartLine = {
 	ref: string;
@@ -32,8 +33,14 @@ export type CartData = {
 	additional_information: string | null;
 	pickup_date: string | null;
 	pickup_time: string | null;
-	total_amount: number;
+	total_amount: number; // articles + livraison
 	lines: CartLine[];
+	// Livraison en Point Relais (articles imprimés)
+	delivery?: 'retrait' | 'relais';
+	relay?: RelayPoint | null;
+	shipping_fee?: number;
+	parcel_size?: string | null;
+	ship_date?: string | null; // date d'envoi prévue
 };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -102,12 +109,17 @@ export async function finalizeCart(
 
 	const cart = claimed[0].order_data as CartData;
 	const emailDate = isoInDays(2);
+	const isRelais = cart.delivery === 'relais' && !!cart.relay;
+	const fee = isRelais ? Number(cart.shipping_fee) || 0 : 0;
+	const firstPrintRef = cart.lines.find((l) => l.delivery_mode !== 'email')?.ref;
 
 	const rows = cart.lines.map((l) => {
 		const isEmail = l.delivery_mode === 'email';
+		const relayLine = isRelais && !isEmail;
+		const lineFee = relayLine && l.ref === firstPrintRef ? fee : 0;
 		const customization = { ...(l.customization_data || {}) };
 		customization['Mode de remise'] = {
-			value: isEmail ? REMISE_EMAIL : REMISE_RETRAIT,
+			value: isEmail ? REMISE_EMAIL : relayLine ? REMISE_RELAIS : REMISE_RETRAIT,
 			type: 'short-text',
 			price: 0,
 			fieldId: 'delivery_mode',
@@ -119,19 +131,22 @@ export async function finalizeCart(
 			customer_name: cart.customer_name,
 			customer_email: cart.customer_email,
 			customer_phone: cart.customer_phone || null,
-			pickup_date: isEmail ? emailDate : cart.pickup_date,
-			pickup_time: isEmail ? null : cart.pickup_time,
+			pickup_date: isEmail ? emailDate : relayLine ? cart.ship_date || isoInDays(3) : cart.pickup_date,
+			pickup_time: isEmail || relayLine ? null : cart.pickup_time,
 			additional_information: cart.additional_information || null,
 			customization_data: customization,
 			inspiration_photos: l.inspiration_photos || [],
 			status: 'to_verify',
 			total_amount: l.total_amount,
-			paid_amount: l.total_amount,
+			paid_amount: Math.round((l.total_amount + lineFee) * 100) / 100,
 			product_name: l.product_name,
 			product_base_price: l.product_base_price || 0,
 			order_ref: l.ref,
 			payment_provider: opts.provider || null,
 			cart_ref: cartRef,
+			...(relayLine
+				? { shipping_relay: cart.relay, shipping_fee: lineFee, parcel_size: cart.parcel_size || null }
+				: {}),
 		};
 	});
 
@@ -169,6 +184,8 @@ export async function finalizeCart(
 			cartRef,
 			pickupDate: cart.pickup_date,
 			pickupTime: cart.pickup_time,
+			relay: isRelais ? cart.relay : null,
+			shippingFee: fee,
 		};
 		await Promise.all([
 			EmailService.sendCartCustomer(cart.customer_email, {

@@ -43,6 +43,7 @@
 		order_ref?: string | null; // Référence de commande
 		cart_ref?: string | null; // Panier : commandes passées ensemble
 		cart_size?: number;
+		is_relais?: boolean;
 	}
 
 	// Données de la page
@@ -359,7 +360,7 @@
 					on:click={() => (selectedStatus = 'ready')}
 					class="whitespace-nowrap"
 				>
-					Prêtes ({statusCounts.ready})
+					Prêtes / Expédiées ({statusCounts.ready})
 				</Button>
 
 				<Button
@@ -445,9 +446,12 @@
 														class="mr-1 h-3 w-3"
 													/>
 													<span class="text-current"
-														>{getStatusText(order.status)}</span
+														>{order.is_relais && order.status === 'ready' ? 'Expédiée' : getStatusText(order.status)}</span
 													>
 												</div>
+												{#if order.is_relais}
+													<span class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">📦 Point Relais</span>
+												{/if}
 												{#if order.total_amount}
 													<span class="text-sm font-medium text-green-600">
 														{formatPrice(order.total_amount)}

@@ -14,7 +14,9 @@ import { policiesSchema } from './policies-schema';
 		CardTitle,
 	} from '$lib/components/ui/card';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Store, Palette, FileText, CreditCard, Bell } from 'lucide-svelte';
+	import { Store, Palette, FileText, CreditCard, Bell, Truck, CircleHelp } from 'lucide-svelte';
+	import DeliveryForm from './delivery-form.svelte';
+	import HelpTab from './help-tab.svelte';
 	import PushNotifications from '$lib/components/push-notifications.svelte';
 	import { cn } from '$lib/utils';
 	import PaymentForm from './payment-form.svelte';
@@ -47,14 +49,18 @@ import { policiesSchema } from './policies-schema';
 
 	let error = '';
 	let success = '';
-	let activeTab: 'info' | 'customization' | 'policies' | 'payment' | 'notifications' = 'info';
+	let activeTab: 'info' | 'customization' | 'policies' | 'payment' | 'delivery' | 'notifications' | 'help' = 'info';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	$: deliveryState = (data as any).delivery;
 
 	const tabs = [
 		{ id: 'info' as const, label: 'Informations', icon: Store },
 		{ id: 'customization' as const, label: 'Personnalisation', icon: Palette },
 		{ id: 'policies' as const, label: 'Politiques de ventes', icon: FileText },
 		{ id: 'payment' as const, label: 'Méthodes de paiement', icon: CreditCard },
-		{ id: 'notifications' as const, label: 'Notifications', icon: Bell }
+		{ id: 'delivery' as const, label: 'Livraison', icon: Truck },
+		{ id: 'notifications' as const, label: 'Notifications', icon: Bell },
+		{ id: 'help' as const, label: 'Aide', icon: CircleHelp }
 	];
 </script>
 
@@ -151,6 +157,12 @@ import { policiesSchema } from './policies-schema';
 				<PaymentForm data={data.paymentForm} />
 			</CardContent>
 		</Card>
+	{:else if activeTab === 'delivery'}
+		{#key deliveryState}
+			<DeliveryForm delivery={deliveryState} />
+		{/key}
+	{:else if activeTab === 'help'}
+		<HelpTab />
 	{:else if activeTab === 'notifications'}
 		<PushNotifications />
 		<p class="text-sm text-muted-foreground">

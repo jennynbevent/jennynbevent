@@ -348,6 +348,15 @@ export function EmailDeliveryNotice(
 			shopColor
 		);
 	}
+	if (mode === 'relais') {
+		return EmailNotice(
+			'Livraison en Point Relais',
+			stage === 'ready'
+				? 'Votre colis est en route vers le Point Relais choisi. Vous recevrez un message de Mondial Relay dès son arrivée.'
+				: 'Votre commande sera envoyée dans le Point Relais choisi. Vous recevrez le numéro de suivi par e-mail dès l’envoi.',
+			shopColor
+		);
+	}
 	if (mode === 'email') {
 		const text =
 			stage === 'ready'

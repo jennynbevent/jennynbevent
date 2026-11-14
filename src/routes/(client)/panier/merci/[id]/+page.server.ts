@@ -36,14 +36,31 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		status: o.status,
 	}));
 	const printOrder = (orders || []).find((o: any) => getDeliveryMode(o.customization_data) !== 'email');
+
+	// Livraison en Point Relais
+	let relay: any = null;
+	let shippingFee = 0;
+	if (printOrder && getDeliveryMode(printOrder.customization_data) === 'relais') {
+		const { data: ship } = await (locals.supabaseServiceRole as any)
+			.from('orders')
+			.select('shipping_relay, shipping_fee')
+			.in('id', (orders || []).map((o: any) => o.id));
+		for (const r of ship || []) {
+			if (r.shipping_relay && !relay) relay = r.shipping_relay;
+			shippingFee += Number(r.shipping_fee) || 0;
+		}
+	}
+	const itemsTotal = Math.round(list.reduce((s: number, i: any) => s + i.price, 0) * 100) / 100;
 	return {
 		shop,
 		ref: first.cart_ref || orders?.[0]?.order_ref || '',
 		customerName: orders?.[0]?.customer_name || '',
 		paidByCard: orders?.[0]?.payment_provider === 'stripe',
 		items: list,
-		total: Math.round(list.reduce((s: number, i: any) => s + i.price, 0) * 100) / 100,
-		pickupDate: printOrder?.pickup_date || null,
-		pickupTime: printOrder?.pickup_time || null,
+		total: Math.round((itemsTotal + shippingFee) * 100) / 100,
+		relay,
+		shippingFee,
+		pickupDate: relay ? null : printOrder?.pickup_date || null,
+		pickupTime: relay ? null : printOrder?.pickup_time || null,
 	};
 };
