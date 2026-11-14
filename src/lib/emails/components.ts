@@ -350,10 +350,10 @@ export function EmailDeliveryNotice(
 	}
 	if (mode === 'relais') {
 		return EmailNotice(
-			'Livraison en Point Relais',
+			'Livraison Colissimo',
 			stage === 'ready'
-				? 'Votre colis est en route vers le Point Relais choisi. Vous recevrez un message de Mondial Relay dès son arrivée.'
-				: 'Votre commande sera envoyée dans le Point Relais choisi. Vous recevrez le numéro de suivi par e-mail dès l’envoi.',
+				? 'Votre colis est en route avec La Poste (Colissimo). Vous pouvez le suivre avec le numéro reçu par e-mail.'
+				: 'Votre commande sera envoyée par La Poste (Colissimo). Vous recevrez le numéro de suivi par e-mail dès l’envoi.',
 			shopColor
 		);
 	}

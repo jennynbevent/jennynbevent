@@ -1004,7 +1004,7 @@ export const actions: Actions = {
         return { success: true };
     },
 
-    // Livraison en Point Relais : réglages
+    // Livraison Colissimo (La Poste) : réglages
     updateDelivery: async ({ request, locals }) => {
         const { user } = await locals.safeGetSession();
         if (!user) return fail(401, { error: 'Non autorisé' });
@@ -1021,12 +1021,9 @@ export const actions: Actions = {
             enabled: fd.get('enabled') === 'on',
             prices: { small: fd.get('small'), medium: fd.get('medium'), large: fd.get('large') },
             freeFrom: freeOn ? fd.get('freeFrom') : null,
-            brand: String(fd.get('brand') || ''),
+            pointRetrait: fd.get('pointRetrait') === 'on',
             prepDays: fd.get('prepDays'),
         });
-        if (settings.brand && !/^[A-Z0-9 ]{2,10}$/.test(settings.brand)) {
-            return fail(400, { error: 'Le code enseigne Mondial Relay ne doit contenir que des lettres et des chiffres.' });
-        }
         const { error: upErr } = await (locals.supabaseServiceRole as any)
             .from('shops')
             .update({ delivery_settings: settings })

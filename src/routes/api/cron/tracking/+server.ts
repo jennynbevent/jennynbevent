@@ -3,19 +3,19 @@ import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { syncParcel } from '$lib/delivery/tracking-sync';
-import { isTrackingConfigured } from '$lib/delivery/mondial-relay';
+import { isTrackingConfigured } from '$lib/delivery/laposte-suivi';
 import type { RequestHandler } from './$types';
 
 /**
  * Lancé chaque jour par Vercel (voir vercel.json) :
- * vérifie le suivi Mondial Relay de tous les colis « Expédiée ».
+ * vérifie le suivi La Poste de tous les colis « Expédiée ».
  */
 export const GET: RequestHandler = async ({ request }) => {
 	const secret = (env.CRON_SECRET || '').trim();
 	const auth = request.headers.get('authorization') || '';
 	const ua = request.headers.get('user-agent') || '';
 	if (secret ? auth !== `Bearer ${secret}` : !ua.includes('vercel-cron')) throw error(401, 'Non autorisé');
-	if (!isTrackingConfigured()) return json({ ok: false, reason: 'MR_ENSEIGNE / MR_PRIVATE_KEY manquants' });
+	if (!isTrackingConfigured()) return json({ ok: false, reason: 'LAPOSTE_OKAPI_KEY manquante' });
 
 	const admin = createClient(PUBLIC_SUPABASE_URL, env.PRIVATE_SUPABASE_SERVICE_ROLE ?? '', { auth: { persistSession: false } });
 	const { data: rows, error: e } = await admin

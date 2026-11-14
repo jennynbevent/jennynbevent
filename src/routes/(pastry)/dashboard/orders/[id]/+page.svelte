@@ -49,7 +49,7 @@
 	$: cart = $page.data.cart as { ref: string; total: number; items: Array<{ id: string; name: string; price: number; status: string; mode: string }> } | null;
 	$: isReservationProduct = product?.booking_type === 'reservation';
 	$: shipping = $page.data.shipping as {
-		relay: { id: string; name: string; address: string; zip: string; city: string; country: string };
+		relay: { kind?: 'home' | 'point'; id?: string; name: string; address: string; address2?: string; zip: string; city: string; country: string };
 		fee: number;
 		parcel: string;
 		tracking: string | null;
@@ -64,17 +64,18 @@
 	} | null;
 	let refreshing = false;
 	let refreshError = '';
-	const trackingSteps = [
+	$: isPoint = shipping?.relay?.kind === 'point';
+	$: trackingSteps = [
 		{ id: 'shipped', label: 'Envoyé' },
 		{ id: 'in_transit', label: 'En route' },
-		{ id: 'available', label: 'Au Point Relais' },
-		{ id: 'delivered', label: 'Retiré' },
+		{ id: 'available', label: isPoint ? 'Au point retrait' : 'En livraison' },
+		{ id: 'delivered', label: isPoint ? 'Retiré' : 'Livré' },
 	];
 	function trackingStepIndex(s: typeof shipping): number {
 		if (!s?.tracking) return -1;
 		const st = s.trackingStatus || '';
 		if (st === 'delivered' || order?.status === 'completed') return 3;
-		if (st === 'available') return 2;
+		if (st === 'available' || st === 'out_for_delivery') return 2;
 		if (st === 'in_transit' || st === 'anomaly') return 1;
 		return 0;
 	}
@@ -93,7 +94,7 @@
 			copied = '';
 		}
 	}
-	const modeLabel = (m: string) => (m === 'email' ? '✉️ Par e-mail' : m === 'relais' ? '📦 Point Relais' : '📍 Retrait');
+	const modeLabel = (m: string) => (m === 'email' ? '✉️ Par e-mail' : m === 'relais' ? '📦 Colissimo' : '📍 Retrait');
 
 	// État du formulaire pour les actions
 	// Fichier PDF à imprimer joint à l'e-mail « commande prête »
@@ -513,18 +514,18 @@
 		{@const r = shipping.relay}
 		<div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
 			<div class="flex flex-wrap items-center justify-between gap-2">
-				<p class="font-semibold text-amber-900">📦 Expédition en Point Relais</p>
+				<p class="font-semibold text-amber-900">📦 Expédition Colissimo · {r.kind === 'point' ? 'point retrait La Poste' : 'à domicile'}</p>
 				<span class="rounded-full bg-white px-3 py-1 text-xs font-medium text-amber-900">{shipping.parcel} · livraison payée {shipping.fee > 0 ? formatPrice(shipping.fee) : 'offerte'}</span>
 			</div>
 			{#if shipping.items.length > 1}
 				<p class="mt-1 text-sm text-amber-900/80">Un seul colis pour : {shipping.items.join(', ')}</p>
 			{/if}
 			<div class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-				{#each [['Destinataire', order.customer_name], ['Téléphone', order.customer_phone || '—'], ['E-mail', order.customer_email], ['Point Relais', `${r.name} (n° ${r.id})`], ['Adresse', r.address], ['Ville', `${r.zip} ${r.city}`]] as [label, value]}
+				{#each [['Destinataire', order.customer_name], ['Téléphone', order.customer_phone || '—'], ['E-mail', order.customer_email], ...(r.kind === 'point' || r.id ? [['Point retrait', r.name]] : []), ['Adresse', r.address], ...(r.address2 ? [['Complément', r.address2]] : []), ['Code postal', r.zip], ['Ville', r.city]] as [label, value]}
 					<div class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
 						<span class="min-w-0"><span class="block text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span><span class="block truncate font-medium">{value}</span></span>
 						{#if value && value !== '—'}
-							<button type="button" class="shrink-0 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" on:click={() => copy(label, label === 'Point Relais' ? r.id : String(value))}>{copied === label ? 'Copié ✓' : 'Copier'}</button>
+							<button type="button" class="shrink-0 rounded-md border px-2 py-1 text-xs hover:bg-gray-50" on:click={() => copy(label, String(value))}>{copied === label ? 'Copié ✓' : 'Copier'}</button>
 						{/if}
 					</div>
 				{/each}
@@ -534,7 +535,7 @@
 				<div class="mt-3 rounded-lg bg-white p-3">
 					<div class="flex flex-wrap items-center justify-between gap-2 text-sm">
 						<span>Suivi <b>{shipping.tracking}</b>{shipping.shippedAt ? ` · envoyé le ${new Date(shipping.shippedAt).toLocaleDateString('fr-FR')}` : ''}</span>
-						{#if shipping.trackingUrl}<a href={shipping.trackingUrl} target="_blank" rel="noopener" class="text-xs underline">Voir sur Mondial Relay</a>{/if}
+						{#if shipping.trackingUrl}<a href={shipping.trackingUrl} target="_blank" rel="noopener" class="text-xs underline">Voir sur laposte.fr</a>{/if}
 					</div>
 					<ol class="mt-3 grid grid-cols-4 gap-1">
 						{#each trackingSteps as st, i}
@@ -545,9 +546,9 @@
 						{/each}
 					</ol>
 					{#if shipping.trackingStatus === 'anomaly'}
-						<p class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700">⚠️ Mondial Relay signale un problème : {shipping.trackingLabel || 'voir le suivi'}</p>
+						<p class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700">⚠️ La Poste signale un problème : {shipping.trackingLabel || 'voir le suivi'}</p>
 					{:else if shipping.trackingLabel}
-						<p class="mt-2 text-xs text-muted-foreground">Dernière info Mondial Relay : {shipping.trackingLabel}</p>
+						<p class="mt-2 text-xs text-muted-foreground">Dernière info La Poste : {shipping.trackingLabel}</p>
 					{/if}
 					{#if shipping.autoTracking}
 						<div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -573,11 +574,11 @@
 						</div>
 						{#if refreshError}<p class="mt-1 text-xs text-red-700">{refreshError}</p>{/if}
 					{:else}
-						<p class="mt-2 text-xs text-muted-foreground">Suivi automatique pas encore branché : passe la commande en « Terminée » quand le client a retiré son colis.</p>
+						<p class="mt-2 text-xs text-muted-foreground">Suivi automatique pas encore branché (clé La Poste à ajouter) : passe la commande en « Terminée » quand le client a reçu son colis.</p>
 					{/if}
 				</div>
 			{:else}
-				<p class="mt-3 text-xs text-amber-900/80">Crée l'étiquette sur ton espace Mondial Relay Pro avec ces infos, puis colle le n° de suivi en bas de la page (« Colis envoyé »). Aide détaillée : Ma boutique → Aide.</p>
+				<p class="mt-3 text-xs text-amber-900/80">Crée l'étiquette sur La Poste Pro Expéditions avec ces infos (format : {shipping.parcel.replace(' colis', '')}{r.kind === 'point' ? ', livraison en point retrait' : ', livraison à domicile'}), dépose le colis à La Poste, puis colle le n° de suivi en bas de la page (« Colis envoyé »). Aide détaillée : Ma boutique → Aide.</p>
 			{/if}
 		</div>
 	{/if}
@@ -1246,7 +1247,7 @@
 							{/if}
 						</div>
 					{:else if order.status === 'confirmed' && shipping}
-						<!-- Point Relais : colis déposé -->
+						<!-- Colissimo : colis déposé -->
 						<form
 							method="POST"
 							action="?/markShipped"
@@ -1272,8 +1273,8 @@
 						>
 							<input type="hidden" name="shopId" value={shop.id} />
 							<label class="block">
-								<span class="mb-1 block text-sm font-medium">Numéro de suivi Mondial Relay</span>
-								<Input name="tracking" bind:value={trackingInput} placeholder="ex. 12345678" autocomplete="off" />
+								<span class="mb-1 block text-sm font-medium">Numéro de suivi Colissimo</span>
+								<Input name="tracking" bind:value={trackingInput} placeholder="ex. 6A12345678901" autocomplete="off" />
 							</label>
 							<Button type="submit" class="h-10 w-full gap-2" disabled={shipSubmitting || trackingInput.trim().length < 6}>
 								<Package class="h-4 w-4" />

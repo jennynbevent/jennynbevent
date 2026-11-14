@@ -48,13 +48,13 @@
 					<div class="min-w-0 flex-1 text-sm">
 						<p class="font-semibold">{it.name}</p>
 						{#each it.lines as l}<p class="truncate text-[12.5px] text-neutral-500">{l}</p>{/each}
-						<p class="text-[12.5px] text-neutral-500">{it.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : data.relay ? '📦 Point Relais' : '📍 Retrait à Andrésy'}</p>
+						<p class="text-[12.5px] text-neutral-500">{it.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : data.relay ? '📦 Envoi Colissimo' : '📍 Retrait à Andrésy'}</p>
 					</div>
 					<span class="text-sm font-semibold">{formatPrice(it.price)}</span>
 				</div>
 			{/each}
 			{#if data.relay}
-				<div class="flex justify-between py-2 text-sm"><span>Livraison Point Relais</span><span>{data.shippingFee > 0 ? formatPrice(data.shippingFee) : 'Offerte'}</span></div>
+				<div class="flex justify-between py-2 text-sm"><span>Livraison Colissimo</span><span>{data.shippingFee > 0 ? formatPrice(data.shippingFee) : 'Offerte'}</span></div>
 			{/if}
 			<div class="flex justify-between border-t pt-3 font-semibold">
 				<span>Total</span><span>{formatPrice(data.total)}</span>
@@ -63,8 +63,8 @@
 
 		{#if data.relay}
 			<div class="mt-4 rounded-2xl border border-[#ecd8e0] bg-[#FBF6F8] p-4 text-sm">
-				📦 <b>Livraison en Point Relais</b><br />
-				{data.relay.name}, {data.relay.address}, {data.relay.zip} {data.relay.city}<br />
+				📦 <b>{data.relay.kind === 'point' ? 'Point retrait La Poste (Colissimo)' : 'Livraison à domicile (Colissimo)'}</b><br />
+				{data.relay.kind === 'point' ? `${data.relay.name}, ` : ''}{data.relay.address}{data.relay.address2 ? `, ${data.relay.address2}` : ''}, {data.relay.zip} {data.relay.city}<br />
 				<span class="text-neutral-600">Vous recevrez le numéro de suivi par e-mail dès l'envoi du colis.</span>
 			</div>
 		{/if}

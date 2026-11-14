@@ -688,7 +688,7 @@
 
 				{#if $formData.booking_type !== 'reservation'}
 					<div class="space-y-2">
-						<p class="text-sm font-medium">Taille du colis (livraison en Point Relais)</p>
+						<p class="text-sm font-medium">Taille du colis (envoi Colissimo)</p>
 						<div class="grid gap-2 sm:grid-cols-2">
 							{#each PARCEL_SIZES as size}
 								<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-2.5 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
@@ -700,7 +700,7 @@
 								</label>
 							{/each}
 						</div>
-						<p class="text-xs text-muted-foreground">Si le panier contient plusieurs articles, c'est la plus grande taille qui compte. « Retrait uniquement » retire le Point Relais pour tout le panier.</p>
+						<p class="text-xs text-muted-foreground">Si le panier contient plusieurs articles, c'est la plus grande taille qui compte. « Retrait uniquement » retire l'envoi par La Poste pour tout le panier.</p>
 					</div>
 				{/if}
 

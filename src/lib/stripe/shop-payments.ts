@@ -134,7 +134,7 @@ export async function createCartCheckout(admin: SupabaseClient, cartRef: string,
 							price_data: {
 								currency: 'eur',
 								unit_amount: cents(Number(cart.shipping_fee)),
-								product_data: { name: `Livraison en Point Relais${cart.relay?.name ? ' – ' + cart.relay.name : ''}` },
+								product_data: { name: cart.relay?.kind === 'point' ? `Livraison Colissimo – point retrait ${cart.relay?.city || ''}`.trim() : `Livraison Colissimo à domicile – ${cart.relay?.city || ''}`.trim() },
 							},
 						},
 					]

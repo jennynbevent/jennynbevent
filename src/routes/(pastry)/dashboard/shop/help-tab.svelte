@@ -22,13 +22,13 @@
 			],
 		},
 		{
-			title: '📦 Point Relais',
+			title: '📦 Colissimo (domicile ou point retrait)',
 			color: 'bg-amber-50 text-amber-800',
 			steps: [
 				{ label: 'À traiter', text: 'Payé par carte. Clique sur « J’ai reçu le paiement ».' },
-				{ label: 'En cours', text: 'Tu prépares et tu emballes le colis.' },
-				{ label: 'Expédiée', text: 'Colle le n° de suivi puis « Colis envoyé » : le client reçoit le suivi.' },
-				{ label: 'Terminée', text: 'Automatique quand le client retire son colis (suivi vérifié chaque jour et à l’ouverture de la commande).' },
+				{ label: 'En cours', text: 'Tu prépares, tu emballes et tu crées l’étiquette sur La Poste Pro Expéditions.' },
+				{ label: 'Expédiée', text: 'Colis déposé à La Poste : colle le n° de suivi puis « Colis envoyé ».' },
+				{ label: 'Terminée', text: 'Automatique quand La Poste indique « livré » (suivi vérifié chaque jour et à l’ouverture de la commande).' },
 			],
 		},
 	];
@@ -49,22 +49,22 @@
 			],
 		},
 		{
-			title: '📦 Point Relais',
+			title: '📦 Colissimo',
 			rows: [
-				['Commande payée', 'Toi : notification + e-mail · Client : e-mail avec son Point Relais'],
-				['Colis envoyé', 'Client : e-mail « Votre colis est en route » + n° de suivi'],
-				['Colis arrivé', 'Client : e-mail « Votre colis vous attend » (+ SMS Mondial Relay) · Toi : notification'],
-				['Colis retiré', 'Toi : notification « Colis retiré ! » · la commande passe en Terminée'],
+				['Commande payée', 'Toi : notification + e-mail · Client : e-mail avec son adresse de livraison'],
+				['Colis envoyé', 'Client : e-mail « Votre colis est en route » + lien de suivi La Poste'],
+				['Colis au point retrait', 'Client : e-mail « Votre colis vous attend » (+ SMS La Poste) · Toi : notification'],
+				['Colis livré', 'Toi : notification « Colis livré ! » · la commande passe en Terminée'],
 			],
 		},
 	];
 
 	const ship = [
-		['Ouvre la commande', 'Le bloc « Expédition » affiche le nom du client, son téléphone et son Point Relais, avec un bouton Copier pour chaque info.'],
-		['Crée l’étiquette sur Mondial Relay', 'Sur ton espace Mondial Relay Pro : nouvelle expédition, colle les infos, choisis le poids (taille indiquée dans la commande). Tu paies l’étiquette là-bas.'],
-		['Imprime et colle l’étiquette', 'Emballe bien le colis, colle l’étiquette bien à plat.'],
-		['Dépose le colis', 'Dans n’importe quel Point Relais ou Locker Mondial Relay près de chez toi.'],
-		['Colle le n° de suivi', 'Dans la commande, colle le numéro de l’étiquette et clique sur « Colis envoyé ». Le client reçoit le suivi par e-mail.'],
+		['Ouvre la commande', 'Le bloc « Expédition Colissimo » affiche le nom, le téléphone et l’adresse (ou le point retrait) du client, avec un bouton Copier pour chaque info, et la taille du colis.'],
+		['Crée l’étiquette sur La Poste Pro Expéditions', 'Nouvelle expédition : colle les infos du client, choisis le format (Petit, Moyen ou Grand) et le mode (domicile ou point retrait), puis paie l’étiquette.'],
+		['Imprime et colle l’étiquette', 'Emballe bien le colis et colle l’étiquette bien à plat. Pas d’imprimante ? Le bureau de poste peut l’imprimer avec le code reçu.'],
+		['Dépose le colis à La Poste', 'Au bureau de poste (obligatoire pour les grands colis hors format) ; les petits colis peuvent aussi aller dans ta boîte aux lettres ou un relais Pickup.'],
+		['Colle le n° de suivi', 'Dans la commande, colle le numéro de suivi Colissimo et clique sur « Colis envoyé ». Le client reçoit le suivi par e-mail, et le site suit le colis tout seul.'],
 	];
 </script>
 
@@ -110,7 +110,7 @@
 
 	<!-- 3. Envoyer un colis -->
 	<section class="rounded-2xl border bg-white p-5 shadow-sm">
-		<h2 class="mb-4 text-lg font-semibold">3. Comment envoyer un colis en Point Relais</h2>
+		<h2 class="mb-4 text-lg font-semibold">3. Comment envoyer un colis avec La Poste</h2>
 		<ol class="space-y-3">
 			{#each ship as [title, text], i}
 				<li class="flex gap-3 text-sm">
@@ -120,7 +120,8 @@
 			{/each}
 		</ol>
 		<p class="mt-4 rounded-xl bg-[#FBF6F8] p-3 text-sm text-muted-foreground">
-			Plus tard : un bouton « Créer l'étiquette » pourra faire les étapes 2 et 5 tout seul (avec ta clé Mondial Relay).
+			Grands panneaux : L+l+h entre 150 et 200 cm = supplément La Poste, livraison à domicile uniquement. Au-delà de 200 cm, mets l'article en « Retrait uniquement ».<br />
+			Plus tard : un bouton « Exporter pour La Poste » pourra préparer toutes les étiquettes d'un coup (import de fichier).
 		</p>
 	</section>
 </div>

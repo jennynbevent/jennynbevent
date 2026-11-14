@@ -146,7 +146,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
             console.error('[orders] cart_ref:', e);
         }
 
-        // Livraison en Point Relais
+        // Envois Colissimo
         try {
             const { data: relaisRows, error: relaisErr } = await (locals.supabaseServiceRole as any)
                 .from('orders')

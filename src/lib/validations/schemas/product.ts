@@ -60,7 +60,7 @@ export const productBaseSchema = z.object({
     booking_type: z.enum(['pickup', 'reservation']).default('pickup'),
     // Affiche le choix du mode de remise et l'ajout du QR code sur la page du produit
     show_delivery_options: z.boolean().default(false),
-    // Taille de colis pour la livraison en Point Relais
+    // Taille de colis pour l'envoi Colissimo
     parcel_size: z.enum(['small', 'medium', 'large', 'pickup_only']).default('medium'),
     min_reservation_days: z.preprocess(
         (val) => {

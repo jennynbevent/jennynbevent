@@ -9,7 +9,7 @@ import { ErrorLogger } from '$lib/services/error-logging';
 import { getShopColorFromShopId } from '$lib/emails/helpers';
 import { optionLines, REMISE_EMAIL, REMISE_RETRAIT } from './options';
 import type { CartEmailLine } from '$lib/emails/cart';
-import { REMISE_RELAIS, type RelayPoint } from '$lib/delivery/settings';
+import { REMISE_DOMICILE, REMISE_POINT, type ShipAddress as RelayPoint } from '$lib/delivery/settings';
 
 export type CartLine = {
 	ref: string;
@@ -35,7 +35,7 @@ export type CartData = {
 	pickup_time: string | null;
 	total_amount: number; // articles + livraison
 	lines: CartLine[];
-	// Livraison en Point Relais (articles imprimés)
+	// Envoi Colissimo (articles imprimés) : domicile ou point retrait La Poste
 	delivery?: 'retrait' | 'relais';
 	relay?: RelayPoint | null;
 	shipping_fee?: number;
@@ -119,7 +119,7 @@ export async function finalizeCart(
 		const lineFee = relayLine && l.ref === firstPrintRef ? fee : 0;
 		const customization = { ...(l.customization_data || {}) };
 		customization['Mode de remise'] = {
-			value: isEmail ? REMISE_EMAIL : relayLine ? REMISE_RELAIS : REMISE_RETRAIT,
+			value: isEmail ? REMISE_EMAIL : relayLine ? (cart.relay?.kind === 'point' ? REMISE_POINT : REMISE_DOMICILE) : REMISE_RETRAIT,
 			type: 'short-text',
 			price: 0,
 			fieldId: 'delivery_mode',

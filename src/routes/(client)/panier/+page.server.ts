@@ -1,7 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import type { CartData, CartLine } from '$lib/cart/server';
-import { readDeliverySettings, cartParcelSize, shippingFee, readRelay } from '$lib/delivery/settings';
+import { readDeliverySettings, cartParcelSize, shippingFee, readShipAddress, pointAllowed } from '$lib/delivery/settings';
 
 /** Réglages de livraison + taille de colis des articles en vente */
 async function deliveryData(locals: App.Locals, shopId: string) {
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 			enabled: delivery.settings.enabled,
 			prices: delivery.settings.prices,
 			freeFrom: delivery.settings.freeFrom,
-			brand: delivery.settings.brand,
+			pointRetrait: delivery.settings.pointRetrait,
 			prepDays: delivery.settings.prepDays,
 		},
 		parcelSizes: delivery.sizes,
@@ -78,10 +78,10 @@ export const actions: Actions = {
 		const info = String(fd.get('additional_information') || '').trim().slice(0, 2000);
 		const pickupDate = String(fd.get('pickup_date') || '').trim();
 		const pickupTime = String(fd.get('pickup_time') || '').trim();
-		const wantsRelais = String(fd.get('delivery') || '') === 'relais';
+		const wantsRelais = String(fd.get('delivery') || '') === 'relais'; // envoi Colissimo
 		let relay = null;
 		try {
-			relay = readRelay(JSON.parse(String(fd.get('relay') || 'null')));
+			relay = readShipAddress(JSON.parse(String(fd.get('relay') || 'null')));
 		} catch {
 			relay = null;
 		}
@@ -147,10 +147,15 @@ export const actions: Actions = {
 
 		if (isRelais) {
 			const { settings, sizes } = await deliveryData(locals, shopId);
-			if (!settings.enabled) return fail(400, { error: 'La livraison en Point Relais n’est pas disponible pour le moment.' });
+			if (!settings.enabled) return fail(400, { error: 'La livraison n’est pas disponible pour le moment.' });
 			const size = cartParcelSize(printLines.map((l) => sizes[l.product_id]));
 			if (!size) return fail(400, { error: 'Un de vos articles est disponible uniquement en retrait à Andrésy.' });
-			if (!relay) return fail(400, { error: 'Merci de choisir votre Point Relais.' });
+			if (!relay) return fail(400, { error: 'Merci de compléter l’adresse de livraison (adresse, code postal, ville).' });
+			if (relay.kind === 'point' && !pointAllowed(settings, size)) {
+				return fail(400, { error: 'Votre colis est trop grand pour un point retrait : choisissez la livraison à domicile.' });
+			}
+			if (!/\d{6,}/.test(phone.replace(/\D/g, ''))) return fail(400, { error: 'Merci d’indiquer un numéro de téléphone pour la livraison.' });
+			if (relay.kind === 'home') relay.name = name;
 			parcel = size;
 			fee = shippingFee(settings, size, itemsTotal);
 			const notice = Math.max(settings.prepDays, ...printLines.map((l) => l.min_days_notice || 0));

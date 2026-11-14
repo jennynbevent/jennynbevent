@@ -905,7 +905,7 @@ export class EmailService {
         return { success: !error };
     }
 
-    /** Point Relais : « Votre colis est en route » */
+    /** Colissimo : « Votre colis est en route » */
     static async sendParcelShipped(to: string, d: Parameters<typeof ParcelShippedEmail>[0]) {
         const resend = getResend();
         if (!resend) return { success: false };
@@ -920,7 +920,7 @@ export class EmailService {
         return { success: !error };
     }
 
-    /** Point Relais : « Votre colis vous attend » */
+    /** Colissimo : « Votre colis vous attend » (point retrait) */
     static async sendParcelArrived(to: string, d: Parameters<typeof ParcelArrivedEmail>[0]) {
         const resend = getResend();
         if (!resend) return { success: false };
@@ -928,7 +928,7 @@ export class EmailService {
             from: `${d.shopName} <contact@jennynbevent.com>`,
             to,
             replyTo: 'contact@jennynbevent.com',
-            subject: `🎉 Votre colis vous attend au Point Relais – n° ${d.orderRef}`,
+            subject: `🎉 Votre colis vous attend au point retrait – n° ${d.orderRef}`,
             html: ParcelArrivedEmail(d),
         });
         if (error) console.error('[EmailService] colis arrivé:', error);

@@ -24,7 +24,7 @@ export function getDeliveryMode(customizationData: unknown): DeliveryMode {
 	if (!customizationData || typeof customizationData !== 'object') return null;
 	const raw = readValue((customizationData as Record<string, unknown>)['Mode de remise']);
 	if (!raw) return null;
-	if (/relais/i.test(raw)) return 'relais';
+	if (/relais|colissimo|domicile/i.test(raw)) return 'relais'; // envoyé par La Poste
 	if (/mail/i.test(raw)) return 'email';
 	if (/retrait/i.test(raw)) return 'retrait';
 	return null;

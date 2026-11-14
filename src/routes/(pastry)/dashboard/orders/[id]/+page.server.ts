@@ -2,7 +2,7 @@ import { getDeliveryMode } from '$lib/utils/delivery';
 import { optionLines } from '$lib/cart/options';
 import { trackingUrl, parcelLabel, type RelayPoint } from '$lib/delivery/settings';
 import { syncParcel } from '$lib/delivery/tracking-sync';
-import { isTrackingConfigured } from '$lib/delivery/mondial-relay';
+import { isTrackingConfigured } from '$lib/delivery/laposte-suivi';
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { getUserPermissions, verifyShopOwnership } from '$lib/auth';
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             throw error(401, 'Non autorisé');
         }
 
-        // Point Relais : mise à jour du suivi à l'ouverture (au plus toutes les 30 min)
+        // Colissimo : mise à jour du suivi à l'ouverture (au plus toutes les 30 min)
         try {
             const { data: own } = await (locals.supabaseServiceRole as any)
                 .from('orders')
@@ -209,7 +209,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             cart = null;
         }
 
-        // Livraison en Point Relais : infos du colis
+        // Envoi Colissimo : infos du colis
         let shipping: {
             relay: RelayPoint;
             fee: number;
@@ -1343,7 +1343,7 @@ export const actions: Actions = {
     },
 
     // Marquer une commande comme terminée
-    // Point Relais : colis déposé → « Expédiée » + e-mail avec le n° de suivi
+    // Colissimo : colis déposé → « Expédiée » + e-mail avec le n° de suivi
     markShipped: async ({ request, params, locals }) => {
         const formData = await request.formData();
         const shopId = String(formData.get('shopId') || '');
@@ -1355,7 +1355,7 @@ export const actions: Actions = {
             return fail(403, { error: 'Accès non autorisé à cette boutique' });
         }
         if (!/^[0-9A-Z-]{6,40}$/.test(tracking)) {
-            return fail(400, { error: 'Numéro de suivi invalide (copie-le depuis ton étiquette Mondial Relay).' });
+            return fail(400, { error: 'Numéro de suivi invalide (copie-le depuis ton étiquette Colissimo, ex. 6A12345678901).' });
         }
 
         const admin = locals.supabaseServiceRole as any;
@@ -1365,10 +1365,10 @@ export const actions: Actions = {
             .eq('id', params.id)
             .eq('shop_id', shopId)
             .maybeSingle();
-        if (!order?.shipping_relay) return fail(400, { error: 'Cette commande n’est pas une livraison en Point Relais.' });
+        if (!order?.shipping_relay) return fail(400, { error: 'Cette commande n’est pas un envoi Colissimo.' });
         if (order.status !== 'confirmed') return fail(400, { error: 'La commande doit être « En cours » pour être expédiée.' });
 
-        // Tous les articles du même colis (même panier, Point Relais, en cours)
+        // Tous les articles du même colis (même panier, envoi Colissimo, en cours)
         let ids = [order.id];
         let names = [order.product_name];
         if (order.cart_ref) {
@@ -1418,7 +1418,7 @@ export const actions: Actions = {
         return { success: true, emailError };
     },
 
-    // Point Relais : « Actualiser le suivi »
+    // Colissimo : « Actualiser le suivi »
     refreshTracking: async ({ request, params, locals }) => {
         const formData = await request.formData();
         const shopId = String(formData.get('shopId') || '');
@@ -1431,7 +1431,7 @@ export const actions: Actions = {
             .from('orders').select('id').eq('id', params.id).eq('shop_id', shopId).maybeSingle();
         if (!own) return fail(404, { error: 'Commande introuvable' });
         const res = await syncParcel(locals.supabaseServiceRole, params.id);
-        if (res.error === 'not_configured') return fail(400, { error: 'Le suivi automatique n’est pas encore branché (clés Mondial Relay à ajouter dans Vercel).' });
+        if (res.error === 'not_configured') return fail(400, { error: 'Le suivi automatique n’est pas encore branché (clé LAPOSTE_OKAPI_KEY à ajouter dans Vercel).' });
         if (res.error) return fail(400, { error: res.error });
         return { success: true };
     },

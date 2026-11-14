@@ -23,15 +23,15 @@
 		<div class="flex items-center space-x-4">
 			<Truck class="h-7 w-7 text-primary" />
 			<div>
-				<CardTitle class="text-xl">Livraison en Point Relais</CardTitle>
-				<CardDescription class="text-base">Mondial Relay : le client choisit son Point Relais dans le panier</CardDescription>
+				<CardTitle class="text-xl">Livraison Colissimo (La Poste)</CardTitle>
+				<CardDescription class="text-base">Tu expédies avec La Poste Pro Expéditions, le client reçoit chez lui ou en point retrait</CardDescription>
 			</div>
 		</div>
 	</CardHeader>
 	<CardContent class="pt-0">
 		{#if !delivery.ready}
 			<p class="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-				⚠️ La mise à jour de la base (SQL « Point Relais ») n'a pas encore été faite. Fais-la dans Supabase, puis recharge cette page.
+				⚠️ La mise à jour de la base (SQL « livraison ») n'a pas encore été faite. Fais-la dans Supabase, puis recharge cette page.
 			</p>
 		{/if}
 
@@ -59,10 +59,19 @@
 			<!-- Activer -->
 			<label class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-4 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
 				<span>
-					<span class="block font-medium">Proposer la livraison en Point Relais</span>
+					<span class="block font-medium">Proposer la livraison à domicile (Colissimo)</span>
 					<span class="block text-sm text-muted-foreground">Désactivé : le panier propose uniquement le retrait à Andrésy.</span>
 				</span>
 				<input type="checkbox" name="enabled" bind:checked={s.enabled} class="h-5 w-5 shrink-0" />
+			</label>
+
+			<!-- Point retrait -->
+			<label class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-4 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+				<span>
+					<span class="block font-medium">Proposer aussi le point retrait La Poste</span>
+					<span class="block text-sm text-muted-foreground">Bureau de poste ou relais Pickup choisi par le client, pour les petits et moyens colis seulement (même prix).</span>
+				</span>
+				<input type="checkbox" name="pointRetrait" bind:checked={s.pointRetrait} class="h-5 w-5 shrink-0" />
 			</label>
 
 			<!-- Prix -->
@@ -110,14 +119,9 @@
 				</span>
 			</label>
 
-			<!-- Code enseigne -->
-			<label class="block space-y-1">
-				<span class="block font-medium">Code enseigne Mondial Relay (facultatif)</span>
-				<input name="brand" bind:value={s.brand} maxlength="10" placeholder="ex. CC12ABCD" class="w-full max-w-xs rounded-lg border px-3 py-2 uppercase" />
-				<span class="block text-xs text-muted-foreground">
-					Il se trouve dans ton espace Mondial Relay Pro. Laissé vide, la carte des Points Relais fonctionne quand même (mode démo de Mondial Relay).
-				</span>
-			</label>
+			<p class="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
+				ℹ️ Mets des prix proches de ce que te coûte l'étiquette sur La Poste Pro Expéditions. Le grand colis (150 à 200 cm au total) a un supplément La Poste : il part uniquement à domicile.
+			</p>
 
 			<div class="flex items-center gap-3">
 				<Button type="submit" disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</Button>

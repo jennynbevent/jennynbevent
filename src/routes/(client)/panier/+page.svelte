@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
@@ -7,7 +7,7 @@
 	import { DatePicker, TimeSlotSelector } from '$lib/components';
 	import { ClientFooter } from '$lib/components';
 	import { cart, cartTotal, removeFromCart } from '$lib/cart/store';
-	import { cartParcelSize, shippingFee, missingForFree, parcelLabel, MR_TEST_BRAND, type RelayPoint } from '$lib/delivery/settings';
+	import { cartParcelSize, shippingFee, missingForFree, parcelLabel, LAPOSTE_LOCATOR_URL, type ShipAddress } from '$lib/delivery/settings';
 
 	export let data;
 	$: ({ shop, availabilities, unavailabilities, datesWithLimitReached } = data);
@@ -22,87 +22,46 @@
 	$: hasPrint = printItems.length > 0;
 	$: minNotice = Math.max(0, ...printItems.map((i) => i.minDaysNotice || 0));
 
-	// Livraison en Point Relais
+	// Envoi Colissimo (La Poste) : à domicile ou en point retrait
 	$: delivery = data.delivery;
 	$: sizes = (data.parcelSizes || {}) as Record<string, string>;
 	$: relaisOn = !!delivery?.enabled && hasPrint;
 	$: parcel = cartParcelSize(printItems.map((i) => sizes[i.productId] || 'medium'));
 	$: blockingItem = printItems.find((i) => sizes[i.productId] === 'pickup_only');
 	$: relaisPossible = relaisOn && !!parcel;
-	let mode: 'retrait' | 'relais' = 'retrait';
-	$: if (!relaisPossible && mode === 'relais') mode = 'retrait';
-	$: isRelais = mode === 'relais' && relaisPossible;
+	$: pointPossible = relaisPossible && !!delivery?.pointRetrait && (parcel === 'small' || parcel === 'medium');
+	let mode: 'retrait' | 'home' | 'point' = 'retrait';
+	$: if (!relaisPossible && mode !== 'retrait') mode = 'retrait';
+	$: if (!pointPossible && mode === 'point') mode = 'home';
+	$: isRelais = mode !== 'retrait' && relaisPossible;
 	$: fee = relaisPossible && parcel ? shippingFee(delivery, parcel, $cartTotal) : 0;
 	$: missing = relaisPossible ? missingForFree(delivery, $cartTotal) : null;
 	$: freeProgress = delivery?.freeFrom ? Math.min(100, Math.round(($cartTotal / delivery.freeFrom) * 100)) : 0;
 	$: total = Math.round(($cartTotal + (isRelais ? fee : 0)) * 100) / 100;
-	let relay: RelayPoint | null = null;
-	let widgetError = '';
-	let widgetLoading = false;
-	let widgetReady = false;
-	let postCode = '';
 
-	function loadScript(src: string) {
-		return new Promise<void>((resolve, reject) => {
-			if (document.querySelector(`script[src="${src}"]`)) return resolve();
-			const el = document.createElement('script');
-			el.src = src;
-			el.onload = () => resolve();
-			el.onerror = () => reject(new Error(src));
-			document.head.appendChild(el);
-		});
-	}
-	function loadCss(href: string) {
-		if (document.querySelector(`link[href="${href}"]`)) return;
-		const el = document.createElement('link');
-		el.rel = 'stylesheet';
-		el.href = href;
-		document.head.appendChild(el);
-	}
+	// Adresse (domicile) ou point retrait
+	let shipAddress = '';
+	let shipAddress2 = '';
+	let shipZip = '';
+	let shipCity = '';
+	let pointName = '';
+	$: relay = isRelais
+		? ({
+				kind: mode === 'point' ? 'point' : 'home',
+				name: mode === 'point' ? pointName.trim() : '',
+				address: shipAddress.trim(),
+				address2: mode === 'point' ? '' : shipAddress2.trim(),
+				zip: shipZip.trim(),
+				city: shipCity.trim(),
+				country: 'FR',
+			} as ShipAddress)
+		: null;
+	$: addressOk =
+		!!relay && relay.address.length >= 4 && /^\d{5}$/.test(relay.zip) && relay.city.length >= 2 && (relay.kind !== 'point' || relay.name.length >= 2);
+	$: phoneOk = phone.replace(/\D/g, '').length >= 6;
 
-	async function openRelayMap() {
-		widgetError = '';
-		widgetLoading = true;
-		try {
-			loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
-			await loadScript('https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js');
-			await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
-			await loadScript('https://widget.mondialrelay.com/parcelshop-picker/jquery.plugin.mondialrelay.parcelshoppicker.min.js');
-			widgetReady = true;
-			await tick();
-			const $ = (window as any).jQuery;
-			$('#mr-widget').empty();
-			$('#mr-widget').MR_ParcelShopPicker({
-				Target: '#mr-target',
-				Brand: (delivery.brand || MR_TEST_BRAND).padEnd(8, ' '),
-				Country: 'FR',
-				PostCode: postCode,
-				ColLivMod: '24R',
-				NbResults: '7',
-				Responsive: true,
-				ShowResultsOnMap: true,
-				OnParcelShopSelected: (d: any) => {
-					relay = {
-						id: String(d.ID || ''),
-						name: String(d.Nom || '').trim(),
-						address: [d.Adresse1, d.Adresse2].filter((x: any) => x && String(x).trim()).join(', ').trim(),
-						zip: String(d.CP || '').trim(),
-						city: String(d.Ville || '').trim(),
-						country: String(d.Pays || 'FR').trim(),
-					};
-				},
-			});
-		} catch (e) {
-			console.error('[Point Relais] carte:', e);
-			widgetError = 'La carte des Points Relais n’a pas pu s’afficher. Vérifiez votre connexion et réessayez.';
-		} finally {
-			widgetLoading = false;
-		}
-	}
-
-	async function chooseMode(m: 'retrait' | 'relais') {
+	function chooseMode(m: 'retrait' | 'home' | 'point') {
 		mode = m;
-		if (m === 'relais' && !relay && !widgetReady) await openRelayMap();
 	}
 
 	let name = '';
@@ -153,7 +112,7 @@
 		const a = availabilities.find((x: any) => x.day === day);
 		return !!(a && a.start_time && a.end_time && a.interval_time);
 	})();
-	$: deliveryOk = !hasPrint || (isRelais ? !!relay : !!(pickupDate && (!needsSlot || pickupTime)));
+	$: deliveryOk = !hasPrint || (isRelais ? addressOk && phoneOk : !!(pickupDate && (!needsSlot || pickupTime)));
 	$: canOrder = items.length > 0 && name.trim() && /\S+@\S+\.\S+/.test(email) && deliveryOk;
 </script>
 
@@ -248,13 +207,22 @@
 										</span>
 										<b>Gratuit</b>
 									</button>
-									<button type="button" disabled={!relaisPossible} on:click={() => chooseMode('relais')} class="flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 text-left text-sm disabled:opacity-60 {isRelais ? 'border-[#7A4F60] bg-[#FBF6F8]' : 'border-neutral-200 bg-white'}">
+									<button type="button" disabled={!relaisPossible} on:click={() => chooseMode('home')} class="flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 text-left text-sm disabled:opacity-60 {mode === 'home' && relaisPossible ? 'border-[#7A4F60] bg-[#FBF6F8]' : 'border-neutral-200 bg-white'}">
 										<span class="flex items-center gap-3">
-											<span class="grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 {isRelais ? 'border-[#7A4F60]' : 'border-neutral-300'}">{#if isRelais}<span class="h-2 w-2 rounded-full bg-[#7A4F60]"></span>{/if}</span>
-											<span>📦 <b>Livraison en Point Relais</b><br /><span class="text-neutral-500">{relaisPossible ? `Mondial Relay · 3 à 5 jours après l’envoi` : `Indisponible : « ${blockingItem?.name || 'un article'} » est en retrait uniquement`}</span></span>
+											<span class="grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 {mode === 'home' && relaisPossible ? 'border-[#7A4F60]' : 'border-neutral-300'}">{#if mode === 'home' && relaisPossible}<span class="h-2 w-2 rounded-full bg-[#7A4F60]"></span>{/if}</span>
+											<span>📦 <b>Livraison à domicile · Colissimo</b><br /><span class="text-neutral-500">{relaisPossible ? `La Poste · environ 2 jours après l’envoi` : `Indisponible : « ${blockingItem?.name || 'un article'} » est en retrait uniquement`}</span></span>
 										</span>
 										{#if relaisPossible}<b class="shrink-0">{fee > 0 ? formatPrice(fee) : 'Offerte'}</b>{/if}
 									</button>
+									{#if relaisPossible && delivery?.pointRetrait}
+										<button type="button" disabled={!pointPossible} on:click={() => chooseMode('point')} class="flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 text-left text-sm disabled:opacity-60 {mode === 'point' && pointPossible ? 'border-[#7A4F60] bg-[#FBF6F8]' : 'border-neutral-200 bg-white'}">
+											<span class="flex items-center gap-3">
+												<span class="grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 {mode === 'point' && pointPossible ? 'border-[#7A4F60]' : 'border-neutral-300'}">{#if mode === 'point' && pointPossible}<span class="h-2 w-2 rounded-full bg-[#7A4F60]"></span>{/if}</span>
+												<span>🏤 <b>Point retrait La Poste · Colissimo</b><br /><span class="text-neutral-500">{pointPossible ? 'Bureau de poste ou relais Pickup de votre choix' : 'Indisponible : colis trop grand pour un point retrait'}</span></span>
+											</span>
+											{#if pointPossible}<b class="shrink-0">{fee > 0 ? formatPrice(fee) : 'Offerte'}</b>{/if}
+										</button>
+									{/if}
 								</div>
 								{#if relaisPossible && missing !== null}
 									<div class="rounded-xl bg-[#FBF6F8] px-4 py-3 text-[13px]">
@@ -275,21 +243,41 @@
 
 							{#if isRelais}
 								<div class="space-y-3 pt-1">
-									{#if relay}
-										<div class="flex items-start justify-between gap-3 rounded-xl border border-[#ecd8e0] bg-white px-4 py-3 text-sm">
-											<span><span class="text-[12px] font-semibold uppercase tracking-wide text-[#7A4F60]">Votre Point Relais ✓</span><br /><b>{relay.name}</b><br />{relay.address}<br />{relay.zip} {relay.city}</span>
-										</div>
+									{#if mode === 'point'}
+										<p class="font-semibold">Votre point retrait</p>
+										<p class="rounded-xl bg-[#FBF6F8] px-4 py-3 text-[13px]">
+											Choisissez un bureau de poste ou un relais Pickup près de chez vous sur
+											<a href={LAPOSTE_LOCATOR_URL} target="_blank" rel="noopener" class="font-medium underline">le site de La Poste</a>, puis recopiez son nom et son adresse ici.
+											<span class="text-neutral-500">Les consignes (casiers) ne sont pas acceptées.</span>
+										</p>
+										<label class="block">
+											<span class="mb-1.5 block text-sm font-medium">Nom du point retrait *</span>
+											<input bind:value={pointName} maxlength="120" placeholder="ex. Bureau de poste Andrésy" class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
+										</label>
 									{:else}
-										<p class="text-sm font-medium">Choisissez votre Point Relais * <span class="font-normal text-neutral-500">(cliquez sur « Choisir » dans la liste)</span></p>
+										<p class="font-semibold">Adresse de livraison</p>
 									{/if}
-									{#if widgetLoading}<p class="text-sm text-neutral-500">Chargement de la carte…</p>{/if}
-									{#if widgetError}
-										<p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{widgetError}</p>
-										<button type="button" on:click={openRelayMap} class="text-sm underline">Réessayer</button>
+									<label class="block">
+										<span class="mb-1.5 block text-sm font-medium">Adresse *</span>
+										<input bind:value={shipAddress} maxlength="160" placeholder="ex. 12 rue des Lilas" autocomplete={mode === 'point' ? 'off' : 'address-line1'} class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
+									</label>
+									{#if mode === 'home'}
+										<label class="block">
+											<span class="mb-1.5 block text-sm font-medium">Complément <span class="font-normal text-neutral-500">(bâtiment, étage, digicode…)</span></span>
+											<input bind:value={shipAddress2} maxlength="120" placeholder="Facultatif" autocomplete="address-line2" class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
+										</label>
 									{/if}
-									<div id="mr-widget" class="mr-widget min-w-0 overflow-hidden rounded-xl"></div>
-									<input id="mr-target" type="hidden" />
-									<p class="text-[12.5px] text-neutral-500">Taille du colis : {parcel ? parcelLabel(parcel) : ''}. Envoi sous {delivery.prepDays} jour{delivery.prepDays > 1 ? 's' : ''} environ, vous recevez le numéro de suivi par e-mail.</p>
+									<div class="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
+										<label class="block min-w-0">
+											<span class="mb-1.5 block text-sm font-medium">Code postal *</span>
+											<input bind:value={shipZip} inputmode="numeric" maxlength="5" placeholder="78570" autocomplete={mode === 'point' ? 'off' : 'postal-code'} class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
+										</label>
+										<label class="block min-w-0">
+											<span class="mb-1.5 block text-sm font-medium">Ville *</span>
+											<input bind:value={shipCity} maxlength="80" placeholder="Andrésy" autocomplete={mode === 'point' ? 'off' : 'address-level2'} class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
+										</label>
+									</div>
+									<p class="text-[12.5px] text-neutral-500">Taille du colis : {parcel ? parcelLabel(parcel) : ''}. Envoi sous {delivery.prepDays} jour{delivery.prepDays > 1 ? 's' : ''} environ, vous recevez le numéro de suivi par e-mail. Livraison en France métropolitaine.</p>
 								</div>
 							{/if}
 							{#if !isRelais}
@@ -341,7 +329,7 @@
 							<input name="customer_email" type="email" bind:value={email} required maxlength="200" placeholder="votre@email.com" autocomplete="email" class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
 						</label>
 						<label class="block">
-							<span class="mb-1.5 block text-sm font-medium">Numéro de téléphone (facultatif)</span>
+							<span class="mb-1.5 block text-sm font-medium">{isRelais ? 'Téléphone * ' : 'Numéro de téléphone (facultatif)'}{#if isRelais}<span class="font-normal text-neutral-500">(pour La Poste)</span>{/if}</span>
 							<input name="customer_phone" type="tel" bind:value={phone} maxlength="40" placeholder="06 12 34 56 78" autocomplete="tel" class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
 						</label>
 						<label class="block">
@@ -356,7 +344,7 @@
 							<p class="text-neutral-600">Merci de bien vérifier les informations de commande car en cas d'erreur votre commande pourra être retardée.</p>
 							<div class="flex justify-between pt-1"><span>{items.length} article{items.length > 1 ? 's' : ''}</span><span>{formatPrice($cartTotal)}</span></div>
 							{#if hasPrint && isRelais}
-								<div class="flex justify-between gap-3"><span>Livraison Point Relais{relay ? ` · ${relay.city}` : ''}</span><span class="shrink-0">{fee > 0 ? formatPrice(fee) : 'Offerte'}</span></div>
+								<div class="flex justify-between gap-3"><span>Livraison Colissimo{relay?.city ? ` · ${relay.city}` : ''}</span><span class="shrink-0">{fee > 0 ? formatPrice(fee) : 'Offerte'}</span></div>
 							{:else if hasPrint}
 								<div class="flex justify-between"><span>Retrait à Andrésy</span><span>{pickupDate ? new Date(pickupDate + 'T12:00:00').toLocaleDateString('fr-FR') + (pickupTime ? ' · ' + pickupTime.slice(0, 5) : '') : 'à choisir'}</span></div>
 							{/if}
@@ -370,7 +358,7 @@
 						</button>
 						{#if !canOrder && items.length}
 							<p class="text-center text-xs text-neutral-500">
-								{!name.trim() || !/\S+@\S+\.\S+/.test(email) ? 'Indiquez votre nom et votre e-mail.' : isRelais ? 'Choisissez votre Point Relais.' : 'Choisissez la date et le créneau de retrait.'}
+								{!name.trim() || !/\S+@\S+\.\S+/.test(email) ? 'Indiquez votre nom et votre e-mail.' : isRelais ? (!addressOk ? 'Complétez l’adresse de livraison.' : 'Indiquez votre téléphone pour La Poste.') : 'Choisissez la date et le créneau de retrait.'}
 							</p>
 						{/if}
 					</div>

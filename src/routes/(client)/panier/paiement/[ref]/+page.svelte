@@ -70,14 +70,14 @@
 						{#if it.image}<img src={it.image} alt="" class="h-12 w-12 shrink-0 rounded-lg object-cover" />{:else}<div class="h-12 w-12 shrink-0 rounded-lg bg-[#F3E6EA]"></div>{/if}
 						<div class="min-w-0 flex-1 text-sm">
 							<p class="font-semibold">{it.name}</p>
-							<p class="text-[12.5px] text-neutral-500">{it.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : data.relay ? '📦 Point Relais' : '📍 Retrait à Andrésy'}</p>
+							<p class="text-[12.5px] text-neutral-500">{it.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : data.relay ? '📦 Envoi Colissimo' : '📍 Retrait à Andrésy'}</p>
 						</div>
 						<span class="text-sm font-semibold">{formatPrice(it.price)}</span>
 					</div>
 				{/each}
 				{#if data.relay}
 					<div class="flex items-start justify-between gap-3 pt-2 text-sm text-neutral-600">
-						<span>📦 Livraison en Point Relais<br /><span class="text-[12.5px]">{data.relay.name} · {data.relay.zip} {data.relay.city}</span></span>
+						<span>📦 {data.relay.kind === 'point' ? 'Point retrait La Poste' : 'Livraison à domicile'} · Colissimo<br /><span class="text-[12.5px]">{data.relay.kind === 'point' ? `${data.relay.name} · ` : ''}{data.relay.address}, {data.relay.zip} {data.relay.city}</span></span>
 						<span class="shrink-0 font-semibold text-neutral-800">{data.shippingFee > 0 ? formatPrice(data.shippingFee) : 'Offerte'}</span>
 					</div>
 				{:else if data.pickupDate}

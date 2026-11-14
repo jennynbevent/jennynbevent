@@ -450,7 +450,7 @@
 													>
 												</div>
 												{#if order.is_relais}
-													<span class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">📦 Point Relais</span>
+													<span class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">📦 Colissimo</span>
 												{/if}
 												{#if order.total_amount}
 													<span class="text-sm font-medium text-green-600">

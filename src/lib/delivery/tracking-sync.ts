@@ -1,4 +1,4 @@
-import { trackParcel, isTrackingConfigured, type TrackingState } from './mondial-relay';
+import { trackParcel, isTrackingConfigured, type TrackingState } from './laposte-suivi';
 import { trackingUrl } from './settings';
 import { EmailService } from '$lib/services/email-service';
 import { sendPushToAll } from '$lib/push';
@@ -6,13 +6,13 @@ import { getShopColorFromShopId } from '$lib/emails/helpers';
 
 export type SyncResult = { checked: boolean; state?: TrackingState; label?: string; error?: string; changed?: boolean };
 
-const RANK: Record<string, number> = { unknown: 0, in_transit: 1, anomaly: 1, available: 2, delivered: 3 };
+const RANK: Record<string, number> = { unknown: 0, in_transit: 1, anomaly: 1, out_for_delivery: 2, available: 3, delivered: 4 };
 
 /**
- * Interroge Mondial Relay pour le colis d'une commande « Expédiée »
+ * Interroge La Poste pour le colis d'une commande « Expédiée »
  * et met à jour toutes les commandes du même colis :
- *  - arrivé au Point Relais → e-mail au client + notification pour toi
- *  - retiré par le client → « Terminée » + notification pour toi
+ *  - disponible au point retrait / bureau de poste → e-mail au client + notification pour toi
+ *  - livré (ou retiré) → « Terminée » + notification pour toi
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function syncParcel(admin: any, orderId: string, opts: { minMinutes?: number } = {}): Promise<SyncResult> {
@@ -59,10 +59,10 @@ export async function syncParcel(admin: any, orderId: string, opts: { minMinutes
 	const ref = order.cart_ref || order.order_ref;
 	let changed = false;
 
-	if ((state === 'available' || state === 'delivered') && RANK[prev] < RANK.available) {
+	if ((state === 'available' || state === 'delivered') && (RANK[prev] ?? 0) < RANK.available) {
 		update.relay_arrived_at = now;
 		changed = true;
-		if (state === 'available') {
+		if (state === 'available' && relay?.kind === 'point') {
 			try {
 				const { data: shop } = await admin.from('shops').select('name, logo_url').eq('id', order.shop_id).single();
 				const shopColor = await getShopColorFromShopId(admin, order.shop_id);
@@ -73,17 +73,19 @@ export async function syncParcel(admin: any, orderId: string, opts: { minMinutes
 					shopColor,
 					relay,
 					tracking: order.tracking_number,
-					trackingUrl: trackingUrl(order.tracking_number, relay?.zip),
+					trackingUrl: trackingUrl(order.tracking_number),
 					orderRef: ref,
 				});
 			} catch (e) {
-				console.error('[suivi] e-mail colis arrivé:', e);
+				console.error('[suivi] e-mail colis disponible:', e);
 			}
+		}
+		if (state === 'available') {
 			await sendPushToAll({
-				title: '📦 Colis arrivé au Point Relais',
-				body: `${order.customer_name} · ${relay?.name || ''} (${relay?.city || ''})`,
+				title: relay?.kind === 'point' ? '📦 Colis arrivé au point retrait' : '📦 Colis en attente au bureau de poste',
+				body: `${order.customer_name} · ${relay?.kind === 'point' ? relay?.name || '' : 'client absent, avis de passage'}`,
 				url: `/dashboard/orders/${order.id}`,
-				tag: `relais-${order.tracking_number}`,
+				tag: `dispo-${order.tracking_number}`,
 			});
 		}
 	}
@@ -92,10 +94,19 @@ export async function syncParcel(admin: any, orderId: string, opts: { minMinutes
 		update.status = 'completed';
 		changed = true;
 		await sendPushToAll({
-			title: '✅ Colis retiré !',
-			body: `${order.customer_name} a retiré son colis · commande terminée`,
+			title: relay?.kind === 'point' ? '✅ Colis retiré !' : '✅ Colis livré !',
+			body: `${order.customer_name} a reçu son colis · commande terminée`,
 			url: `/dashboard/orders/${order.id}`,
-			tag: `retire-${order.tracking_number}`,
+			tag: `livre-${order.tracking_number}`,
+		});
+	}
+
+	if (state === 'anomaly' && prev !== 'anomaly') {
+		await sendPushToAll({
+			title: '⚠️ Problème de livraison',
+			body: `${order.customer_name} · ${res.label || 'voir le suivi La Poste'}`,
+			url: `/dashboard/orders/${order.id}`,
+			tag: `pb-${order.tracking_number}`,
 		});
 	}
 

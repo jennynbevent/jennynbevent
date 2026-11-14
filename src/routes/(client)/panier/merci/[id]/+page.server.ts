@@ -37,7 +37,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}));
 	const printOrder = (orders || []).find((o: any) => getDeliveryMode(o.customization_data) !== 'email');
 
-	// Livraison en Point Relais
+	// Envoi Colissimo
 	let relay: any = null;
 	let shippingFee = 0;
 	if (printOrder && getDeliveryMode(printOrder.customization_data) === 'relais') {
