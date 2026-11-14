@@ -297,7 +297,7 @@
 								{/if}
 							</div>
 							<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight">{product.name}</p>
-							<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>dès {formatPrice(product.base_price)}</p>
+							<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>{formatPrice(product.base_price)}</p>
 						</a>
 					{/each}
 				</div>
@@ -350,7 +350,7 @@
 										{/if}
 									</div>
 									<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight">{product.name}</p>
-									<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>dès {formatPrice(product.base_price)}</p>
+									<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>{formatPrice(product.base_price)}</p>
 								</a>
 							{/each}
 						</div>

@@ -680,15 +680,15 @@
 					<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-3 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
 						<input type="checkbox" bind:checked={$formData.show_delivery_options} class="mt-0.5 h-4 w-4" />
 						<span>
-							<span class="block text-sm font-medium">Afficher « Comment recevoir votre commande » et « Votre QR code »</span>
-							<span class="block text-sm text-muted-foreground">Le client choisit entre le retrait à Andrésy et l'envoi par e-mail, et peut ajouter son QR code.</span>
+							<span class="block text-sm font-medium">Afficher « Votre QR code »</span>
+							<span class="block text-sm text-muted-foreground">Le client peut ajouter l'image de son QR code (Souvientoi, Placemoi…) à sa commande.</span>
 						</span>
 					</label>
 				{/if}
 
 				{#if $formData.booking_type !== 'reservation'}
 					<div class="space-y-2">
-						<p class="text-sm font-medium">Taille du colis (envoi Colissimo)</p>
+						<p class="text-sm font-medium">Envoi de l'article (taille du colis ou fichier par e-mail)</p>
 						<div class="grid gap-2 sm:grid-cols-2">
 							{#each PARCEL_SIZES as size}
 								<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-2.5 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
@@ -700,7 +700,7 @@
 								</label>
 							{/each}
 						</div>
-						<p class="text-xs text-muted-foreground">Si le panier contient plusieurs articles, c'est la plus grande taille qui compte. « Retrait uniquement » retire l'envoi par La Poste pour tout le panier.</p>
+						<p class="text-xs text-muted-foreground">Si le panier contient plusieurs articles, c'est la plus grande taille qui compte. « Retrait uniquement » retire l'envoi par La Poste pour tout le panier. « Fichier par e-mail » : rien à expédier, le client reçoit un fichier sous 48 h.</p>
 					</div>
 				{/if}
 

@@ -292,7 +292,7 @@
 							class="text-xl font-semibold sm:text-2xl"
 							style={`color: ${customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 						>
-							À partir de {formatPrice(product.base_price)}
+							{formatPrice(product.base_price)}
 						</p>
 						{#if product.description}
 							<p

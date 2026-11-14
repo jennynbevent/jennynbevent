@@ -61,7 +61,7 @@ export const productBaseSchema = z.object({
     // Affiche le choix du mode de remise et l'ajout du QR code sur la page du produit
     show_delivery_options: z.boolean().default(false),
     // Taille de colis pour l'envoi Colissimo
-    parcel_size: z.enum(['small', 'medium', 'large', 'pickup_only']).default('medium'),
+    parcel_size: z.enum(['small', 'medium', 'large', 'pickup_only', 'email']).default('medium'),
     min_reservation_days: z.preprocess(
         (val) => {
             if (val === '' || val === undefined) return undefined;

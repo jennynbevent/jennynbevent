@@ -5,7 +5,7 @@
  * Utilisable côté client comme côté serveur.
  */
 
-export type ParcelSize = 'small' | 'medium' | 'large' | 'pickup_only';
+export type ParcelSize = 'small' | 'medium' | 'large' | 'pickup_only' | 'email';
 
 export type DeliverySettings = {
 	enabled: boolean;
@@ -28,6 +28,7 @@ export const PARCEL_SIZES: Array<{ id: ParcelSize; label: string; hint: string }
 	{ id: 'medium', label: 'Moyen colis', hint: 'Tasse, panneau A4/A3, petits objets (L+l+h ≤ 150 cm, longueur ≤ 100 cm)' },
 	{ id: 'large', label: 'Grand colis', hint: 'Grands panneaux (150 à 200 cm au total) : domicile uniquement, supplément La Poste' },
 	{ id: 'pickup_only', label: 'Retrait uniquement', hint: 'Trop grand ou fragile : jamais envoyé, retrait à Andrésy' },
+	{ id: 'email', label: 'Fichier par e-mail', hint: 'Rien à envoyer ni à retirer : le client reçoit son fichier par e-mail sous 48 h' },
 ];
 
 const ORDER: Record<string, number> = { small: 1, medium: 2, large: 3 };
@@ -37,7 +38,7 @@ export function parcelLabel(size: string | null | undefined): string {
 }
 
 export function normalizeParcelSize(v: unknown): ParcelSize {
-	return v === 'small' || v === 'medium' || v === 'large' || v === 'pickup_only' ? v : 'medium';
+	return v === 'small' || v === 'medium' || v === 'large' || v === 'pickup_only' || v === 'email' ? v : 'medium';
 }
 
 function num(v: unknown, fallback: number): number {
@@ -67,10 +68,11 @@ export function readDeliverySettings(raw: unknown): DeliverySettings {
  * Taille du colis pour un ensemble d'articles imprimés :
  * la plus grande taille l'emporte. null si un article est « retrait uniquement ».
  */
-export function cartParcelSize(sizes: Array<string | null | undefined>): Exclude<ParcelSize, 'pickup_only'> | null {
-	let best: Exclude<ParcelSize, 'pickup_only'> = 'small';
+export function cartParcelSize(sizes: Array<string | null | undefined>): 'small' | 'medium' | 'large' | null {
+	let best: 'small' | 'medium' | 'large' = 'small';
 	for (const s of sizes) {
 		const n = normalizeParcelSize(s);
+		if (n === 'email') continue;
 		if (n === 'pickup_only') return null;
 		if (ORDER[n] > ORDER[best]) best = n;
 	}
@@ -78,7 +80,7 @@ export function cartParcelSize(sizes: Array<string | null | undefined>): Exclude
 }
 
 /** Frais de port à payer (0 si la livraison est offerte) */
-export function shippingFee(settings: DeliverySettings, size: Exclude<ParcelSize, 'pickup_only'>, itemsTotal: number): number {
+export function shippingFee(settings: DeliverySettings, size: 'small' | 'medium' | 'large', itemsTotal: number): number {
 	if (settings.freeFrom !== null && itemsTotal >= settings.freeFrom) return 0;
 	return settings.prices[size];
 }

@@ -61,7 +61,6 @@
 
 	$: if (!$formData.customization_data) $formData.customization_data = {};
 	$: showDeliveryOptions = !!product?.show_delivery_options;
-	$: isEmail = showDeliveryOptions && $formData.delivery_mode === 'email';
 
 	$: totalPrice = (() => {
 		let total = Number(product.base_price) || 0;
@@ -146,39 +145,6 @@
 		{/if}
 
 		{#if showDeliveryOptions}
-			<div class="space-y-3">
-				<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="letter-spacing: -0.02em;">
-					Comment recevoir votre commande
-				</h3>
-				<div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Mode de remise">
-					<button
-						type="button"
-						role="radio"
-						aria-checked={!isEmail}
-						on:click={() => ($formData.delivery_mode = 'retrait')}
-						class="rounded-full border px-4 py-2 text-sm font-medium transition-colors {!isEmail ? 'border-neutral-900 bg-white text-neutral-900' : 'border-neutral-300 bg-white/60 text-neutral-600 hover:border-neutral-500'}"
-					>
-						🖨️ Version imprimée
-					</button>
-					<button
-						type="button"
-						role="radio"
-						aria-checked={isEmail}
-						on:click={() => ($formData.delivery_mode = 'email')}
-						class="rounded-full border px-4 py-2 text-sm font-medium transition-colors {isEmail ? 'border-neutral-900 bg-white text-neutral-900' : 'border-neutral-300 bg-white/60 text-neutral-600 hover:border-neutral-500'}"
-					>
-						✉️ Par e-mail (à imprimer)
-					</button>
-				</div>
-				<p class="text-xs text-neutral-500">
-					{#if isEmail}
-						Vous recevrez votre design en fichier sous 48 h, à imprimer vous-même ou à envoyer à vos invités.
-					{:else}
-						Retrait à Andrésy : vous choisirez la date dans le panier.
-					{/if}
-				</p>
-			</div>
-
 			<div class="space-y-2">
 				<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="letter-spacing: -0.02em;">
 					Votre QR code <span class="text-sm font-normal text-neutral-500">(facultatif)</span>
@@ -202,17 +168,11 @@
 				{#if qrError}<p class="text-sm font-medium text-destructive">{qrError}</p>{/if}
 			</div>
 			<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
-		{:else}
-			<p class="rounded-2xl border bg-white p-4 text-sm text-neutral-700">📍 Retrait à Andrésy : vous choisirez la date dans le panier.</p>
 		{/if}
 
 		<div class="space-y-4">
 			<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="letter-spacing: -0.02em;">Récapitulatif</h3>
 			<div class="space-y-3 rounded-2xl border bg-white p-4 text-sm">
-				<div class="flex items-center justify-between gap-2">
-					<span class="font-semibold text-neutral-700">Mode de remise :</span>
-					<span class="text-right text-neutral-900">{isEmail ? 'Par e-mail, sous 48 h' : 'Version imprimée'}</span>
-				</div>
 				{#if $formData.qr_code_url}
 					<div class="flex items-center justify-between gap-2">
 						<span class="font-semibold text-neutral-700">QR code :</span><span>Ajouté ✓</span>

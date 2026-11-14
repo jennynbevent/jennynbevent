@@ -115,7 +115,7 @@ export const actions: Actions = {
 
 		const { data: product } = await (locals.supabaseServiceRole as any)
 			.from('products')
-			.select('id, name, base_price, image_url, form_id, booking_type, min_days_notice, show_delivery_options, shop_id')
+			.select('id, name, base_price, image_url, form_id, booking_type, min_days_notice, show_delivery_options, parcel_size, shop_id')
 			.eq('id', productId)
 			.eq('shop_id', shopId)
 			.eq('is_active', true)
@@ -138,8 +138,9 @@ export const actions: Actions = {
 		const form = await superValidate(formData, zod(createCartSchema(customFields)), { id: 'cart' });
 		if (!form.valid) return fail(400, { form });
 
-		const showDeliveryOptions = !!product.show_delivery_options;
-		const mode: 'print' | 'email' = showDeliveryOptions && form.data.delivery_mode === 'email' ? 'email' : 'print';
+		const showDeliveryOptions = !!product.show_delivery_options; // = afficher « Votre QR code »
+		// Article « Fichier par e-mail » : rien à expédier
+		const mode: 'print' | 'email' = product.parcel_size === 'email' ? 'email' : 'print';
 		const qrCodeUrl = showDeliveryOptions ? form.data.qr_code_url || '' : '';
 
 		const selectedOptions = buildSelectedOptions(customFields, form.data.customization_data);

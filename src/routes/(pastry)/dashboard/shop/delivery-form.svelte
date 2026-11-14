@@ -15,7 +15,7 @@
 	let message = '';
 	let errorText = '';
 
-	const sizes = PARCEL_SIZES.filter((p) => p.id !== 'pickup_only') as Array<{ id: 'small' | 'medium' | 'large'; label: string; hint: string }>;
+	const sizes = PARCEL_SIZES.filter((p) => p.id !== 'pickup_only' && p.id !== 'email') as Array<{ id: 'small' | 'medium' | 'large'; label: string; hint: string }>;
 </script>
 
 <Card class="shadow-sm">

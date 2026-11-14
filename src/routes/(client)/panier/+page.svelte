@@ -182,9 +182,11 @@
 							<div class="min-w-0 flex-1">
 								<p class="font-semibold">{item.name}</p>
 								{#each item.lines as l}<p class="truncate text-[13px] text-neutral-500">{l}</p>{/each}
+								{#if item.mode === 'email' || (relaisOn && sizes[item.productId] === 'pickup_only')}
 								<span class="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[12px] font-semibold {item.mode === 'email' ? 'bg-blue-50 text-blue-800' : 'bg-[#F3E6EA] text-[#7A4F60]'}">
-									{item.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : relaisOn && sizes[item.productId] === 'pickup_only' ? '🖨️ Imprimé · retrait uniquement' : '🖨️ Imprimé'}
+									{item.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : '📍 Retrait uniquement'}
 								</span>
+								{/if}
 							</div>
 							<div class="flex shrink-0 flex-col items-end gap-2">
 								<span class="font-semibold">{formatPrice(item.price)}</span>
@@ -197,7 +199,7 @@
 
 					{#if hasPrint}
 						<div class="mt-6 space-y-3 rounded-2xl border bg-white p-4">
-							<h2 class="text-lg font-semibold">Comment recevoir vos articles imprimés ?</h2>
+							<h2 class="text-lg font-semibold">Comment recevoir votre commande ?</h2>
 							{#if relaisOn}
 								<div class="grid gap-2">
 									<button type="button" on:click={() => chooseMode('retrait')} class="flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 text-left text-sm {mode === 'retrait' ? 'border-[#7A4F60] bg-[#FBF6F8]' : 'border-neutral-200 bg-white'}">
