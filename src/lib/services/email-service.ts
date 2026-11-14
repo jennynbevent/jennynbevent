@@ -38,7 +38,7 @@ import { CriticalErrorNotificationEmail } from '$lib/emails/critical-error-notif
 import { MarketingCampaignEmail } from '$lib/emails/marketing-campaign';
 import type { OrderEmailExtras } from '$lib/emails/order-extras';
 import { sendPushToAll, euros, pathOf } from '$lib/push';
-import { CartCustomerEmail, ParcelShippedEmail, CartOwnerEmail, type CartEmailData } from '$lib/emails/cart';
+import { CartCustomerEmail, ParcelShippedEmail, ParcelArrivedEmail, CartOwnerEmail, type CartEmailData } from '$lib/emails/cart';
 import { ContactMessageNotificationEmail, ContactMessageCopyEmail, ContactReplyEmail } from '$lib/emails/contact-message';
 
 export class EmailService {
@@ -917,6 +917,21 @@ export class EmailService {
             html: ParcelShippedEmail(d),
         });
         if (error) console.error('[EmailService] colis en route:', error);
+        return { success: !error };
+    }
+
+    /** Point Relais : « Votre colis vous attend » */
+    static async sendParcelArrived(to: string, d: Parameters<typeof ParcelArrivedEmail>[0]) {
+        const resend = getResend();
+        if (!resend) return { success: false };
+        const { error } = await resend.emails.send({
+            from: `${d.shopName} <contact@jennynbevent.com>`,
+            to,
+            replyTo: 'contact@jennynbevent.com',
+            subject: `🎉 Votre colis vous attend au Point Relais – n° ${d.orderRef}`,
+            html: ParcelArrivedEmail(d),
+        });
+        if (error) console.error('[EmailService] colis arrivé:', error);
         return { success: !error };
     }
 

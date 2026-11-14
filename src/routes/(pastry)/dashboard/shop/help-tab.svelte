@@ -28,7 +28,7 @@
 				{ label: 'À traiter', text: 'Payé par carte. Clique sur « J’ai reçu le paiement ».' },
 				{ label: 'En cours', text: 'Tu prépares et tu emballes le colis.' },
 				{ label: 'Expédiée', text: 'Colle le n° de suivi puis « Colis envoyé » : le client reçoit le suivi.' },
-				{ label: 'Terminée', text: 'Le client a retiré son colis : « Marquer comme terminée ».' },
+				{ label: 'Terminée', text: 'Automatique quand le client retire son colis (suivi vérifié chaque jour et à l’ouverture de la commande).' },
 			],
 		},
 	];
@@ -53,7 +53,8 @@
 			rows: [
 				['Commande payée', 'Toi : notification + e-mail · Client : e-mail avec son Point Relais'],
 				['Colis envoyé', 'Client : e-mail « Votre colis est en route » + n° de suivi'],
-				['Colis arrivé', 'Client : SMS / e-mail de Mondial Relay'],
+				['Colis arrivé', 'Client : e-mail « Votre colis vous attend » (+ SMS Mondial Relay) · Toi : notification'],
+				['Colis retiré', 'Toi : notification « Colis retiré ! » · la commande passe en Terminée'],
 			],
 		},
 	];

@@ -180,3 +180,28 @@ export function ParcelShippedEmail(d: {
 		d.shopColor
 	);
 }
+
+/** Client : « Votre colis vous attend au Point Relais » */
+export function ParcelArrivedEmail(d: {
+	customerName: string;
+	shopName: string;
+	shopLogo?: string | null;
+	shopColor?: string | null;
+	relay: RelayPoint;
+	tracking: string;
+	trackingUrl: string | null;
+	orderRef: string;
+}): string {
+	return EmailContainer(
+		`
+		${EmailHeader({ logoUrl: d.shopLogo || undefined, logoAlt: escapeHtml(d.shopName), type: 'customer', shopColor: d.shopColor })}
+		${EmailTitle('🎉 Votre colis vous attend !')}
+		${EmailParagraph(`Bonjour ${escapeHtml(d.customerName)},<br /><br />Votre colis est arrivé au Point Relais. Vous pouvez aller le chercher dès maintenant.`)}
+		${EmailNotice('Votre Point Relais', `${relayHtml(d.relay)}<br /><span style="color: ${EMAIL_COLORS.neutral[500]}; font-size: 13px;">Pensez à prendre une pièce d’identité. Le colis reste disponible environ 10 jours.</span>`, d.shopColor)}
+		${d.trackingUrl ? `<div style="text-align: center; margin: ${EMAIL_SPACING.lg} 0;">${EmailButton({ href: d.trackingUrl, text: 'Voir le suivi', shopColor: d.shopColor })}</div>` : ''}
+		${EmailSignature(escapeHtml(d.shopName))}
+		<p style="text-align: center; color: ${EMAIL_COLORS.neutral[500]}; font-size: 12px; margin-top: ${EMAIL_SPACING.lg};">Commande n° ${escapeHtml(d.orderRef)} · Suivi ${escapeHtml(d.tracking)}</p>
+	`,
+		d.shopColor
+	);
+}

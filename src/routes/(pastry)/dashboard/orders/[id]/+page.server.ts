@@ -1,6 +1,8 @@
 import { getDeliveryMode } from '$lib/utils/delivery';
 import { optionLines } from '$lib/cart/options';
 import { trackingUrl, parcelLabel, type RelayPoint } from '$lib/delivery/settings';
+import { syncParcel } from '$lib/delivery/tracking-sync';
+import { isTrackingConfigured } from '$lib/delivery/mondial-relay';
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { getUserPermissions, verifyShopOwnership } from '$lib/auth';
@@ -23,6 +25,21 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 
         if (!user) {
             throw error(401, 'Non autorisé');
+        }
+
+        // Point Relais : mise à jour du suivi à l'ouverture (au plus toutes les 30 min)
+        try {
+            const { data: own } = await (locals.supabaseServiceRole as any)
+                .from('orders')
+                .select('id')
+                .eq('id', params.id)
+                .eq('shop_id', permissions.shopId)
+                .eq('status', 'ready')
+                .not('tracking_number', 'is', null)
+                .maybeSingle();
+            if (own) await syncParcel(locals.supabaseServiceRole, params.id, { minMinutes: 30 });
+        } catch (e) {
+            console.error('[order] suivi:', e);
         }
 
         // Vérifier d'abord si c'est une pending_order
@@ -201,14 +218,23 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             trackingUrl: string | null;
             shippedAt: string | null;
             items: string[];
+            trackingStatus?: string | null;
+            trackingLabel?: string | null;
+            trackingCheckedAt?: string | null;
+            arrivedAt?: string | null;
+            autoTracking?: boolean;
         } | null = null;
         try {
-            const { data: sh } = await (locals.supabaseServiceRole as any)
-                .from('orders')
-                .select('shipping_relay, shipping_fee, parcel_size, tracking_number, shipped_at, cart_ref, product_name')
-                .eq('id', params.id)
-                .eq('shop_id', permissions.shopId)
-                .maybeSingle();
+            const baseCols = 'shipping_relay, shipping_fee, parcel_size, tracking_number, shipped_at, cart_ref, product_name';
+            const shipQuery = (cols: string) =>
+                (locals.supabaseServiceRole as any)
+                    .from('orders')
+                    .select(cols)
+                    .eq('id', params.id)
+                    .eq('shop_id', permissions.shopId)
+                    .maybeSingle();
+            let { data: sh, error: shErr } = await shipQuery(`${baseCols}, tracking_status, tracking_label, tracking_checked_at, relay_arrived_at`);
+            if (shErr) ({ data: sh } = await shipQuery(baseCols)); // SQL « suivi » pas encore fait
             if (sh?.shipping_relay) {
                 let parcelRows = [sh];
                 if (sh.cart_ref) {
@@ -229,6 +255,11 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
                     trackingUrl: trackingUrl(sh.tracking_number, sh.shipping_relay?.zip),
                     shippedAt: sh.shipped_at || null,
                     items: parcelRows.map((r: any) => r.product_name),
+                    trackingStatus: sh.tracking_status || null,
+                    trackingLabel: sh.tracking_label || null,
+                    trackingCheckedAt: sh.tracking_checked_at || null,
+                    arrivedAt: sh.relay_arrived_at || null,
+                    autoTracking: isTrackingConfigured(),
                 };
             }
         } catch {
@@ -1385,6 +1416,24 @@ export const actions: Actions = {
             emailError = "La commande est bien « Expédiée », mais l'e-mail au client n'a pas pu partir.";
         }
         return { success: true, emailError };
+    },
+
+    // Point Relais : « Actualiser le suivi »
+    refreshTracking: async ({ request, params, locals }) => {
+        const formData = await request.formData();
+        const shopId = String(formData.get('shopId') || '');
+        const { session } = await locals.safeGetSession();
+        const userId = session?.user.id;
+        if (!userId || !shopId || !(await verifyShopOwnership(userId, shopId, locals.supabase))) {
+            return fail(403, { error: 'Accès non autorisé' });
+        }
+        const { data: own } = await (locals.supabaseServiceRole as any)
+            .from('orders').select('id').eq('id', params.id).eq('shop_id', shopId).maybeSingle();
+        if (!own) return fail(404, { error: 'Commande introuvable' });
+        const res = await syncParcel(locals.supabaseServiceRole, params.id);
+        if (res.error === 'not_configured') return fail(400, { error: 'Le suivi automatique n’est pas encore branché (clés Mondial Relay à ajouter dans Vercel).' });
+        if (res.error) return fail(400, { error: res.error });
+        return { success: true };
     },
 
     makeOrderCompleted: async ({ request, params, locals }) => {

@@ -56,7 +56,30 @@
 		trackingUrl: string | null;
 		shippedAt: string | null;
 		items: string[];
+		trackingStatus?: string | null;
+		trackingLabel?: string | null;
+		trackingCheckedAt?: string | null;
+		arrivedAt?: string | null;
+		autoTracking?: boolean;
 	} | null;
+	let refreshing = false;
+	let refreshError = '';
+	const trackingSteps = [
+		{ id: 'shipped', label: 'Envoyé' },
+		{ id: 'in_transit', label: 'En route' },
+		{ id: 'available', label: 'Au Point Relais' },
+		{ id: 'delivered', label: 'Retiré' },
+	];
+	function trackingStepIndex(s: typeof shipping): number {
+		if (!s?.tracking) return -1;
+		const st = s.trackingStatus || '';
+		if (st === 'delivered' || order?.status === 'completed') return 3;
+		if (st === 'available') return 2;
+		if (st === 'in_transit' || st === 'anomaly') return 1;
+		return 0;
+	}
+	const fmtDateTime = (d: string) =>
+		new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
 	let trackingInput = '';
 	let shipSubmitting = false;
 	let shipError = '';
@@ -507,10 +530,52 @@
 				{/each}
 			</div>
 			{#if shipping.tracking}
-				<p class="mt-3 text-sm">
-					✅ Envoyé{shipping.shippedAt ? ` le ${new Date(shipping.shippedAt).toLocaleDateString('fr-FR')}` : ''} · Suivi <b>{shipping.tracking}</b>
-					{#if shipping.trackingUrl}· <a href={shipping.trackingUrl} target="_blank" rel="noopener" class="underline">Suivre le colis</a>{/if}
-				</p>
+				{@const stepIdx = trackingStepIndex(shipping)}
+				<div class="mt-3 rounded-lg bg-white p-3">
+					<div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+						<span>Suivi <b>{shipping.tracking}</b>{shipping.shippedAt ? ` · envoyé le ${new Date(shipping.shippedAt).toLocaleDateString('fr-FR')}` : ''}</span>
+						{#if shipping.trackingUrl}<a href={shipping.trackingUrl} target="_blank" rel="noopener" class="text-xs underline">Voir sur Mondial Relay</a>{/if}
+					</div>
+					<ol class="mt-3 grid grid-cols-4 gap-1">
+						{#each trackingSteps as st, i}
+							<li class="text-center text-[11px] {i <= stepIdx ? 'font-semibold text-amber-900' : 'text-muted-foreground'}">
+								<span class="mx-auto mb-1 block h-1.5 rounded-full {i <= stepIdx ? 'bg-amber-500' : 'bg-gray-200'}"></span>
+								{st.label}
+							</li>
+						{/each}
+					</ol>
+					{#if shipping.trackingStatus === 'anomaly'}
+						<p class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700">⚠️ Mondial Relay signale un problème : {shipping.trackingLabel || 'voir le suivi'}</p>
+					{:else if shipping.trackingLabel}
+						<p class="mt-2 text-xs text-muted-foreground">Dernière info Mondial Relay : {shipping.trackingLabel}</p>
+					{/if}
+					{#if shipping.autoTracking}
+						<div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+							<span>Suivi automatique ✓ {shipping.trackingCheckedAt ? `· vérifié le ${fmtDateTime(shipping.trackingCheckedAt)}` : ''}</span>
+							{#if order.status === 'ready'}
+								<form
+									method="POST"
+									action="?/refreshTracking"
+									use:enhance={() => {
+										refreshing = true;
+										refreshError = '';
+										return async ({ result, update }) => {
+											refreshing = false;
+											if (result.type === 'failure') refreshError = String(result.data?.error || 'Erreur');
+											await update({ reset: false });
+										};
+									}}
+								>
+									<input type="hidden" name="shopId" value={shop.id} />
+									<button type="submit" class="rounded-md border px-2 py-1 hover:bg-gray-50" disabled={refreshing}>{refreshing ? 'Vérification…' : '↻ Actualiser'}</button>
+								</form>
+							{/if}
+						</div>
+						{#if refreshError}<p class="mt-1 text-xs text-red-700">{refreshError}</p>{/if}
+					{:else}
+						<p class="mt-2 text-xs text-muted-foreground">Suivi automatique pas encore branché : passe la commande en « Terminée » quand le client a retiré son colis.</p>
+					{/if}
+				</div>
 			{:else}
 				<p class="mt-3 text-xs text-amber-900/80">Crée l'étiquette sur ton espace Mondial Relay Pro avec ces infos, puis colle le n° de suivi en bas de la page (« Colis envoyé »). Aide détaillée : Ma boutique → Aide.</p>
 			{/if}
