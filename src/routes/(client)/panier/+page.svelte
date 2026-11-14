@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy, tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
@@ -78,17 +78,10 @@
 				Country: 'FR',
 				PostCode: postCode,
 				ColLivMod: '24R',
-				NbResults: '20',
+				NbResults: '7',
 				Responsive: true,
 				ShowResultsOnMap: true,
 				OnParcelShopSelected: (d: any) => {
-					// Les lockers (casiers) sont trop petits pour nos colis : refusés
-					if (isLocker(d)) {
-						relay = null;
-						lockerWarning = true;
-						return;
-					}
-					lockerWarning = false;
 					relay = {
 						id: String(d.ID || ''),
 						name: String(d.Nom || '').trim(),
@@ -99,7 +92,6 @@
 					};
 				},
 			});
-			watchLockers();
 		} catch (e) {
 			console.error('[Point Relais] carte:', e);
 			widgetError = 'La carte des Points Relais n’a pas pu s’afficher. Vérifiez votre connexion et réessayez.';
@@ -107,38 +99,6 @@
 			widgetLoading = false;
 		}
 	}
-
-	let lockerWarning = false;
-	const LOCKER_RE = /\blocker\b|\bconsigne\b/i;
-	function isLocker(d: any) {
-		return LOCKER_RE.test(String(d?.Nom || '')) || /^(LOC|LCK)/i.test(String(d?.TypeActivite || d?.Type || ''));
-	}
-	// Cache les lockers dans la liste de la carte Mondial Relay
-	let lockerObserver: MutationObserver | null = null;
-	function hideLockers(root: HTMLElement) {
-		const numbered = /^\s*\d+\s*-\s*/;
-		const leaves = Array.from(root.querySelectorAll<HTMLElement>('*')).filter(
-			(e) => e.children.length === 0 && numbered.test(e.textContent || '') && LOCKER_RE.test(e.textContent || '')
-		);
-		for (const leaf of leaves) {
-			let n: HTMLElement = leaf;
-			while (n.parentElement && n.parentElement !== root) {
-				const sibs = Array.from(n.parentElement.children);
-				if (sibs.length > 1 && sibs.filter((x) => numbered.test(x.textContent || '')).length > 1) break;
-				n = n.parentElement;
-			}
-			if (n !== root && n.style.display !== 'none') n.style.display = 'none';
-		}
-	}
-	function watchLockers() {
-		const root = document.getElementById('mr-widget');
-		if (!root) return;
-		lockerObserver?.disconnect();
-		lockerObserver = new MutationObserver(() => hideLockers(root));
-		lockerObserver.observe(root, { childList: true, subtree: true });
-		hideLockers(root);
-	}
-	onDestroy(() => lockerObserver?.disconnect());
 
 	async function chooseMode(m: 'retrait' | 'relais') {
 		mode = m;
@@ -320,10 +280,7 @@
 											<span><span class="text-[12px] font-semibold uppercase tracking-wide text-[#7A4F60]">Votre Point Relais ✓</span><br /><b>{relay.name}</b><br />{relay.address}<br />{relay.zip} {relay.city}</span>
 										</div>
 									{:else}
-										<p class="text-sm font-medium">Choisissez votre Point Relais * <span class="font-normal text-neutral-500">(cliquez sur un Point Relais dans la liste)</span></p>
-									{/if}
-									{#if lockerWarning}
-										<p class="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">Les lockers (casiers automatiques) sont trop petits pour nos colis. Choisissez un Point Relais en magasin dans la liste.</p>
+										<p class="text-sm font-medium">Choisissez votre Point Relais * <span class="font-normal text-neutral-500">(cliquez sur « Choisir » dans la liste)</span></p>
 									{/if}
 									{#if widgetLoading}<p class="text-sm text-neutral-500">Chargement de la carte…</p>{/if}
 									{#if widgetError}

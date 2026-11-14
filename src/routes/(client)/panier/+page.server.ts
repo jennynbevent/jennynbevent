@@ -151,9 +151,6 @@ export const actions: Actions = {
 			const size = cartParcelSize(printLines.map((l) => sizes[l.product_id]));
 			if (!size) return fail(400, { error: 'Un de vos articles est disponible uniquement en retrait à Andrésy.' });
 			if (!relay) return fail(400, { error: 'Merci de choisir votre Point Relais.' });
-			if (/\blocker\b|\bconsigne\b/i.test(relay.name)) {
-				return fail(400, { error: 'Les lockers sont trop petits pour nos colis : choisissez un Point Relais en magasin.' });
-			}
 			parcel = size;
 			fee = shippingFee(settings, size, itemsTotal);
 			const notice = Math.max(settings.prepDays, ...printLines.map((l) => l.min_days_notice || 0));
