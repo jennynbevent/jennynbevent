@@ -11,7 +11,7 @@ async function loadShop(locals: App.Locals, shopId: string | null) {
 	if (!shopId) return null;
 	const { data } = await (locals.supabaseServiceRole as any)
 		.from('shops')
-		.select('id, name, logo_url, is_custom_accepted, is_visible, instagram, tiktok, website')
+		.select('*')
 		.eq('id', shopId)
 		.maybeSingle();
 	return data;

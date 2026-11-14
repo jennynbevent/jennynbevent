@@ -23,8 +23,12 @@ export const actions: Actions = {
 		const shop = await getOwnShop(locals);
 		const fd = await request.formData();
 		const enabled = fd.get('enabled') === 'true';
-		const { error } = await (locals.supabase as any).from('shops').update({ is_custom_accepted: enabled }).eq('id', shop.id);
-		if (error) {
+		const { data: rows, error } = await (locals.supabaseServiceRole as any)
+			.from('shops')
+			.update({ is_custom_accepted: enabled })
+			.eq('id', shop.id)
+			.select('is_custom_accepted');
+		if (error || !rows?.length) {
 			console.error('[messages] activation:', error);
 			return fail(500, { error: "Impossible d'enregistrer le réglage." });
 		}

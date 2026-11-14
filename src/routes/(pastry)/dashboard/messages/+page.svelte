@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { Paperclip, Check } from 'lucide-svelte';
 
@@ -32,8 +33,10 @@
 		return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', timeZone: TZ });
 	}
 
-	function toggle() {
+	async function toggle() {
 		enabled = !enabled;
+		// Attendre que la case cachée prenne la nouvelle valeur avant d'envoyer
+		await tick();
 		toggleForm.requestSubmit();
 	}
 </script>
