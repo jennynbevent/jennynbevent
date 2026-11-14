@@ -41,6 +41,8 @@
 		chef_pickup_time: string | null;
 		is_pending?: boolean; // Flag pour identifier les pending_orders
 		order_ref?: string | null; // Référence de commande
+		cart_ref?: string | null; // Panier : commandes passées ensemble
+		cart_size?: number;
 	}
 
 	// Données de la page
@@ -401,7 +403,7 @@
 					<!-- Commandes du groupe -->
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 						{#each ordersInGroup as order}
-							<Card class="transition-shadow hover:shadow-md">
+							<Card class="transition-shadow hover:shadow-md {order.cart_ref && (order.cart_size || 1) > 1 ? 'border-l-4 border-l-[#BC90A5]' : ''}">
 								<div
 									class="cursor-pointer"
 									on:click={() => viewOrder(order.id)}
@@ -409,6 +411,11 @@
 									role="button"
 									tabindex="0"
 								>
+									{#if order.cart_ref && (order.cart_size || 1) > 1}
+										<div class="rounded-t-lg bg-[#FBF6F8] px-3 py-1.5 text-xs font-semibold text-[#7A4F60]">
+											🛍️ Panier #{order.cart_ref} · {order.cart_size} articles · {order.customer_name}
+										</div>
+									{/if}
 									{#if order.is_pending}
 										<!-- Bandeau d'alerte pour les commandes non finalisées -->
 										<div class="mb-2 rounded-t-lg bg-red-50 p-2 text-xs text-red-700">

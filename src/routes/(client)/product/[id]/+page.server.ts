@@ -2,7 +2,8 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { superValidate, fail, message, setError } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
-import { createLocalDynamicSchema } from './schema';
+import { createLocalDynamicSchema, createCartSchema } from './schema';
+import { buildSelectedOptions, totalWithOptions, optionLines, REMISE_EMAIL } from '$lib/cart/options';
 import { ErrorLogger } from '$lib/services/error-logging';
 
 export const load: PageServerLoad = async ({ params, locals, url, parent }) => {
@@ -91,7 +92,8 @@ export const load: PageServerLoad = async ({ params, locals, url, parent }) => {
 			datesWithLimitReached: datesWithLimitReached || [],
 			reservedRanges,
 			orderLimitStats: null,
-			form: await superValidate(zod(dynamicSchema))
+			form: await superValidate(zod(dynamicSchema)),
+			cartForm: await superValidate(zod(createCartSchema(customFields || [])), { id: 'cart' })
 		};
 	} catch (err) {
 		if (err && typeof err === 'object' && 'status' in err) throw err;
@@ -100,6 +102,90 @@ export const load: PageServerLoad = async ({ params, locals, url, parent }) => {
 };
 
 export const actions: Actions = {
+	// Panier : enregistre l'article tel que le client l'a personnalisé (prix calculé ici)
+	addToCart: async ({ request, params, locals }) => {
+		const formData = await request.formData();
+		const shopId = formData.get('shopId') as string;
+		const productId = params.id;
+		const uuid = /^[0-9a-f-]{36}$/i;
+		if (!shopId || !uuid.test(shopId) || !uuid.test(productId)) {
+			const form = await superValidate(formData, zod(createCartSchema([])), { id: 'cart' });
+			return fail(400, { form, error: 'Données manquantes' });
+		}
+
+		const { data: product } = await (locals.supabaseServiceRole as any)
+			.from('products')
+			.select('id, name, base_price, image_url, form_id, booking_type, min_days_notice, show_delivery_options, shop_id')
+			.eq('id', productId)
+			.eq('shop_id', shopId)
+			.eq('is_active', true)
+			.maybeSingle();
+		if (!product || product.booking_type === 'reservation') {
+			const form = await superValidate(formData, zod(createCartSchema([])), { id: 'cart' });
+			return fail(400, { form, error: 'Cet article ne peut pas être ajouté au panier.' });
+		}
+
+		let customFields: any[] = [];
+		if (product.form_id) {
+			const { data: formFields } = await (locals.supabaseServiceRole as any)
+				.from('form_fields')
+				.select('*')
+				.eq('form_id', product.form_id)
+				.order('order');
+			customFields = formFields || [];
+		}
+
+		const form = await superValidate(formData, zod(createCartSchema(customFields)), { id: 'cart' });
+		if (!form.valid) return fail(400, { form });
+
+		const showDeliveryOptions = !!product.show_delivery_options;
+		const mode: 'print' | 'email' = showDeliveryOptions && form.data.delivery_mode === 'email' ? 'email' : 'print';
+		const qrCodeUrl = showDeliveryOptions ? form.data.qr_code_url || '' : '';
+
+		const selectedOptions = buildSelectedOptions(customFields, form.data.customization_data);
+		const total = totalWithOptions(product.base_price || 0, selectedOptions);
+		if (mode === 'email') {
+			selectedOptions['Mode de remise'] = { value: REMISE_EMAIL, type: 'short-text', price: 0, fieldId: 'delivery_mode', fieldType: 'short-text' };
+		}
+
+		const { data: ref, error: refError } = await (locals.supabaseServiceRole as any).rpc('generate_order_ref');
+		if (refError || !ref) return fail(500, { form, error: 'Erreur, merci de réessayer.' });
+
+		const lineData = {
+			kind: 'cart_item',
+			shop_id: shopId,
+			product_id: product.id,
+			product_name: product.name,
+			product_base_price: product.base_price || 0,
+			image_url: product.image_url || null,
+			customization_data: selectedOptions,
+			total_amount: total,
+			delivery_mode: mode,
+			min_days_notice: product.min_days_notice || 0,
+			inspiration_photos: qrCodeUrl ? [qrCodeUrl] : [],
+		};
+		const { error: insertError } = await (locals.supabaseServiceRole as any)
+			.from('pending_orders')
+			.insert({ order_ref: ref, order_data: lineData });
+		if (insertError) return fail(500, { form, error: 'Erreur, merci de réessayer.' });
+
+		const lines = optionLines(selectedOptions);
+		if (qrCodeUrl) lines.push('QR code ajouté ✓');
+		return message(form, {
+			cartItem: {
+				ref,
+				productId: product.id,
+				name: product.name,
+				image: product.image_url || null,
+				price: total,
+				mode,
+				lines,
+				minDaysNotice: product.min_days_notice || 0,
+				addedAt: Date.now(),
+			},
+		});
+	},
+
 	createProductOrder: async ({ request, params, locals }) => {
 		const rateLimitExceeded = request.headers.get('x-rate-limit-exceeded');
 		if (rateLimitExceeded === 'true') {

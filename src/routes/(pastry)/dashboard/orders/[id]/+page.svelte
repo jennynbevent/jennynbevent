@@ -46,6 +46,7 @@
 		isPending,
 		printFile: sentPrintFile,
 	} = $page.data);
+	$: cart = $page.data.cart as { ref: string; total: number; items: Array<{ id: string; name: string; price: number; status: string; mode: string }> } | null;
 	$: isReservationProduct = product?.booking_type === 'reservation';
 
 	// État du formulaire pour les actions
@@ -437,6 +438,28 @@
 		<Alert>
 			<AlertDescription>{page.form.message}</AlertDescription>
 		</Alert>
+	{/if}
+
+	{#if cart}
+		<div class="rounded-2xl border border-[#ecd8e0] bg-[#FBF6F8] p-4">
+			<p class="font-semibold text-[#7A4F60]">🛍️ Fait partie du panier #{cart.ref}</p>
+			<p class="text-sm text-muted-foreground">{cart.items.length} articles · {order.customer_name} · {formatPrice(cart.total)} payés en une fois</p>
+			<ul class="mt-2 space-y-1 text-sm">
+				{#each cart.items as it}
+					<li class="flex items-center justify-between gap-3">
+						{#if it.id === order.id}
+							<span><b>{it.name}</b> <span class="text-muted-foreground">(cette commande)</span> · {it.mode === 'email' ? '✉️ Par e-mail' : '📍 Retrait'}</span>
+						{:else}
+							<a href="/dashboard/orders/{it.id}" class="underline-offset-2 hover:underline">{it.name} · {it.mode === 'email' ? '✉️ Par e-mail' : '📍 Retrait'}</a>
+						{/if}
+						<span class="shrink-0 text-muted-foreground">{getStatusText(it.status)}</span>
+					</li>
+				{/each}
+			</ul>
+			{#if order.status === 'to_verify'}
+				<p class="mt-2 text-xs text-muted-foreground">« J'ai reçu le paiement » valide tous les articles du panier d'un coup.</p>
+			{/if}
+		</div>
 	{/if}
 
 	<!-- Layout en 2 colonnes -->

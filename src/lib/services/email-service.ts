@@ -38,6 +38,7 @@ import { CriticalErrorNotificationEmail } from '$lib/emails/critical-error-notif
 import { MarketingCampaignEmail } from '$lib/emails/marketing-campaign';
 import type { OrderEmailExtras } from '$lib/emails/order-extras';
 import { sendPushToAll, euros, pathOf } from '$lib/push';
+import { CartCustomerEmail, CartOwnerEmail, type CartEmailData } from '$lib/emails/cart';
 import { ContactMessageNotificationEmail, ContactMessageCopyEmail, ContactReplyEmail } from '$lib/emails/contact-message';
 
 export class EmailService {
@@ -887,6 +888,45 @@ export class EmailService {
             console.error('Erreur EmailService.sendOrderCancelled:', error);
             throw error;
         }
+    }
+
+    /** Panier : e-mail au client (commande reçue ou confirmée) */
+    static async sendCartCustomer(to: string, d: CartEmailData & { stage: 'pending' | 'confirmed' }) {
+        const resend = getResend();
+        if (!resend) return { success: false };
+        const { error } = await resend.emails.send({
+            from: `${d.shopName} <contact@jennynbevent.com>`,
+            to,
+            replyTo: 'contact@jennynbevent.com',
+            subject: d.stage === 'confirmed' ? `Votre commande est confirmée – n° ${d.cartRef}` : `Commande reçue – n° ${d.cartRef}`,
+            html: CartCustomerEmail(d),
+        });
+        if (error) console.error('[EmailService] panier (client):', error);
+        return { success: !error };
+    }
+
+    /** Panier : e-mail + notification pour toi */
+    static async sendCartOwner(
+        to: string | null,
+        d: CartEmailData & { customerEmail: string; customerPhone?: string | null; paidByCard: boolean; info?: string | null }
+    ) {
+        await sendPushToAll({
+            title: '🛍️ Nouvelle commande !',
+            body: [d.items.length > 1 ? `${d.items.length} articles` : d.items[0]?.name, euros(d.total), d.customerName].filter(Boolean).join(' · '),
+            url: pathOf(d.url),
+            tag: 'cart-' + d.cartRef,
+        });
+        const resend = getResend();
+        if (!resend || !to) return { success: false };
+        const { error } = await resend.emails.send({
+            from: 'Jnb Event <contact@jennynbevent.com>',
+            to,
+            replyTo: d.customerEmail,
+            subject: `🛍️ Nouvelle commande – ${d.customerName} (${euros(d.total)})`,
+            html: CartOwnerEmail(d),
+        });
+        if (error) console.error('[EmailService] panier (toi):', error);
+        return { success: !error };
     }
 
     /**

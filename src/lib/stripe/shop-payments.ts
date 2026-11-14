@@ -17,6 +17,7 @@ import { getShopColorFromShopId } from '$lib/emails/helpers';
 import { buildOrderEmailExtras } from '$lib/emails/order-extras';
 import { amountDueNow } from '$lib/utils/deposit';
 import { ErrorLogger } from '$lib/services/error-logging';
+import { loadPendingCart, finalizeCart } from '$lib/cart/server';
 
 let _stripe: Stripe | null = null;
 
@@ -96,6 +97,40 @@ export async function createProductCheckout(
 		payment_intent_data: { description: `${name} – réf. ${orderRef}`, metadata: { order_ref: orderRef } },
 		success_url: `${origin}${checkoutPath}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: `${origin}${checkoutPath}?payment=cancelled`,
+		locale: 'fr',
+	});
+	if (!session.url) throw new Error('Session Stripe sans adresse');
+	return session.url;
+}
+
+/** Panier : plusieurs articles payés en une fois */
+export async function createCartCheckout(admin: SupabaseClient, cartRef: string, origin: string): Promise<string> {
+	const stripe = getShopStripe();
+	if (!stripe) throw new Error('Stripe non configuré');
+	const cart = await loadPendingCart(admin, cartRef);
+	if (!cart) throw new Error('Panier introuvable');
+	if (cents(cart.total_amount) < 50) throw new Error('Montant trop faible pour un paiement par carte (0,50 € minimum)');
+
+	const path = `/panier/paiement/${cartRef}`;
+	const session = await stripe.checkout.sessions.create({
+		mode: 'payment',
+		customer_email: cart.customer_email || undefined,
+		client_reference_id: cartRef,
+		line_items: cart.lines.map((l) => ({
+			quantity: 1,
+			price_data: {
+				currency: 'eur',
+				unit_amount: cents(l.total_amount),
+				product_data: {
+					name: l.product_name,
+					...(l.image_url ? { images: [l.image_url] } : {}),
+				},
+			},
+		})),
+		metadata: { kind: 'cart', order_ref: cartRef },
+		payment_intent_data: { description: `Commande n° ${cartRef}`, metadata: { order_ref: cartRef } },
+		success_url: `${origin}${path}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+		cancel_url: `${origin}${path}?payment=cancelled`,
 		locale: 'fr',
 	});
 	if (!session.url) throw new Error('Session Stripe sans adresse');
@@ -192,6 +227,9 @@ export async function finalizeStripeSession(
 
 	if (session.metadata?.kind === 'quote') {
 		return finalizeQuote(admin, orderRef, paidAmount);
+	}
+	if (session.metadata?.kind === 'cart') {
+		return finalizeCart(admin, orderRef, { provider: 'stripe', byCard: true, paidTotal: paidAmount });
 	}
 	return finalizeProduct(admin, orderRef, paidAmount);
 }

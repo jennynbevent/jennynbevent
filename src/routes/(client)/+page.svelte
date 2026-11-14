@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CartButton from '$lib/components/client/cart-button.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -238,11 +239,14 @@
 					{#if menuOpen}<X class="h-6 w-6" />{:else}<Menu class="h-6 w-6" />{/if}
 				</button>
 			{/if}
-			{#if shop.instagram}
-				<a href="https://instagram.com/{shop.instagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" class="absolute right-3 top-[42px] z-10 rounded-full p-2 hover:bg-black/5 md:right-6 md:top-8" style={customStyles.iconStyle} title="Instagram">
-					<Instagram class="h-5 w-5" />
-				</a>
-			{/if}
+			<div class="absolute right-3 top-[42px] z-10 flex items-center md:right-6 md:top-8">
+				{#if shop.instagram}
+					<a href="https://instagram.com/{shop.instagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" class="rounded-full p-2 hover:bg-black/5" style={customStyles.iconStyle} title="Instagram">
+						<Instagram class="h-5 w-5" />
+					</a>
+				{/if}
+				<CartButton style={customStyles.iconStyle} />
+			</div>
 			<a href={showBackButton ? '/?from=app' : '/'} class="flex flex-col items-center pb-4 pt-4 md:pb-0 md:pt-6">
 				<span class="h-12 w-12 overflow-hidden rounded-full bg-white p-1 shadow-sm md:h-[70px] md:w-[70px]">
 					<img src={shop.logo_url || '/images/logo_jennynbevent.jpg'} alt="" class="h-full w-full object-contain" />

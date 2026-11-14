@@ -124,6 +124,26 @@ export function createDynamicProductOrderSchema(fields: Array<{
     });
 }
 
+// Panier : uniquement la personnalisation (contact et date se remplissent dans le panier)
+export function createCartItemSchema(fields: Array<{
+    id: string;
+    label: string;
+    type: 'short-text' | 'long-text' | 'number' | 'single-select' | 'multi-select';
+    required: boolean;
+    options?: Array<{ label: string; price?: number }>;
+}>) {
+    return z.object({
+        customization_data: createDynamicCustomizationSchema(fields),
+        delivery_mode: z.enum(['retrait', 'email']).default('retrait'),
+        qr_code_url: z
+            .string()
+            .max(500)
+            .regex(/^https:\/\/res\.cloudinary\.com\//, 'Lien de QR code invalide')
+            .optional()
+            .or(z.literal('')),
+    });
+}
+
 // Mise à jour du statut d'une commande
 export const updateOrderStatusSchema = z.object({
     status: orderStatusSchema

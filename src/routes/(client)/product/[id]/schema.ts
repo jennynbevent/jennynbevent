@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createDynamicProductOrderSchema } from '$lib/validations/schemas/order.js';
+import { createDynamicProductOrderSchema, createCartItemSchema } from '$lib/validations/schemas/order.js';
 
 export interface CustomField {
 	id: string;
@@ -11,4 +11,8 @@ export interface CustomField {
 
 export function createLocalDynamicSchema(fields: CustomField[]) {
 	return createDynamicProductOrderSchema(fields);
+}
+
+export function createCartSchema(fields: CustomField[]) {
+	return createCartItemSchema(fields);
 }

@@ -1,3 +1,5 @@
+import { getDeliveryMode } from '$lib/utils/delivery';
+import { optionLines } from '$lib/cart/options';
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { getUserPermissions, verifyShopOwnership } from '$lib/auth';
@@ -158,6 +160,37 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             printFile = null;
         }
 
+        // Panier : les autres articles commandés en même temps
+        let cart: { ref: string; total: number; items: Array<{ id: string; name: string; price: number; status: string; mode: string }> } | null = null;
+        try {
+            const { data: refRow } = await (locals.supabaseServiceRole as any)
+                .from('orders')
+                .select('cart_ref')
+                .eq('id', params.id)
+                .eq('shop_id', permissions.shopId)
+                .maybeSingle();
+            if (refRow?.cart_ref) {
+                const { data: siblings } = await (locals.supabaseServiceRole as any)
+                    .from('orders')
+                    .select('id, product_name, total_amount, status, customization_data, created_at')
+                    .eq('cart_ref', refRow.cart_ref)
+                    .eq('shop_id', permissions.shopId)
+                    .order('created_at', { ascending: true });
+                const items = (siblings || []).map((o: any) => ({
+                    id: o.id,
+                    name: o.product_name,
+                    price: Number(o.total_amount) || 0,
+                    status: o.status,
+                    mode: getDeliveryMode(o.customization_data) === 'email' ? 'email' : 'print',
+                }));
+                if (items.length > 1) {
+                    cart = { ref: refRow.cart_ref, items, total: Math.round(items.reduce((t: number, i: any) => t + i.price, 0) * 100) / 100 };
+                }
+            }
+        } catch {
+            cart = null;
+        }
+
         // Initialiser les formulaires Superforms
         const makeQuoteForm = await superValidate(zod(makeQuoteFormSchema));
         const rejectOrderForm = await superValidate(zod(rejectOrderFormSchema));
@@ -180,7 +213,8 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
             rejectOrderForm,
             personalNoteForm,
             isPending: false,
-            printFile
+            printFile,
+            cart
         };
     } catch (err) {
         throw err;
@@ -898,6 +932,59 @@ export const actions: Actions = {
             }
 
             console.log('✅ Payment confirmed for order:', params.id);
+
+            // Panier : le paiement couvre tous les articles commandés ensemble
+            const cartRef = (order as any).cart_ref as string | null;
+            if (cartRef) {
+                const { data: confirmedRows } = await (locals.supabaseServiceRole as any)
+                    .from('orders')
+                    .update({ status: 'confirmed' })
+                    .eq('cart_ref', cartRef)
+                    .eq('shop_id', shopId)
+                    .eq('status', 'to_verify')
+                    .select('id');
+                if ((order as any).payment_provider === 'stripe') {
+                    return { message: 'Commande passée en préparation' };
+                }
+                try {
+                    const { data: all } = await (locals.supabaseServiceRole as any)
+                        .from('orders')
+                        .select('id, product_id, product_name, total_amount, customization_data, inspiration_photos, pickup_date, pickup_time, created_at')
+                        .eq('cart_ref', cartRef)
+                        .eq('shop_id', shopId)
+                        .order('created_at', { ascending: true });
+                    const pIds = [...new Set((all || []).map((o: any) => o.product_id).filter(Boolean))];
+                    const { data: prods } = pIds.length
+                        ? await (locals.supabaseServiceRole as any).from('products').select('id, image_url').in('id', pIds)
+                        : { data: [] };
+                    const imgs = new Map((prods || []).map((p: any) => [p.id, p.image_url]));
+                    const items = (all || []).map((o: any) => ({
+                        name: o.product_name,
+                        image: imgs.get(o.product_id) || null,
+                        price: Number(o.total_amount) || 0,
+                        mode: (getDeliveryMode(o.customization_data) === 'email' ? 'email' : 'print') as 'email' | 'print',
+                        lines: optionLines(o.customization_data || {}),
+                    }));
+                    const printRow = (all || []).find((o: any) => getDeliveryMode(o.customization_data) !== 'email');
+                    const shopColor = await getShopColorFromShopId(locals.supabaseServiceRole, shopId);
+                    await EmailService.sendCartCustomer(order.customer_email, {
+                        stage: 'confirmed',
+                        customerName: order.customer_name,
+                        shopName: order.shops.name,
+                        shopLogo: order.shops.logo_url,
+                        shopColor,
+                        items,
+                        total: Math.round(items.reduce((t: number, i: any) => t + i.price, 0) * 100) / 100,
+                        cartRef,
+                        pickupDate: printRow?.pickup_date || null,
+                        pickupTime: printRow?.pickup_time || null,
+                        url: `${PUBLIC_SITE_URL}/panier/merci/${all?.[0]?.id || order.id}`,
+                    });
+                } catch (e) {
+                    console.error('[confirmPayment] e-mail panier:', e);
+                }
+                return { message: `Paiement confirmé pour les ${(confirmedRows?.length || 0) + 1} articles du panier` };
+            }
 
             // Paiement par carte : le client a déjà reçu sa confirmation au moment du paiement
             if ((order as any).payment_provider === 'stripe') {

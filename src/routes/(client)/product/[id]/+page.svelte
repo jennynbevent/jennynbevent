@@ -4,6 +4,8 @@
 	import { goto } from '$app/navigation';
 	import { ArrowLeft, Cake, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import ProductForm from './product-form.svelte';
+	import CartProductForm from './cart-product-form.svelte';
+	import CartButton from '$lib/components/client/cart-button.svelte';
 	import SocialMediaIcons from '$lib/components/client/social-media-icons.svelte';
 	import * as Carousel from '$lib/components/ui/carousel';
 
@@ -21,6 +23,7 @@
 		product,
 		productImages,
 		form,
+		cartForm,
 		customFields,
 		availabilities,
 		unavailabilities,
@@ -158,10 +161,13 @@
 		</h1>
 			</div>
 
-			<!-- Réseaux sociaux -->
-			{#if shop && (shop.instagram || shop.tiktok || shop.website)}
-				<SocialMediaIcons {shop} iconStyle={customStyles.iconStyle} />
-			{/if}
+			<div class="flex items-center gap-2">
+				<!-- Réseaux sociaux -->
+				{#if shop && (shop.instagram || shop.tiktok || shop.website)}
+					<SocialMediaIcons {shop} iconStyle={customStyles.iconStyle} inline />
+				{/if}
+				<CartButton style={customStyles.iconStyle} />
+			</div>
 		</div>
 	</header>
 
@@ -321,6 +327,9 @@
 						<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
 					</div>
 
+					{#if product.booking_type !== 'reservation' && cartForm}
+						<CartProductForm data={cartForm} {shop} {product} {customFields} {customizations} />
+					{:else}
 					<ProductForm
 						data={form}
 						{shop}
@@ -334,6 +343,7 @@
 						{orderLimitStats}
 						onCancel={goBack}
 					/>
+					{/if}
 				</div>
 			</div>
 		</div>

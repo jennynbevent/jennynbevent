@@ -63,6 +63,8 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
             for (const pending of pendingOrdersData) {
                 const orderData = pending.order_data as any;
+                // Articles ajoutés au panier / paniers en cours de paiement : pas des commandes
+                if (orderData?.kind === 'cart_item' || orderData?.kind === 'cart') continue;
                 // Vérifier que cette pending_order appartient à cette boutique
                 if (orderData?.shop_id === shop.id) {
                     pendingOrdersByShop.push(pending);
@@ -120,6 +122,29 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
         // Séparer les commandes normales et les pending_orders
         // Les pending_orders ne doivent apparaître que dans le filtre "Non finalisée"
         const normalOrders = orders || [];
+
+        // Panier : référence commune aux articles commandés ensemble
+        try {
+            const { data: cartRows } = await (locals.supabaseServiceRole as any)
+                .from('orders')
+                .select('id, cart_ref')
+                .eq('shop_id', shop.id)
+                .not('cart_ref', 'is', null);
+            if (cartRows?.length) {
+                const refById = new Map(cartRows.map((r: any) => [r.id, r.cart_ref]));
+                const sizes = new Map<string, number>();
+                cartRows.forEach((r: any) => sizes.set(r.cart_ref, (sizes.get(r.cart_ref) || 0) + 1));
+                for (const o of normalOrders as any[]) {
+                    const ref = refById.get(o.id);
+                    if (ref) {
+                        o.cart_ref = ref;
+                        o.cart_size = sizes.get(ref as string) || 1;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[orders] cart_ref:', e);
+        }
 
         // Grouper les commandes normales par date (pour l'affichage "Tout")
         const groupedOrders = groupOrdersByDate(normalOrders);
