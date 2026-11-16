@@ -71,7 +71,7 @@ export const actions: Actions = {
         }
 
         // Extraire les données validées
-        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, show_delivery_options, show_photo_upload, parcel_size, customizationFields } = form.data;
+        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, show_delivery_options, show_photo_upload, parcel_size, ship_days, availability, customizationFields } = form.data;
 
         // Récupérer toutes les images depuis formData
         const imageFiles: File[] = [];
@@ -149,6 +149,8 @@ export const actions: Actions = {
                     min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0,
                     show_delivery_options: booking_type === 'reservation' ? false : !!show_delivery_options,
                 show_photo_upload: booking_type === 'reservation' ? false : !!show_photo_upload,
+                ship_days: ship_days ?? null,
+                availability: availability || 'available',
                 parcel_size: parcel_size || 'medium'
                 })
                 .select()

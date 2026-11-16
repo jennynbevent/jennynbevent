@@ -14,7 +14,21 @@ async function deliveryData(locals: App.Locals, shopId: string) {
 	if (e1 || e2) settings.enabled = false; // migration pas encore faite
 	const sizes: Record<string, string> = {};
 	for (const p of products || []) sizes[p.id] = p.parcel_size || 'medium';
-	return { settings, sizes };
+	// Délai d'envoi Colissimo de chaque article (vide = délai de commande minimum)
+	const shipDays: Record<string, number> = {};
+	const unavailable: Record<string, string> = {};
+	const { data: extra, error: e3 } = await admin
+		.from('products')
+		.select('id, ship_days, min_days_notice, availability')
+		.eq('shop_id', shopId)
+		.eq('is_active', true);
+	if (!e3) {
+		for (const p of extra || []) {
+			shipDays[p.id] = typeof p.ship_days === 'number' ? p.ship_days : Number(p.min_days_notice) || 0;
+			if (p.availability && p.availability !== 'available') unavailable[p.id] = p.availability;
+		}
+	}
+	return { settings, sizes, shipDays, unavailable };
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -42,6 +56,8 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 			pointRetrait: delivery.settings.pointRetrait,
 			prepDays: delivery.settings.prepDays,
 		},
+		shipDays: delivery.shipDays,
+		unavailable: delivery.unavailable,
 		parcelSizes: delivery.sizes,
 		shop: data.shop,
 		availabilities: data.availabilities || [],
@@ -136,6 +152,18 @@ export const actions: Actions = {
 			return fail(400, { missing: inactive, error: 'Un article de votre panier n’est plus en vente. Il a été retiré.' });
 		}
 
+		// Articles « Bientôt de retour » / « Indisponible » : le client doit les retirer
+		{
+			const { data: avRows, error: avErr } = await (locals.supabaseServiceRole as any)
+				.from('products')
+				.select('id, name, availability')
+				.in('id', [...new Set(lines.map((l) => l.product_id))]);
+			const blocked = avErr ? [] : (avRows || []).filter((p: any) => p.availability && p.availability !== 'available');
+			if (blocked.length) {
+				return fail(400, { error: `« ${blocked[0].name} » n’est plus disponible pour le moment : retirez-le de votre panier pour commander.` });
+			}
+		}
+
 		const printLines = lines.filter((l) => l.delivery_mode === 'print');
 		let finalDate: string | null = null;
 		let finalTime: string | null = null;
@@ -146,7 +174,7 @@ export const actions: Actions = {
 		const isRelais = printLines.length > 0 && wantsRelais;
 
 		if (isRelais) {
-			const { settings, sizes } = await deliveryData(locals, shopId);
+			const { settings, sizes, shipDays } = await deliveryData(locals, shopId);
 			if (!settings.enabled) return fail(400, { error: 'La livraison n’est pas disponible pour le moment.' });
 			const size = cartParcelSize(printLines.map((l) => sizes[l.product_id]));
 			if (!size) return fail(400, { error: 'Un de vos articles est disponible uniquement en retrait à Andrésy.' });
@@ -158,7 +186,8 @@ export const actions: Actions = {
 			if (relay.kind === 'home') relay.name = name;
 			parcel = size;
 			fee = shippingFee(settings, size, itemsTotal);
-			const notice = Math.max(settings.prepDays, ...printLines.map((l) => l.min_days_notice || 0));
+			// Un seul colis : c'est le délai d'envoi le plus long du panier qui compte
+			const notice = Math.max(0, ...printLines.map((l) => shipDays[l.product_id] ?? (l.min_days_notice || 0)));
 			shipDate = addDays(todayParis(), notice);
 		} else if (printLines.length) {
 			if (!DATE_RE.test(pickupDate)) return fail(400, { error: 'Merci de choisir une date de retrait.' });

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { AVAILABILITY_OPTIONS } from '$lib/utils/availability';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { writable } from 'svelte/store';
@@ -364,6 +365,33 @@
 									{product.category?.name || 'Général'}
 								</Badge>
 							</div>
+
+							<!-- Disponibilité en boutique -->
+							<select
+								class="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm"
+								value={product.availability || 'available'}
+								title="Disponibilité en boutique"
+								on:change={async (e) => {
+									const previous = product.availability || 'available';
+									const value = e.currentTarget.value;
+									product.availability = value;
+									try {
+										const fd = new FormData();
+										fd.append('productId', product.id);
+										fd.append('shopId', permissions.shopId);
+										fd.append('availability', value);
+										const res = await fetch('?/setAvailability', { method: 'POST', body: fd, headers: { 'x-sveltekit-action': 'true' } });
+										const out = await res.json().catch(() => null);
+										if (!res.ok || out?.type !== 'success') product.availability = previous;
+									} catch {
+										product.availability = previous;
+									}
+								}}
+							>
+								{#each AVAILABILITY_OPTIONS as opt}
+									<option value={opt.id}>{opt.label}</option>
+								{/each}
+							</select>
 
 							<!-- Menu d'actions -->
 							<div class="flex gap-1">

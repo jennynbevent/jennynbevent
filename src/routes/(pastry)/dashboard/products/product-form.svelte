@@ -19,6 +19,7 @@
 	import type { SuperValidated, Infer } from 'sveltekit-superforms';
 	import { createProductFormSchema } from './new/schema';
 	import { PARCEL_SIZES } from '$lib/delivery/settings';
+	import { AVAILABILITY_OPTIONS } from '$lib/utils/availability';
 	import {
 		CustomizationFormBuilder,
 		type CustomizationField,
@@ -117,6 +118,8 @@
 		$formData.min_reservation_days = initialData.min_reservation_days ?? 1;
 		$formData.show_delivery_options = !!initialData.show_delivery_options;
 		$formData.show_photo_upload = !!initialData.show_photo_upload;
+		$formData.ship_days = initialData.ship_days ?? null;
+		$formData.availability = initialData.availability || 'available';
 		$formData.parcel_size = initialData.parcel_size || 'medium';
 		// Charger les images existantes
 		if (initialData.images && Array.isArray(initialData.images)) {
@@ -694,6 +697,22 @@
 					</label>
 				{/if}
 
+				<div class="space-y-2">
+					<p class="text-sm font-medium">Disponibilité en boutique</p>
+					<div class="grid gap-2 sm:grid-cols-3">
+						{#each AVAILABILITY_OPTIONS as opt}
+							<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-2.5 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+								<input type="radio" name="availability" value={opt.id} bind:group={$formData.availability} class="mt-1 h-4 w-4" />
+								<span>
+									<span class="block text-sm font-medium">{opt.label}</span>
+									<span class="block text-xs text-muted-foreground">{opt.hint}</span>
+								</span>
+							</label>
+						{/each}
+					</div>
+					<p class="text-xs text-muted-foreground">Pour cacher complètement l'article, utilise l'interrupteur dans la liste des articles.</p>
+				</div>
+
 				{#if $formData.booking_type !== 'reservation'}
 					<div class="space-y-2">
 						<p class="text-sm font-medium">Envoi de l'article (taille du colis ou fichier par e-mail)</p>
@@ -754,6 +773,28 @@
 						{/if}
 					</p>
 				</Form.Field>
+
+				{#if $formData.booking_type !== 'reservation' && $formData.parcel_size !== 'email' && $formData.parcel_size !== 'pickup_only'}
+					<div class="space-y-1">
+						<label for="ship_days" class="text-sm font-medium">Délai d'envoi Colissimo (jours)</label>
+						<Input
+							id="ship_days"
+							type="number"
+							min="0"
+							inputmode="numeric"
+							placeholder={String($formData.min_days_notice || 0)}
+							value={$formData.ship_days ?? ''}
+							on:input={(e) => {
+								const v = e.currentTarget.value;
+								$formData.ship_days = v === '' ? null : Math.max(0, parseInt(v, 10) || 0);
+							}}
+						/>
+						<p class="text-sm text-muted-foreground">
+							Pour la livraison Colissimo : le nombre de jours pour préparer et poster cet article. Il est affiché au client dans le panier.
+							Vide = même délai que le délai de commande minimum.
+						</p>
+					</div>
+				{/if}
 
 				<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-3 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
 					<input

@@ -110,14 +110,11 @@
 				{/if}
 			</div>
 
-			<!-- Préparation -->
-			<label class="block space-y-1">
-				<span class="block font-medium">Délai avant l'envoi</span>
-				<span class="flex items-center gap-2">
-					<input name="prepDays" type="number" min="0" max="30" bind:value={s.prepDays} class="w-24 rounded-lg border px-3 py-2 text-right" />
-					<span class="text-sm">jours (si un article demande plus, c'est son délai qui compte)</span>
-				</span>
-			</label>
+			<!-- Délai d'envoi : réglé dans chaque article -->
+			<p class="rounded-lg bg-neutral-50 p-3 text-sm text-muted-foreground">
+				⏱️ Le <b>délai d'envoi</b> se règle maintenant <b>dans chaque article</b> (Articles → modifier → « Délai d'envoi Colissimo »). Le panier affiche le délai de chaque article et la date d'envoi du colis.
+			</p>
+			<input type="hidden" name="prepDays" value={s.prepDays} />
 
 			<p class="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
 				ℹ️ Mets des prix proches de ce que te coûte l'étiquette sur La Poste Pro Expéditions. Le grand colis (150 à 200 cm au total) a un supplément La Poste : il part uniquement à domicile.

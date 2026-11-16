@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CartButton from '$lib/components/client/cart-button.svelte';
+	import { availabilityBadge } from '$lib/utils/availability';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -41,7 +42,7 @@
 		separatorColor: 'rgba(0, 0, 0, 0.3)',
 	};
 
-	type Product = { id: string; name: string; base_price: number; image_url: string | null; category_id: string | null };
+	type Product = { id: string; name: string; base_price: number; image_url: string | null; category_id: string | null; availability?: string };
 	type Category = { id: string; name: string; description?: string | null };
 
 	// « Tout voir » : ?categorie=<id> affiche toute la catégorie
@@ -289,15 +290,16 @@
 				<div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
 					{#each currentSection.items as product (product.id)}
 						<a href={productHref(product.id)} class="group block">
-							<div class="aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
+							<div class="relative aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
+{#if availabilityBadge(product.availability)}<span class="absolute left-2 top-2 z-10 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold shadow {product.availability === 'soon' ? 'text-[#a3376a]' : 'text-neutral-600'}">{availabilityBadge(product.availability)}</span>{/if}
 								{#if product.image_url}
-									<img src={product.image_url} alt={product.name} loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+									<img src={product.image_url} alt={product.name} loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 {availabilityBadge(product.availability) ? 'opacity-50 grayscale' : ''}" />
 								{:else}
 									<div class="flex h-full items-center justify-center bg-[#BB91A4]/15"><Cake class="h-10 w-10 text-neutral-300" /></div>
 								{/if}
 							</div>
-							<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight">{product.name}</p>
-							<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>{formatPrice(product.base_price)}</p>
+							<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight {availabilityBadge(product.availability) ? 'text-neutral-400' : ''}">{product.name}</p>
+							<p class="mt-0.5 text-sm" style={`color: ${availabilityBadge(product.availability) ? '#b5b5b5' : customizations?.button_color || '#BC90A5'};`}>{formatPrice(product.base_price)}</p>
 						</a>
 					{/each}
 				</div>
@@ -342,15 +344,16 @@
 						<div class="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 md:pb-0">
 							{#each section.items.slice(0, 4) as product (product.id)}
 								<a href={productHref(product.id)} class="group block w-[44%] flex-none snap-start md:w-auto">
-									<div class="aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
+									<div class="relative aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
+{#if availabilityBadge(product.availability)}<span class="absolute left-2 top-2 z-10 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold shadow {product.availability === 'soon' ? 'text-[#a3376a]' : 'text-neutral-600'}">{availabilityBadge(product.availability)}</span>{/if}
 										{#if product.image_url}
-											<img src={product.image_url} alt={product.name} loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+											<img src={product.image_url} alt={product.name} loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 {availabilityBadge(product.availability) ? 'opacity-50 grayscale' : ''}" />
 										{:else}
 											<div class="flex h-full items-center justify-center bg-[#BB91A4]/15"><Cake class="h-10 w-10 text-neutral-300" /></div>
 										{/if}
 									</div>
-									<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight">{product.name}</p>
-									<p class="mt-0.5 text-sm" style={`color: ${customizations?.button_color || '#BC90A5'};`}>{formatPrice(product.base_price)}</p>
+									<p class="mt-2 line-clamp-2 text-[15px] font-semibold leading-tight {availabilityBadge(product.availability) ? 'text-neutral-400' : ''}">{product.name}</p>
+									<p class="mt-0.5 text-sm" style={`color: ${availabilityBadge(product.availability) ? '#b5b5b5' : customizations?.button_color || '#BC90A5'};`}>{formatPrice(product.base_price)}</p>
 								</a>
 							{/each}
 						</div>

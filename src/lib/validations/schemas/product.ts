@@ -63,6 +63,13 @@ export const productBaseSchema = z.object({
     show_photo_upload: z.boolean().default(false), // = afficher « Votre photo »
     // Taille de colis pour l'envoi Colissimo
     parcel_size: z.enum(['small', 'medium', 'large', 'pickup_only', 'email']).default('medium'),
+    // Délai d'envoi Colissimo (jours) ; vide = délai de commande minimum
+    ship_days: z.preprocess(
+        (val) => (val === '' || val === undefined || val === null || (typeof val === 'number' && Number.isNaN(val)) ? null : typeof val === 'string' ? parseInt(val, 10) : val),
+        z.number().int().min(0, 'Le délai doit être positif').max(365, 'Délai trop long').nullable()
+    ).default(null),
+    // Disponibilité en boutique (sans cacher l'article)
+    availability: z.enum(['available', 'soon', 'unavailable']).default('available'),
     min_reservation_days: z.preprocess(
         (val) => {
             if (val === '' || val === undefined) return undefined;
@@ -98,7 +105,9 @@ export const updateProductSchema = productBaseSchema.pick({
     min_reservation_days: true,
     show_delivery_options: true,
     show_photo_upload: true,
-    parcel_size: true
+    parcel_size: true,
+    ship_days: true,
+    availability: true
 });
 // Note: images ne sont pas dans le schéma car elles sont gérées manuellement via FormData
 

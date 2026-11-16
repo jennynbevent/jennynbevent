@@ -5,6 +5,7 @@
 	import { ArrowLeft, Cake, ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import ProductForm from './product-form.svelte';
 	import CartProductForm from './cart-product-form.svelte';
+	import { availabilityBadge } from '$lib/utils/availability';
 	import CartButton from '$lib/components/client/cart-button.svelte';
 	import SocialMediaIcons from '$lib/components/client/social-media-icons.svelte';
 	import * as Carousel from '$lib/components/ui/carousel';
@@ -96,6 +97,7 @@
 			}
 		}
 	}
+	$: unavailableLabel = availabilityBadge(product?.availability);
 </script>
 
 <svelte:head>
@@ -189,8 +191,11 @@
 			<div class="grid grid-cols-1 gap-6 {primaryImage ? 'md:grid-cols-2 md:gap-8' : ''}">
 				<!-- Colonne gauche : Galerie d'images avec carousel (fixe sur desktop) - Design moderne -->
 				{#if primaryImage}
-					<div class="h-fit md:sticky md:top-6">
-					<div class="flex flex-col items-center gap-4">
+					<div class="relative h-fit md:sticky md:top-6">
+					{#if unavailableLabel}
+						<span class="absolute left-1/2 top-3 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-[13px] font-bold shadow {product.availability === 'soon' ? 'text-[#a3376a]' : 'text-neutral-600'}">{unavailableLabel}</span>
+					{/if}
+					<div class="flex flex-col items-center gap-4 {unavailableLabel ? 'opacity-60 grayscale' : ''}">
 						{#if hasMultipleImages}
 							<!-- Carousel pour plusieurs images -->
 							<div class="relative w-full max-w-[350px] lg:max-w-[450px] xl:max-w-[500px]">
@@ -290,7 +295,7 @@
 						</h2>
 						<p
 							class="text-xl font-semibold sm:text-2xl"
-							style={`color: ${customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
+							style={`color: ${unavailableLabel ? '#c9b3bd' : customizations?.button_color || '#BC90A5'}; font-weight: 600;`}
 						>
 							{formatPrice(product.base_price)}
 						</p>
@@ -327,7 +332,19 @@
 						<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
 					</div>
 
-					{#if product.booking_type !== 'reservation' && cartForm}
+					{#if unavailableLabel}
+						<div class="space-y-5">
+							<div class="rounded-2xl border border-[#f3cfe0] bg-[#fdf0f5] p-4 text-[15px] leading-relaxed text-[#7A4F60]">
+								<b>{unavailableLabel}</b><br />
+								Cet article n'est pas disponible à la commande pour le moment. Revenez bientôt, ou
+								<a href="/contact" class="underline">contactez-moi</a> si vous avez une question.
+							</div>
+							<div class="flex gap-3">
+								<button type="button" disabled class="h-12 flex-1 cursor-not-allowed rounded-xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-300">Ajouter au panier</button>
+								<button type="button" disabled class="h-12 flex-1 cursor-not-allowed rounded-xl bg-[#e5dbe0] text-sm font-semibold text-white">{unavailableLabel.replace('⏳ ', '')}</button>
+							</div>
+						</div>
+					{:else if product.booking_type !== 'reservation' && cartForm}
 						<CartProductForm data={cartForm} {shop} {product} {customFields} {customizations} />
 					{:else}
 					<ProductForm

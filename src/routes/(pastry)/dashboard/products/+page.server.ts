@@ -19,8 +19,21 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
         throw svelteError(500, 'Erreur lors du chargement des données');
     }
 
-    const { products, shop } = productsData;
+    const { shop } = productsData;
+    let products = productsData.products;
     let categories = productsData.categories;
+
+    // Disponibilité de chaque article (colonne ajoutée séparément : ignorée si absente)
+    if (Array.isArray(products) && products.length) {
+        const { data: av, error: avError } = await (locals.supabase as any)
+            .from('products')
+            .select('id, availability')
+            .in('id', products.map((p: { id: string }) => p.id));
+        if (!avError && av) {
+            const byId = new Map(av.map((r: { id: string; availability: string | null }) => [r.id, r.availability || 'available']));
+            products = products.map((p: { id: string }) => ({ ...p, availability: byId.get(p.id) || 'available' }));
+        }
+    }
 
     // Sous-titres des catégories (colonne ajoutée séparément : ignorée si absente)
     if (Array.isArray(categories) && categories.length) {
@@ -551,6 +564,32 @@ export const actions: Actions = {
         } catch (err) {
             return fail(500, { form, error: 'Erreur inattendue lors de la suppression' });
         }
+    },
+
+    // Disponibilité en boutique (Disponible / Bientôt de retour / Indisponible)
+    setAvailability: async ({ request, locals }) => {
+        const { session } = await locals.safeGetSession();
+        const userId = session?.user.id;
+        if (!userId) return fail(401, { error: 'Non autorisé' });
+        const formData = await request.formData();
+        const shopId = String(formData.get('shopId') || '');
+        const productId = String(formData.get('productId') || '');
+        const value = String(formData.get('availability') || '');
+        if (!['available', 'soon', 'unavailable'].includes(value)) return fail(400, { error: 'Valeur invalide' });
+        if (!shopId || !productId) return fail(400, { error: 'Données manquantes' });
+        if (!(await verifyShopOwnership(userId, shopId, locals.supabase))) {
+            return fail(403, { error: 'Accès non autorisé à cette boutique' });
+        }
+        const { data, error: upErr } = await (locals.supabase as any)
+            .from('products')
+            .update({ availability: value })
+            .eq('id', productId)
+            .eq('shop_id', shopId)
+            .select('id');
+        if (upErr || !data?.length) {
+            return fail(500, { error: "Impossible d'enregistrer (la mise à jour SQL a-t-elle été faite ?)" });
+        }
+        return { success: true, availability: value };
     },
 
     toggleProductActive: async ({ request, locals }) => {

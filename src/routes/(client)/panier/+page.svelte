@@ -113,7 +113,22 @@
 		return !!(a && a.start_time && a.end_time && a.interval_time);
 	})();
 	$: deliveryOk = !hasPrint || (isRelais ? addressOk && phoneOk : !!(pickupDate && (!needsSlot || pickupTime)));
-	$: canOrder = items.length > 0 && name.trim() && /\S+@\S+\.\S+/.test(email) && deliveryOk;
+	// Articles « Bientôt de retour » / « Indisponible »
+	$: unavailableMap = (data.unavailable || {}) as Record<string, string>;
+	$: blockedItems = items.filter((i) => unavailableMap[i.productId]);
+	$: canOrder = items.length > 0 && blockedItems.length === 0 && name.trim() && /\S+@\S+\.\S+/.test(email) && deliveryOk;
+
+	// Délai d'envoi Colissimo de chaque article ; un seul colis = le plus long compte
+	$: shipDaysMap = (data.shipDays || {}) as Record<string, number>;
+	const itemShipDays = (i: { productId: string; minDaysNotice?: number }) => shipDaysMap[i.productId] ?? (i.minDaysNotice || 0);
+	$: shipItems = printItems.filter((i) => !unavailableMap[i.productId]);
+	$: longestItem = shipItems.reduce<(typeof shipItems)[number] | null>((best, i) => (!best || itemShipDays(i) > itemShipDays(best) ? i : best), null);
+	$: longestDays = longestItem ? itemShipDays(longestItem) : 0;
+	$: shipDateLabel = (() => {
+		const d = new Date();
+		d.setDate(d.getDate() + longestDays);
+		return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Paris' });
+	})();
 </script>
 
 <svelte:head>
@@ -173,19 +188,27 @@
 				<!-- Articles -->
 				<div class="min-w-0 space-y-3">
 					{#each items as item (item.ref)}
-						<div class="flex items-start gap-4 rounded-2xl border bg-white p-3.5">
+						<div class="flex items-start gap-4 rounded-2xl border bg-white p-3.5 {unavailableMap[item.productId] ? 'opacity-70' : ''}">
 							{#if item.image}
-								<img src={item.image} alt="" class="h-[72px] w-[72px] shrink-0 rounded-xl object-cover" />
+								<img src={item.image} alt="" class="h-[72px] w-[72px] shrink-0 rounded-xl object-cover {unavailableMap[item.productId] ? 'grayscale' : ''}" />
 							{:else}
 								<div class="h-[72px] w-[72px] shrink-0 rounded-xl bg-[#F3E6EA]"></div>
 							{/if}
 							<div class="min-w-0 flex-1">
 								<p class="font-semibold">{item.name}</p>
 								{#each item.lines as l}<p class="truncate text-[13px] text-neutral-500">{l}</p>{/each}
-								{#if item.mode === 'email' || (relaisOn && sizes[item.productId] === 'pickup_only')}
+								{#if unavailableMap[item.productId]}
+									<span class="mt-1 inline-block rounded-full bg-neutral-100 px-2.5 py-0.5 text-[12px] font-semibold text-neutral-600">
+										{unavailableMap[item.productId] === 'soon' ? '⏳ Bientôt de retour' : 'Indisponible'} · retirez-le pour commander
+									</span>
+								{:else if item.mode === 'email' || (relaisOn && sizes[item.productId] === 'pickup_only')}
 								<span class="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[12px] font-semibold {item.mode === 'email' ? 'bg-blue-50 text-blue-800' : 'bg-[#F3E6EA] text-[#7A4F60]'}">
 									{item.mode === 'email' ? '✉️ Par e-mail · sous 48 h' : '📍 Retrait uniquement'}
 								</span>
+								{:else if isRelais}
+									<span class="mt-1 inline-block rounded-full bg-[#fff4e0] px-2.5 py-0.5 text-[12px] font-semibold text-[#8a5a14]">
+										📦 Envoi sous {itemShipDays(item)} jour{itemShipDays(item) > 1 ? 's' : ''}
+									</span>
 								{/if}
 							</div>
 							<div class="flex shrink-0 flex-col items-end gap-2">
@@ -279,7 +302,11 @@
 											<input bind:value={shipCity} maxlength="80" placeholder="Andrésy" autocomplete={mode === 'point' ? 'off' : 'address-level2'} class="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 outline-none focus:border-[#BC90A5]" />
 										</label>
 									</div>
-									<p class="text-[12.5px] text-neutral-500">Taille du colis : {parcel ? parcelLabel(parcel) : ''}. Envoi sous {delivery.prepDays} jour{delivery.prepDays > 1 ? 's' : ''} environ, vous recevez le numéro de suivi par e-mail. Livraison en France métropolitaine.</p>
+									<div class="rounded-xl border border-[#f3dc9a] bg-[#fffbea] px-4 py-3 text-[13.5px] leading-relaxed">
+										📦 <b>{shipItems.length > 1 ? `Un seul colis pour vos ${shipItems.length} articles` : 'Votre colis'}</b><br />
+										Envoi prévu au plus tard le <b>{shipDateLabel}</b>{#if shipItems.length > 1 && longestItem}, car « {longestItem.name} » demande {longestDays} jour{longestDays > 1 ? 's' : ''}{/if}.<br />
+										<span class="text-[12.5px] text-[#8a5a14]">Puis environ 2 jours de livraison La Poste. Vous recevez le numéro de suivi par e-mail. Livraison en France métropolitaine.</span>
+									</div>
 								</div>
 							{/if}
 							{#if !isRelais}
@@ -360,7 +387,7 @@
 						</button>
 						{#if !canOrder && items.length}
 							<p class="text-center text-xs text-neutral-500">
-								{!name.trim() || !/\S+@\S+\.\S+/.test(email) ? 'Indiquez votre nom et votre e-mail.' : isRelais ? (!addressOk ? 'Complétez l’adresse de livraison.' : 'Indiquez votre téléphone pour La Poste.') : 'Choisissez la date et le créneau de retrait.'}
+								{blockedItems.length ? `Retirez « ${blockedItems[0].name} » (plus disponible pour le moment).` : !name.trim() || !/\S+@\S+\.\S+/.test(email) ? 'Indiquez votre nom et votre e-mail.' : isRelais ? (!addressOk ? 'Complétez l’adresse de livraison.' : 'Indiquez votre téléphone pour La Poste.') : 'Choisissez la date et le créneau de retrait.'}
 							</p>
 						{/if}
 					</div>

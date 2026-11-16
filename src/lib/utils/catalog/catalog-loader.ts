@@ -97,6 +97,22 @@ export async function loadShopCatalog(
             heroProductIds = [];
         }
 
+        // Disponibilité de chaque article (colonne ajoutée séparément : ignorée si absente)
+        let products: any[] = productsResult.data || [];
+        try {
+            const { data: av, error: avError } = await (supabase as any)
+                .from('products')
+                .select('id, availability')
+                .eq('shop_id', shopId)
+                .eq('is_active', true);
+            if (!avError && av) {
+                const map = new Map(av.map((r: any) => [r.id, r.availability || 'available']));
+                products = products.map((p: any) => ({ ...p, availability: map.get(p.id) || 'available' }));
+            }
+        } catch {
+            /* colonne absente */
+        }
+
         // 3. Structurer les données du catalogue
         const catalogData = {
             shop: {
@@ -111,7 +127,7 @@ export async function loadShopCatalog(
                 is_custom_accepted: shop.is_custom_accepted,
                 is_active: shop.is_active
             },
-            products: productsResult.data || [],
+            products,
             categories: categoriesResult.data || [],
             faqs: faqsResult.data || [],
             heroProductIds,

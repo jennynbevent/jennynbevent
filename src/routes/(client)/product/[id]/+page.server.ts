@@ -87,11 +87,25 @@ export const load: PageServerLoad = async ({ params, locals, url, parent }) => {
 				.single();
 			if (!phError && ph) showPhotoUpload = !!ph.show_photo_upload;
 		}
+		// Disponibilité (Bientôt de retour / Indisponible) et délai d'envoi
+		let availability = 'available';
+		let shipDays: number | null = null;
+		{
+			const { data: av, error: avError } = await (locals.supabaseServiceRole as any)
+				.from('products')
+				.select('availability, ship_days')
+				.eq('id', product.id)
+				.single();
+			if (!avError && av) {
+				availability = av.availability || 'available';
+				shipDays = typeof av.ship_days === 'number' ? av.ship_days : null;
+			}
+		}
 
 		const dynamicSchema = createLocalDynamicSchema(customFields || []);
 		return {
 			shop,
-			product: { ...product, images: productImages, show_delivery_options: showDeliveryOptions, show_photo_upload: showPhotoUpload },
+			product: { ...product, images: productImages, show_delivery_options: showDeliveryOptions, show_photo_upload: showPhotoUpload, availability, ship_days: shipDays },
 			productImages,
 			customForm,
 			customFields: customFields || [],
@@ -146,6 +160,9 @@ export const actions: Actions = {
 		const form = await superValidate(formData, zod(createCartSchema(customFields)), { id: 'cart' });
 		if (!form.valid) return fail(400, { form });
 
+		if (product.availability && product.availability !== 'available') {
+			return fail(400, { form, error: 'Cet article n’est pas disponible à la commande pour le moment.' });
+		}
 		const showDeliveryOptions = !!product.show_delivery_options; // = afficher « Votre QR code »
 		// Article « Fichier par e-mail » : rien à expédier
 		const mode: 'print' | 'email' = product.parcel_size === 'email' ? 'email' : 'print';
