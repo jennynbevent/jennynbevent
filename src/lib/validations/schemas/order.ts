@@ -141,6 +141,13 @@ export function createCartItemSchema(fields: Array<{
             .regex(/^https:\/\/res\.cloudinary\.com\//, 'Lien de QR code invalide')
             .optional()
             .or(z.literal('')),
+        // Photo jointe par le client (option « Votre photo »)
+        photo_url: z
+            .string()
+            .max(500)
+            .regex(/^https:\/\/res\.cloudinary\.com\//, 'Lien de photo invalide')
+            .optional()
+            .or(z.literal('')),
     });
 }
 

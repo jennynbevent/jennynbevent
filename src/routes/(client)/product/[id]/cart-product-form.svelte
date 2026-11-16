@@ -77,6 +77,48 @@
 
 	let qrUploading = false;
 	let qrError = '';
+	// Option « Votre photo »
+	$: showPhotoUpload = !!product?.show_photo_upload;
+	let photoInput: HTMLInputElement;
+	let photoUploading = false;
+	let photoError = '';
+	/** Réduit la photo (max 2500 px) pour un envoi rapide, en gardant une bonne qualité d'impression */
+	async function shrinkPhoto(file: File): Promise<File> {
+		try {
+			const bmp = await createImageBitmap(file);
+			const scale = Math.min(1, 2500 / Math.max(bmp.width, bmp.height));
+			const canvas = document.createElement('canvas');
+			canvas.width = Math.round(bmp.width * scale);
+			canvas.height = Math.round(bmp.height * scale);
+			canvas.getContext('2d')?.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+			const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.9));
+			if (!blob) return file;
+			return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+		} catch {
+			return file;
+		}
+	}
+	async function onPhotoSelected(event: Event) {
+		const original = (event.currentTarget as HTMLInputElement).files?.[0];
+		if (!original) return;
+		photoError = '';
+		photoUploading = true;
+		try {
+			const file = await shrinkPhoto(original);
+			const body = new FormData();
+			body.set('file', file);
+			const res = await fetch('/api/upload-qr-code', { method: 'POST', body });
+			const result = await res.json().catch(() => ({}));
+			if (!res.ok || !result.url) throw new Error(result.error || "L'envoi a échoué, réessayez.");
+			$formData.photo_url = result.url;
+		} catch (e) {
+			photoError = e instanceof Error ? e.message : "L'envoi a échoué, réessayez.";
+		} finally {
+			photoUploading = false;
+			if (photoInput) photoInput.value = '';
+		}
+	}
+
 	let qrInput: HTMLInputElement;
 	async function onQrSelected(event: Event) {
 		const file = (event.currentTarget as HTMLInputElement).files?.[0];
@@ -144,6 +186,32 @@
 			<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>
 		{/if}
 
+		{#if showPhotoUpload}
+			<div class="space-y-2">
+				<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="letter-spacing: -0.02em;">
+					Votre photo <span class="text-sm font-normal text-neutral-500">(facultatif)</span>
+				</h3>
+				{#if $formData.photo_url}
+					<div class="flex items-center gap-3 rounded-xl border bg-white p-3">
+						<img src={$formData.photo_url} alt="Votre photo" class="h-16 w-16 rounded object-cover" />
+						<span class="flex-1 text-sm text-neutral-700">Photo ajoutée ✓</span>
+						<button type="button" class="text-sm font-medium text-neutral-600 underline" on:click={() => ($formData.photo_url = '')}>Retirer</button>
+					</div>
+				{:else}
+					<label class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed bg-white p-4 text-sm text-neutral-600 hover:border-neutral-500" style={`border-color: ${buttonColor};`}>
+						<span class="text-2xl" aria-hidden="true">🖼️</span>
+						<span>
+							<span class="block font-medium text-neutral-900">{photoUploading ? 'Envoi en cours…' : 'Ajouter ma photo'}</span>
+							<span class="block text-xs">Photo JPG ou PNG, en bonne qualité de préférence</span>
+						</span>
+						<input bind:this={photoInput} type="file" accept="image/*" class="sr-only" disabled={photoUploading} on:change={onPhotoSelected} />
+					</label>
+				{/if}
+				{#if photoError}<p class="text-sm font-medium text-destructive">{photoError}</p>{/if}
+			</div>
+			{#if !showDeliveryOptions}<div class="border-t" style="border-color: rgba(0, 0, 0, 0.1);"></div>{/if}
+		{/if}
+
 		{#if showDeliveryOptions}
 			<div class="space-y-2">
 				<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="letter-spacing: -0.02em;">
@@ -173,6 +241,11 @@
 		<div class="space-y-4">
 			<h3 class="text-lg font-semibold leading-[110%] tracking-tight text-neutral-900 sm:text-xl" style="letter-spacing: -0.02em;">Récapitulatif</h3>
 			<div class="space-y-3 rounded-2xl border bg-white p-4 text-sm">
+				{#if $formData.photo_url}
+					<div class="flex items-center justify-between gap-2">
+						<span class="font-semibold text-neutral-700">Photo :</span><span>Ajoutée ✓</span>
+					</div>
+				{/if}
 				{#if $formData.qr_code_url}
 					<div class="flex items-center justify-between gap-2">
 						<span class="font-semibold text-neutral-700">QR code :</span><span>Ajouté ✓</span>

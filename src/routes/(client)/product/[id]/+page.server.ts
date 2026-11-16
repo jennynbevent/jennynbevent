@@ -71,6 +71,7 @@ export const load: PageServerLoad = async ({ params, locals, url, parent }) => {
 
 		// Option « mode de remise + QR code » (colonne ajoutée séparément : ignorée si absente)
 		let showDeliveryOptions = false;
+		let showPhotoUpload = false;
 		{
 			const { data: opt, error: optError } = await (locals.supabaseServiceRole as any)
 				.from('products')
@@ -78,12 +79,19 @@ export const load: PageServerLoad = async ({ params, locals, url, parent }) => {
 				.eq('id', product.id)
 				.single();
 			if (!optError && opt) showDeliveryOptions = !!opt.show_delivery_options;
+			// Option « Votre photo » (colonne ajoutée séparément : ignorée si absente)
+			const { data: ph, error: phError } = await (locals.supabaseServiceRole as any)
+				.from('products')
+				.select('show_photo_upload')
+				.eq('id', product.id)
+				.single();
+			if (!phError && ph) showPhotoUpload = !!ph.show_photo_upload;
 		}
 
 		const dynamicSchema = createLocalDynamicSchema(customFields || []);
 		return {
 			shop,
-			product: { ...product, images: productImages, show_delivery_options: showDeliveryOptions },
+			product: { ...product, images: productImages, show_delivery_options: showDeliveryOptions, show_photo_upload: showPhotoUpload },
 			productImages,
 			customForm,
 			customFields: customFields || [],
@@ -115,7 +123,7 @@ export const actions: Actions = {
 
 		const { data: product } = await (locals.supabaseServiceRole as any)
 			.from('products')
-			.select('id, name, base_price, image_url, form_id, booking_type, min_days_notice, show_delivery_options, parcel_size, shop_id')
+			.select('*')
 			.eq('id', productId)
 			.eq('shop_id', shopId)
 			.eq('is_active', true)
@@ -142,8 +150,11 @@ export const actions: Actions = {
 		// Article « Fichier par e-mail » : rien à expédier
 		const mode: 'print' | 'email' = product.parcel_size === 'email' ? 'email' : 'print';
 		const qrCodeUrl = showDeliveryOptions ? form.data.qr_code_url || '' : '';
+		const photoUrl = product.show_photo_upload ? form.data.photo_url || '' : '';
 
 		const selectedOptions = buildSelectedOptions(customFields, form.data.customization_data);
+		if (qrCodeUrl) selectedOptions['QR code du client'] = { value: 'Joint ✓ (voir les images)', type: 'short-text', price: 0, fieldId: 'qr_code', fieldType: 'short-text' };
+		if (photoUrl) selectedOptions['Photo du client'] = { value: 'Jointe ✓ (voir les images)', type: 'short-text', price: 0, fieldId: 'photo', fieldType: 'short-text' };
 		const total = totalWithOptions(product.base_price || 0, selectedOptions);
 		if (mode === 'email') {
 			selectedOptions['Mode de remise'] = { value: REMISE_EMAIL, type: 'short-text', price: 0, fieldId: 'delivery_mode', fieldType: 'short-text' };
@@ -163,7 +174,7 @@ export const actions: Actions = {
 			total_amount: total,
 			delivery_mode: mode,
 			min_days_notice: product.min_days_notice || 0,
-			inspiration_photos: qrCodeUrl ? [qrCodeUrl] : [],
+			inspiration_photos: [qrCodeUrl, photoUrl].filter(Boolean),
 		};
 		const { error: insertError } = await (locals.supabaseServiceRole as any)
 			.from('pending_orders')
@@ -171,7 +182,6 @@ export const actions: Actions = {
 		if (insertError) return fail(500, { form, error: 'Erreur, merci de réessayer.' });
 
 		const lines = optionLines(selectedOptions);
-		if (qrCodeUrl) lines.push('QR code ajouté ✓');
 		return message(form, {
 			cartItem: {
 				ref,

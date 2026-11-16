@@ -118,6 +118,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
                 booking_type: (product as any).booking_type || 'pickup',
                 min_reservation_days: (product as any).min_reservation_days ?? 1,
                 show_delivery_options: !!(product as any).show_delivery_options,
+                show_photo_upload: !!(product as any).show_photo_upload,
                 parcel_size: (product as any).parcel_size || 'medium',
                 customizationFields: customizationFields
             }
@@ -182,7 +183,7 @@ export const actions: Actions = {
         }
 
         // Extraire les données validées
-        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, show_delivery_options, parcel_size, customizationFields } = form.data;
+        const { name, description, base_price, category_id, min_days_notice, deposit_percentage, booking_type, min_reservation_days, show_delivery_options, show_photo_upload, parcel_size, customizationFields } = form.data;
 
         // Récupérer toutes les nouvelles images depuis formData
         const newImageFiles: File[] = [];
@@ -411,6 +412,7 @@ export const actions: Actions = {
                 booking_type: booking_type || 'pickup',
                 min_reservation_days: booking_type === 'reservation' ? (min_reservation_days ?? 1) : 0,
                 show_delivery_options: booking_type === 'reservation' ? false : !!show_delivery_options,
+                show_photo_upload: booking_type === 'reservation' ? false : !!show_photo_upload,
                 parcel_size: parcel_size || 'medium'
             };
 

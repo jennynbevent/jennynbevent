@@ -116,6 +116,7 @@
 		$formData.booking_type = initialData.booking_type || 'pickup';
 		$formData.min_reservation_days = initialData.min_reservation_days ?? 1;
 		$formData.show_delivery_options = !!initialData.show_delivery_options;
+		$formData.show_photo_upload = !!initialData.show_photo_upload;
 		$formData.parcel_size = initialData.parcel_size || 'medium';
 		// Charger les images existantes
 		if (initialData.images && Array.isArray(initialData.images)) {
@@ -682,6 +683,13 @@
 						<span>
 							<span class="block text-sm font-medium">Afficher « Votre QR code »</span>
 							<span class="block text-sm text-muted-foreground">Le client peut ajouter l'image de son QR code (Souvientoi, Placemoi…) à sa commande.</span>
+						</span>
+					</label>
+					<label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-300 px-3 py-3 transition-colors hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+						<input type="checkbox" bind:checked={$formData.show_photo_upload} class="mt-0.5 h-4 w-4" />
+						<span>
+							<span class="block text-sm font-medium">Afficher « Votre photo »</span>
+							<span class="block text-sm text-muted-foreground">Le client peut joindre une photo à sa commande (ex. panneau avec photo, tasse photo).</span>
 						</span>
 					</label>
 				{/if}

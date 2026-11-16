@@ -5,7 +5,7 @@ import type { RequestHandler } from './$types';
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 
-/** Envoi du QR code du client avant la commande (renvoie l'adresse de l'image) */
+/** Envoi du QR code ou de la photo du client avant la commande (renvoie l'adresse de l'image) */
 export const POST: RequestHandler = async ({ request }) => {
 	if (request.headers.get('x-rate-limit-exceeded') === 'true') {
 		return json({ error: 'Trop de tentatives. Veuillez patienter.' }, { status: 429 });

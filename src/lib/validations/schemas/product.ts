@@ -59,7 +59,8 @@ export const productBaseSchema = z.object({
     ).default(100),
     booking_type: z.enum(['pickup', 'reservation']).default('pickup'),
     // Affiche le choix du mode de remise et l'ajout du QR code sur la page du produit
-    show_delivery_options: z.boolean().default(false),
+    show_delivery_options: z.boolean().default(false), // = afficher « Votre QR code »
+    show_photo_upload: z.boolean().default(false), // = afficher « Votre photo »
     // Taille de colis pour l'envoi Colissimo
     parcel_size: z.enum(['small', 'medium', 'large', 'pickup_only', 'email']).default('medium'),
     min_reservation_days: z.preprocess(
@@ -96,6 +97,7 @@ export const updateProductSchema = productBaseSchema.pick({
     booking_type: true,
     min_reservation_days: true,
     show_delivery_options: true,
+    show_photo_upload: true,
     parcel_size: true
 });
 // Note: images ne sont pas dans le schéma car elles sont gérées manuellement via FormData
